@@ -1,5 +1,7 @@
 ﻿using System.Linq;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Microsoft.VisualBasic;
 using UserManagement.Models;
 
 namespace UserManagement.Data;
@@ -48,5 +50,9 @@ public class DataContext : DbContext, IDataContext
     {
         base.Remove(entity);
         SaveChanges();
+
+
     }
+
+
 }

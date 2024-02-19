@@ -1,0 +1,63 @@
+﻿@page "/list/view/"
+@using NewUserManagement.Shared.Models
+@using System.Net.Http.Json;
+@if (showModal)
+{
+	<div class="modal fade show d-block">
+		<div class="modal-dialog">
+			<div class="modal-content">
+				<!-- Modal header -->
+				<div class="modal-header">
+					<h5 class="modal-title">User Details</h5>
+					<button type="button" class="btn-close" @onclick="CloseModal"></button>
+				</div>
+				<!-- Modal body -->
+				<div class="modal-body">
+					<!-- Display user details here -->
+					<p><strong>Id:</strong> @userDetails?.Id</p>
+					<p><strong>Forename:</strong> @userDetails?.Forename</p>
+					<p><strong>Surname:</strong> @userDetails?.Surname</p>
+					<p><strong>Email:</strong> @userDetails?.Email</p>
+					<p><strong>Active:</strong> @userDetails?.IsActive</p>
+					<p><strong>DOB:</strong> @userDetails?.DateOfBirth</p>
+					<!-- Add other user details here -->
+				</div>
+				<!-- Modal footer -->
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" @onclick="CloseModal">Close</button>
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+@code {
+	[Parameter] public int UserDetailId { get; set; } // Id of the user to display details
+	[Parameter] public bool showModal { get; set; } // Flag to control modal visibility
+	[Parameter] public EventCallback OnCloseModal { get; set; } // Event callback for closing modal
+
+	private User? userDetails; // User details to display
+
+	// Load user details when component initializes
+	protected override async Task OnInitializedAsync()
+	{
+		// Fetch user details based on the provided user id
+		userDetails = await FetchUserDetails(UserDetailId);
+	}
+	@inject HttpClient HttpClient
+	// Method to fetch user details from API
+	private async Task<User> FetchUserDetails(int userId)
+	{
+		// Make HTTP request to fetch user details
+		userDetails = await HttpClient.GetFromJsonAsync<User>($"api/user/");
+		// Replace this with actual API call to fetch user details
+		return new User(); // Dummy data for demonstration
+	}
+
+	// Method to close the modal
+	private async Task CloseModal()
+	{
+		await OnCloseModal.InvokeAsync(); // Invoke the event callback to close the modal
+	}
+}
+
