@@ -10,10 +10,10 @@
     <NewUserManagement.Client.Components.Public.List.View ParentMethodToCallOnClickBtnClose="() => _viewModalWindow = false" />
 }
 <main class="container min-vh-90 py-nd-5">
-
 	<h2 class="p-5">User List</h2>
 
 	<div class="container min-vh-90 py-nd-5 table-responsive">
+		
 			 <table class="table table-striped">
 				<thead>
 					<tr>
@@ -26,9 +26,15 @@
 						<th style="width: 1px;"></th>
 					</tr>
 				</thead>
+				@if (isLoading)
+				{
+					<Loading />
+				}
+				else
+				{
 				<tbody>
 				@foreach (var user in users )
-					{ 
+				{
 						<tr>
 							 <td>
 								 @user.Id 
@@ -55,9 +61,8 @@
 									</button>
 									<ul class="dropdown-menu" aria-labelledby="btnToggleActions">
 										<li>
-										<a @onclick="() => ViewUser(user.Id)" id="carouselfade" asp-action="ViewUser" class="dropdown-item">
-													View
-										</a>
+											<button @onclick="() => ViewUser(user.Id)" class="btn">View</button>
+										
 										</li>
 										<li>
 										<a @onclick="() => _viewModalWindow = true" id="carouselfade" asp-action="EditUser" class="dropdown-item">
@@ -73,11 +78,13 @@
 								</div>
 							</td>
 						</tr>
-					 }  
+					 }
+					 
 				</tbody>
+				}
 			</table> 
 		</div>
-
+		
 	<div class="container py-nd-5 p-5">
 		<div class="btn-group" role="group">
 			<button @onclick="FetchAllUsers" class="btn btn-default">Show All</button>
@@ -97,9 +104,10 @@
 @code {
 
 	private bool _viewModalWindow = false;
-
+	private int userDetailId; // Id of the user to display details
+	private bool showModal = false; // Flag to control modal visibility
 	List<User> users = new List<User>();
-
+	private bool isLoading = true; // Flag to indicate loading state
 	protected override async Task OnInitializedAsync()
 	{
 		await FetchAllUsers();
@@ -108,15 +116,20 @@
 
 	private async Task FetchAllUsers()
 	{
+		isLoading = true; // Set loading flag to true
 		try
 		{
-			Console.WriteLine("This is where the modal calls the user ID when the view button is clicked.");
+			Console.WriteLine("Loaded all users from the Database Complete.");
 
 			users = await HttpClient.GetFromJsonAsync<List<User>>("api/User") ?? new List<User>();
 		}
 		catch (Exception)
 		{
-			Console.WriteLine("This is where the modal calls the user ID when the view button is clicked.");
+			Console.WriteLine("User Loading from database failed. Please try again or contact a system administrator if the problem persists.");
+		}
+		finally
+		{
+			isLoading = false; // Set loading flag to false when loading completes or fails
 		}
 	}
 
@@ -124,11 +137,16 @@
 	{
 		try
 		{
+
+			Console.WriteLine("Loaded all Active users from the Database Complete.");
+
 			users = await HttpClient.GetFromJsonAsync<List<User>>("api/User/active") ?? new List<User>();
 		}
 		catch (Exception)
 		{
 			// Handle error
+			Console.WriteLine("Active User List Load Failed. Please try again or contact a systems administrator if problem persists");
+
 		}
 	}
 
@@ -136,26 +154,64 @@
 	{
 		try
 		{
+			Console.WriteLine("Loaded all Inactive users from the Database Complete.");
+
 			users = await HttpClient.GetFromJsonAsync<List<User>>("api/User/inactive") ?? new List<User>();
 		}
 		catch (Exception)
 		{
 			// Handle error
+			Console.WriteLine("Inactive User List Load Failed. Please try again or contact a systems administrator if problem persists");
+		}
+	}
+
+	private async Task ViewUser(int userId)
+	{
+		try
+		{
+			Console.WriteLine("Are we getting here?");
+
+			var userDetailsResponse = await HttpClient.GetAsync($"api/User/{userId}");
+			if (userDetailsResponse.IsSuccessStatusCode)
+			{
+				var userDetails = await userDetailsResponse.Content.ReadFromJsonAsync<User>();
+				if (userDetails != null)
+				{
+					userDetailId = userId;
+					showModal = true;
+					Console.WriteLine("User Details loaded!");
+				}
+				else
+				{
+					Console.WriteLine("User Details not found!");
+				}
+			}
+			else
+			{
+				Console.WriteLine($"Failed to load user details. Status code: {userDetailsResponse.StatusCode}");
+			}
+		}
+		catch (Exception ex)
+		{
+			// Handle error
+			Console.WriteLine($"Unable to load user details: {ex.Message}");
 		}
 	}
 
 
-	private int userDetailId; // Id of the user to display details
-	private bool showModal = false; // Flag to control modal visibility
-
-	private void ViewUser(int userId)
+	private void EditUser(int userId)
 	{
-		userDetailId = userId; // Set the id of the user to display details
-		showModal = true; // Show the modal
+		// Handle edit user action
+	}
+
+	private void DeleteUser(int userId)
+	{
+		// Handle delete user action
 	}
 
 	private void CloseModal()
 	{
-		showModal = false; // Close the modal
+		showModal = false;
 	}
+
 }

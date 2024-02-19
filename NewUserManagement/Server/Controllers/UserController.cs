@@ -72,22 +72,27 @@ namespace NewUserManagement.Server.Controllers
 
             return Ok(inactiveUsers);
         }
-        [HttpGet("id")]
-        public async Task<ActionResult<IEnumerable<UserDTO>>> GetUsersId()
+        [HttpGet("{id}")]
+        public async Task<ActionResult<UserDTO>> GetUserById([FromRoute] int id)
         {
-            var UsersId = await _dbContext.Users
-                .Select(u => new UserDTO
-                {
-                    Id = (int)u.Id,
-                    Forename = u.Forename,
-                    Surname = u.Surname,
-                    Email = u.Email,
-                    IsActive = u.IsActive,
-                    DateOfBirth = u.DateOfBirth
-                })
-                .ToListAsync();
+            var user = await _dbContext.Users.FindAsync(id);
 
-            return Ok(UsersId);
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            var userDTO = new UserDTO
+            {
+                Id = user.Id,
+                Forename = user.Forename,
+                Surname = user.Surname,
+                Email = user.Email,
+                IsActive = user.IsActive,
+                DateOfBirth = user.DateOfBirth
+            };
+
+            return Ok(userDTO);
         }
         // Add more actions as needed for other endpoints
     }

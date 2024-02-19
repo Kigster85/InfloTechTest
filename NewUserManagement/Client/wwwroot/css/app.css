@@ -27,7 +27,13 @@ body {
 .btns {
     border-radius: 0px;
 }
-
+.navbar-toggler {
+    padding: .25rem .75rem;
+    font-size: 1.25rem;
+    line-height: 1;
+    background-color: black !important;
+    border: 1px solid transparent;
+}
 .shadow {
     box-shadow: 0 0.15rem 0.4rem rgba(0, 0, 0, 0.8) !important;
 }
