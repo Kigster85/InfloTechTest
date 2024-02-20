@@ -52,14 +52,19 @@ body {
 
 #informationalModal {
     animation: fade-in ease-in-out 1s;
-    transition: ease-in-out 1s
+    transition: ease-in-out 1s;
+    background-color: rgba(0, 0, 0, 0.75);
 }
 
 .fadein {
     animation: fade-in ease-in-out 1s;
     transition: ease-in-out 1s
 }
-
+.fade-out {
+    animation: fade-out ease-in-out 1s;
+    transition: ease-in-out 1s;
+    background-color: rgba(255, 255, 255, 0.75);
+}
 
 .w-8 {
     width: 8%;
@@ -421,7 +426,15 @@ body {
         opacity: 1;
     }
 }
+@keyframes fade-out {
+    from {
+        opacity: 1;
+    }
 
+    to {
+        opacity: 0;
+    }
+}
 .img--size {
     width: 414px;
     height: 232px;

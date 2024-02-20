@@ -72,7 +72,7 @@ namespace NewUserManagement.Server.Controllers
 
             return Ok(inactiveUsers);
         }
-        [HttpGet("{id}")]
+        [HttpGet("{Id}")]
         public async Task<ActionResult<UserDTO>> GetUserById([FromRoute] int id)
         {
             var user = await _dbContext.Users.FindAsync(id);

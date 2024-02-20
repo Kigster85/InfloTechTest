@@ -12,7 +12,7 @@ internal static class API_EndPoints
 #endif
 
     internal readonly static string s_user = $"{ServerBaseUrl}/api/user";
-    //internal readonly static string s_Ids = $"{ServerBaseUrl}/api/user/Ids";
+    internal readonly static string s_userById = $"{ServerBaseUrl}/api/user"; // Assuming the endpoint is /api/user/{id}
 
     //internal readonly static string s_signIn = $"{ServerBaseUrl}/api/signin";
 

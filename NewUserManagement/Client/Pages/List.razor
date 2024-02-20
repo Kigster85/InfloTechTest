@@ -1,152 +1,128 @@
 ﻿@page "/list"
-@using NewUserManagement.Client.Components.Public.List
 @using NewUserManagement.Shared.Models
+@using NewUserManagement.Client.Components.Public.List
 @using System.Net.Http.Json
 @using System.Net.Http
+@using NewUserManagement.Client.Services
+@inject InMemoryDatabaseCache DatabaseCache
 
 <NavBar />
-@if (_viewModalWindow == true)
+@if (_showingViewModalWindow == true)
 {
-    <NewUserManagement.Client.Components.Public.List.View ParentMethodToCallOnClickBtnClose="() => _viewModalWindow = false" />
+	<View ParentMethodToCallOnClickBtnClose="() => _showingViewModalWindow = false"/>
 }
 <main class="container min-vh-90 py-nd-5">
-	<h2 class="p-5">User List</h2>
+    <h2 class="p-5">User List</h2>
 
-	<div class="container min-vh-90 py-nd-5 table-responsive">
-		
-			 <table class="table table-striped">
-				<thead>
-					<tr>
-						<th>Id</th>
-						<th>Forename</th>
-						<th>Surname</th>
-						<th>Email</th>
-						<th>Account Active</th>
-						<th>Date Of Birth</th>
-						<th style="width: 1px;"></th>
-					</tr>
-				</thead>
-				@if (isLoading)
-				{
-					<Loading />
-				}
-				else
-				{
-				<tbody>
-				@foreach (var user in users )
-				{
-						<tr>
-							 <td>
-								 @user.Id 
-							</td>
-							<td>
-								 @user.Forename 
-							</td>
-							<td>
-								 @user.Surname 
-							</td>
-							<td>
-								 @user.Email 
-							</td>
-							<td>
-								 @(user.IsActive ? "Yes" : "No") 
-							</td>
-							<td>
-								@user.DateOfBirth.ToShortDateString()
-				</td> 
-							<td>
-								<div class="dropdown">
-									<button type="button" class="btn btn-default dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" id="btnToggleActions">
-										Actions
-									</button>
-									<ul class="dropdown-menu" aria-labelledby="btnToggleActions">
-										<li>
-											<button @onclick="() => ViewUser(user.Id)" class="btn">View</button>
-										
-										</li>
-										<li>
-										<a @onclick="() => _viewModalWindow = true" id="carouselfade" asp-action="EditUser" class="dropdown-item">
-											Edit											
-										</a>
-										</li>
-										<li>
-										<a @onclick="() => _viewModalWindow = true" class=" dropdown-item" id="carouselfade" href="#">
-													Delete
-										</a>
-										</li>
-									</ul>
-								</div>
-							</td>
-						</tr>
-					 }
-					 
-				</tbody>
-				}
-			</table> 
-		</div>
-		
-	<div class="container py-nd-5 p-5">
-		<div class="btn-group" role="group">
-			<button @onclick="FetchAllUsers" class="btn btn-default">Show All</button>
-			<button @onclick="FetchActiveUsers" class="btn btn-default">Active Only</button>
-			<button @onclick="FetchInactiveUsers" class="btn btn-default">Non Active</button>
-		</div>
+    <div class="container min-vh-90 py-nd-5 table-responsive">
 
-		<a asp-controller="Shared" asp-action="AddUser" class="btn btn-primary float-end">
-			Add User
-		</a>
-	</div>
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Id</th>
+                    <th>Forename</th>
+                    <th>Surname</th>
+                    <th>Email</th>
+                    <th>Account Active</th>
+                    <th>Date Of Birth</th>
+                    <th style="width: 1px;"></th>
+                </tr>
+            </thead>
+            @if (isLoading)
+            {
+                <Loading />
+            }
+            else
+            {
+                <tbody>
+                    @foreach (var user in DatabaseCache.Users)
+                    {
+                        <tr>
+                            <td>@user.Id</td>
+                            <td>@user.Forename</td>
+                            <td>@user.Surname</td>
+                            <td>@user.Email</td>
+                            <td>@(user.IsActive ? "Yes" : "No")</td>
+                            <td>@user.DateOfBirth.ToShortDateString()</td>
+                            <td>
+                                <div class="dropdown">
+                                    <button type="button" class="btn btn-default dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" id="btnToggleActions">
+                                        Actions
+                                    </button>
+                                    <ul class="dropdown-menu" aria-labelledby="btnToggleActions">
+                                        <li>
+																						<button @onclick="() => _showingViewModalWindow = true" class="btn dropdown-item">View</button>
+                                        </li>
+                                        <li>
+                                            <button @onclick="() => EditUser(user.Id)" class="btn dropdown-item">Edit</button>
+                                        </li>
+                                        <li>
+                                            <button @onclick="() => DeleteUser(user.Id)" class="btn dropdown-item">Delete</button>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            }
+        </table>
+    </div>
+
+    <div class="container py-nd-5 p-5">
+        <div class="btn-group" role="group">
+            <button @onclick="FetchAllUsers" class="btn btn-primary">Show All</button>
+            <button @onclick="FetchActiveUsers" class="btn btn-primary">Active Only</button>
+            <button @onclick="FetchInactiveUsers" class="btn btn-primary">Non Active</button>
+        </div>
+
+        <a asp-controller="Shared" asp-action="AddUser" class="btn btn-primary float-end">Add User</a>
+    </div>
 
 </main>
 <FooterBar />
-<View UserDetailId="@userDetailId" ShowModal="@showModal" OnCloseModal="CloseModal" />
 
 @code {
 
-	private bool _viewModalWindow = false;
-	private int userDetailId; // Id of the user to display details
-	private bool showModal = false; // Flag to control modal visibility
-	List<User> users = new List<User>();
-	private bool isLoading = true; // Flag to indicate loading state
-	protected override async Task OnInitializedAsync()
-	{
-		await FetchAllUsers();
-	}
-	@inject HttpClient HttpClient
+	[Parameter] public int? UserDetailId { get; set; }
+    private List<User> users = new List<User>();
+    private bool isLoading = true; // Flag to indicate loading state
 
-	private async Task FetchAllUsers()
-	{
-		isLoading = true; // Set loading flag to true
-		try
-		{
-			Console.WriteLine("Loaded all users from the Database Complete.");
+    @inject HttpClient HttpClient
 
-			users = await HttpClient.GetFromJsonAsync<List<User>>("api/User") ?? new List<User>();
-		}
-		catch (Exception)
-		{
-			Console.WriteLine("User Loading from database failed. Please try again or contact a system administrator if the problem persists.");
-		}
-		finally
-		{
-			isLoading = false; // Set loading flag to false when loading completes or fails
-		}
-	}
+    protected override async Task OnInitializedAsync()
+    {
+        await FetchAllUsers();
+    }
 
+    private async Task FetchAllUsers()
+    {
+        isLoading = true; // Set loading flag to true
+        try
+        {
+            users = await HttpClient.GetFromJsonAsync<List<User>>("api/User") ?? new List<User>();
+        }
+        catch (Exception)
+        {
+            Console.WriteLine("User Loading from database failed. Please try again or contact a system administrator if the problem persists.");
+        }
+        finally
+        {
+            isLoading = false; // Set loading flag to false when loading completes or fails
+        }
+    }
 	private async Task FetchActiveUsers()
 	{
 		try
 		{
-
 			Console.WriteLine("Loaded all Active users from the Database Complete.");
 
-			users = await HttpClient.GetFromJsonAsync<List<User>>("api/User/active") ?? new List<User>();
+			users = (await HttpClient.GetFromJsonAsync<List<User>>("api/User/active")) ?? new List<User>();
 		}
 		catch (Exception)
 		{
 			// Handle error
 			Console.WriteLine("Active User List Load Failed. Please try again or contact a systems administrator if problem persists");
-
 		}
 	}
 
@@ -156,7 +132,7 @@
 		{
 			Console.WriteLine("Loaded all Inactive users from the Database Complete.");
 
-			users = await HttpClient.GetFromJsonAsync<List<User>>("api/User/inactive") ?? new List<User>();
+			users = (await HttpClient.GetFromJsonAsync<List<User>>("api/User/inactive")) ?? new List<User>();
 		}
 		catch (Exception)
 		{
@@ -164,54 +140,23 @@
 			Console.WriteLine("Inactive User List Load Failed. Please try again or contact a systems administrator if problem persists");
 		}
 	}
-
-	private async Task ViewUser(int userId)
-	{
-		try
+		private void ViewUser(int userId)
 		{
-			Console.WriteLine("Are we getting here?");
-
-			var userDetailsResponse = await HttpClient.GetAsync($"api/User/{userId}");
-			if (userDetailsResponse.IsSuccessStatusCode)
-			{
-				var userDetails = await userDetailsResponse.Content.ReadFromJsonAsync<User>();
-				if (userDetails != null)
-				{
-					userDetailId = userId;
-					showModal = true;
-					Console.WriteLine("User Details loaded!");
-				}
-				else
-				{
-					Console.WriteLine("User Details not found!");
-				}
-			}
-			else
-			{
-				Console.WriteLine($"Failed to load user details. Status code: {userDetailsResponse.StatusCode}");
-			}
-		}
-		catch (Exception ex)
-		{
-			// Handle error
-			Console.WriteLine($"Unable to load user details: {ex.Message}");
-		}
-	}
-
-
-	private void EditUser(int userId)
-	{
 		// Handle edit user action
-	}
+		}
+    private void EditUser(int userId)
+    {
+        // Handle edit user action
+    }
 
-	private void DeleteUser(int userId)
-	{
-		// Handle delete user action
-	}
+    private void DeleteUser(int userId)
+    {
+        // Handle delete user action
+    }
 
-	private void CloseModal()
-	{
-		showModal = false;
-	}
+	private bool _showingViewModalWindow = false;
 
+
+
+	
 }
