@@ -1,7 +1,4 @@
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
-using System;
-using System.Net.Http;
 using Blazored.LocalStorage;
 using NewUserManagement.Client;
 using NewUserManagement.Client.Services;
@@ -9,10 +6,12 @@ using NewUserManagement.Client.Services;
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.Services.AddBlazoredLocalStorage();
-builder.Services.AddSingleton<HttpClient>();
-builder.Services.AddSingleton<InMemoryDatabaseCache>();
+// Use AddHttpClient to register HttpClient with a base address
+builder.Services.AddHttpClient();
 
-// Add IHttpClientFactory registration
-builder.Services.AddScoped(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
+// Register InMemoryDatabaseCache as a scoped service
+builder.Services.AddScoped<InMemoryDatabaseCache>();
+
+
 
 await builder.Build().RunAsync();

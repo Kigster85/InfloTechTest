@@ -1,9 +1,17 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.OpenApi.Models;
 using NewUserManagement.Server.Data;
 
 var builder = WebApplication.CreateBuilder(args);
-
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowLocalhost",
+        builder =>
+        {
+            builder.WithOrigins("http://localhost:5167")
+                   .AllowAnyMethod()
+                   .AllowAnyHeader();
+        });
+});
 builder.Services.AddDbContext<AppDBContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
@@ -24,6 +32,7 @@ else
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
+app.UseCors("AllowLocalhost");
 
 app.UseHttpsRedirection();
 app.UseBlazorFrameworkFiles();
@@ -31,7 +40,9 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
+
 app.MapRazorPages();
+
 app.MapControllers();
 app.MapFallbackToFile("index.html");
 

@@ -4,7 +4,7 @@ internal static class API_EndPoints
 {
 #if DEBUG
     //Use this path//
-    internal const string ServerBaseUrl = "https://localhost:7036";
+    internal const string ServerBaseUrl = "https://localhost:5167";
 
 #else
     //Use this Prod Path//

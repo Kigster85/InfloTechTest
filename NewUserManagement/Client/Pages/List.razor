@@ -4,7 +4,6 @@
 @using System.Net.Http.Json
 @using System.Net.Http
 @using NewUserManagement.Client.Services
-@inject InMemoryDatabaseCache DatabaseCache
 
 <NavBar />
 @if (_showingViewModalWindow == true)
@@ -67,62 +66,74 @@
                 </tbody>
             }
         </table>
+		<div class="container py-nd-5">
+			<div class="btn-group" role="group">
+				<button @onclick="FetchAllUsers" class="btn btn-primary">Show All</button>
+				<button @onclick="FetchActiveUsers" class="btn btn-primary">Active Only</button>
+				<button @onclick="FetchInactiveUsers" class="btn btn-primary">Non Active</button>
+
+			</div>
+
+			<a asp-controller="Shared" asp-action="AddUser" class="btn btn-primary float-end">Add User</a>
+		</div>
+
     </div>
 
-    <div class="container py-nd-5 p-5">
-        <div class="btn-group" role="group">
-            <button @onclick="FetchAllUsers" class="btn btn-primary">Show All</button>
-            <button @onclick="FetchActiveUsers" class="btn btn-primary">Active Only</button>
-            <button @onclick="FetchInactiveUsers" class="btn btn-primary">Non Active</button>
-        </div>
 
-        <a asp-controller="Shared" asp-action="AddUser" class="btn btn-primary float-end">Add User</a>
-    </div>
 
 </main>
 <FooterBar />
 
 @code {
-
-	[Parameter] public int? UserDetailId { get; set; }
-    private List<User> users = new List<User>();
+		@inject InMemoryDatabaseCache DatabaseCache
+		private bool showingActiveUsers = false;
+		private List<User> users = new List<User>();
     private bool isLoading = true; // Flag to indicate loading state
-
-    @inject HttpClient HttpClient
-
     protected override async Task OnInitializedAsync()
     {
-        await FetchAllUsers();
+				await DatabaseCache.GetUsersFromDatabaseAndCache(null);
+				isLoading = false;
     }
 
-    private async Task FetchAllUsers()
-    {
-        isLoading = true; // Set loading flag to true
-        try
-        {
-            users = await HttpClient.GetFromJsonAsync<List<User>>("api/User") ?? new List<User>();
-        }
-        catch (Exception)
-        {
-            Console.WriteLine("User Loading from database failed. Please try again or contact a system administrator if the problem persists.");
-        }
-        finally
-        {
-            isLoading = false; // Set loading flag to false when loading completes or fails
-        }
-    }
+    
+	private async Task FetchAllUsers()
+	{
+		isLoading = true; // Set loading flag to true
+		try
+		{
+			await DatabaseCache.GetUsersFromDatabaseAndCache(null);
+		}
+		catch (Exception)
+		{
+			Console.WriteLine("User Loading from database failed. Please try again or contact a system administrator if the problem persists.");
+		}
+		finally
+		{
+			isLoading = false; // Set loading flag to false when loading completes or fails
+		}
+	}
+
 	private async Task FetchActiveUsers()
 	{
 		try
 		{
-			Console.WriteLine("Loaded all Active users from the Database Complete.");
+			// Check if active users are currently being displayed
+			if (!showingActiveUsers)
+			{
+				// Fetch all users first
+				await FetchAllUsers();
+				showingActiveUsers = true;
+			}
 
-			users = (await HttpClient.GetFromJsonAsync<List<User>>("api/User/active")) ?? new List<User>();
+			// Call the GetActiveUsers method from the cache service with appropriate page and pageSize parameters
+			var activeUsers = await DatabaseCache.GetActiveUsers(DatabaseCache.CurrentPage, 10); // Assuming pageSize is 10
+
+			// Update the list of users displayed in the UI with activeUsers
+			DatabaseCache.Users = activeUsers;
 		}
 		catch (Exception)
 		{
-			// Handle error
-			Console.WriteLine("Active User List Load Failed. Please try again or contact a systems administrator if problem persists");
+			// Handle any errors
 		}
 	}
 
@@ -130,16 +141,26 @@
 	{
 		try
 		{
-			Console.WriteLine("Loaded all Inactive users from the Database Complete.");
+			// Check if inactive users are currently being displayed
+			if (showingActiveUsers)
+			{
+				// Fetch all users first
+				await FetchAllUsers();
+				showingActiveUsers = false;
+			}
 
-			users = (await HttpClient.GetFromJsonAsync<List<User>>("api/User/inactive")) ?? new List<User>();
+			// Call the GetInactiveUsers method from the cache service with appropriate page and pageSize parameters
+			var inactiveUsers = await DatabaseCache.GetInactiveUsers(DatabaseCache.CurrentPage, 10); // Assuming pageSize is 10
+
+			// Update the list of users displayed in the UI with inactiveUsers
+			DatabaseCache.Users = inactiveUsers;
 		}
 		catch (Exception)
 		{
-			// Handle error
-			Console.WriteLine("Inactive User List Load Failed. Please try again or contact a systems administrator if problem persists");
+			// Handle any errors
 		}
 	}
+
 		private void ViewUser(int userId)
 		{
 		// Handle edit user action

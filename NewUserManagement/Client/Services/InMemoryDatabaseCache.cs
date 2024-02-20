@@ -39,21 +39,25 @@ namespace NewUserManagement.Client.Services
         internal bool AscendingOrder { get; private set; } = true; // Default ascending order
 
         private bool _gettingUsersFromDatabaseAndCaching = false;
-        internal async Task GetUsersFromDatabaseAndCache(int page)
+        internal async Task GetUsersFromDatabaseAndCache(int? page)
         {
             if (_gettingUsersFromDatabaseAndCaching == false)
             {
                 try
                 {
                     _gettingUsersFromDatabaseAndCaching = true;
-                    var response = await _httpClient.GetAsync($"{API_EndPoints.s_user}?page={page}&pageSize={PageSize}");
+                    var url = $"{API_EndPoints.s_user}?pageSize={PageSize}";
+                    if (page != null && page >= 1)
+                    {
+                        url += $"&page={page}";
+                    }
+                    var response = await _httpClient.GetAsync(url);
                     response.EnsureSuccessStatusCode();
                     var responseData = await response.Content.ReadFromJsonAsync<List<User>>();
                     if (responseData != null)
                     {
                         Users = responseData;
-                        CurrentPage = page;
-                        TotalPages = (int)Math.Ceiling((double)responseData.Count / PageSize);
+                        CurrentPage = page ?? 1; // Set CurrentPage to page if not null, otherwise use 1
                     }
                 }
                 catch (HttpRequestException ex)
@@ -67,6 +71,26 @@ namespace NewUserManagement.Client.Services
                 }
             }
         }
+
+
+        internal async Task<List<User>> GetActiveUsers(int page, int pageSize)
+        {
+            if (_users == null)
+                await GetUsersFromDatabaseAndCache(page);
+
+            var startIndex = (page - 1) * pageSize;
+            return _users?.Where(u => u.IsActive).Skip(startIndex).Take(pageSize).ToList() ?? new List<User>();
+        }
+
+        internal async Task<List<User>> GetInactiveUsers(int page, int pageSize)
+        {
+            if (_users == null)
+                await GetUsersFromDatabaseAndCache(page);
+
+            var startIndex = (page - 1) * pageSize;
+            return _users?.Where(u => !u.IsActive).Skip(startIndex).Take(pageSize).ToList() ?? new List<User>();
+        }
+
         // Method to change sorting criteria
         internal async Task ChangeSorting(string sortBy, bool ascendingOrder)
         {

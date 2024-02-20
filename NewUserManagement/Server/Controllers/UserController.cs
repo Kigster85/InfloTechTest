@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using NewUserManagement.Server.Data;
 using NewUserManagement.Shared.DTOs;
 
-
 namespace NewUserManagement.Server.Controllers
 {
     [Route("api/[controller]")]
@@ -17,13 +16,16 @@ namespace NewUserManagement.Server.Controllers
             _dbContext = appDBContext;
         }
 
+        // GET: api/User
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<UserDTO>>> GetAllUsers()
+        public async Task<ActionResult<IEnumerable<UserDTO>>> GetAllUsers(int page, int pageSize)
         {
             var users = await _dbContext.Users
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .Select(u => new UserDTO
                 {
-                    Id = (int)u.Id,
+                    Id = u.Id,
                     Forename = u.Forename,
                     Surname = u.Surname,
                     Email = u.Email,
@@ -35,14 +37,17 @@ namespace NewUserManagement.Server.Controllers
             return Ok(users);
         }
 
+        // GET: api/User/active
         [HttpGet("active")]
-        public async Task<ActionResult<IEnumerable<UserDTO>>> GetActiveUsers()
+        public async Task<ActionResult<IEnumerable<UserDTO>>> GetActiveUsers(int page, int pageSize)
         {
             var activeUsers = await _dbContext.Users
                 .Where(u => u.IsActive)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .Select(u => new UserDTO
                 {
-                    Id = (int)u.Id,
+                    Id = u.Id,
                     Forename = u.Forename,
                     Surname = u.Surname,
                     Email = u.Email,
@@ -54,14 +59,17 @@ namespace NewUserManagement.Server.Controllers
             return Ok(activeUsers);
         }
 
+        // GET: api/User/inactive
         [HttpGet("inactive")]
-        public async Task<ActionResult<IEnumerable<UserDTO>>> GetInactiveUsers()
+        public async Task<ActionResult<IEnumerable<UserDTO>>> GetInactiveUsers(int page, int pageSize)
         {
             var inactiveUsers = await _dbContext.Users
                 .Where(u => !u.IsActive)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
                 .Select(u => new UserDTO
                 {
-                    Id = (int)u.Id,
+                    Id = u.Id,
                     Forename = u.Forename,
                     Surname = u.Surname,
                     Email = u.Email,
@@ -72,6 +80,8 @@ namespace NewUserManagement.Server.Controllers
 
             return Ok(inactiveUsers);
         }
+
+        // GET: api/User/{Id}
         [HttpGet("{Id}")]
         public async Task<ActionResult<UserDTO>> GetUserById([FromRoute] int id)
         {
@@ -94,6 +104,5 @@ namespace NewUserManagement.Server.Controllers
 
             return Ok(userDTO);
         }
-        // Add more actions as needed for other endpoints
     }
 }
