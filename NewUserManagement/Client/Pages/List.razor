@@ -1,15 +1,21 @@
 ﻿@page "/list"
 @using NewUserManagement.Shared.Models
+@using NewUserManagement.Client.Components.Public
 @using NewUserManagement.Client.Components.Public.List
 @using System.Net.Http.Json
 @using System.Net.Http
 @using NewUserManagement.Client.Services
 
 <NavBar />
-@if (_showingViewModalWindow == true)
+@if (_showingViewModalWindow)
 {
-	<View ParentMethodToCallOnClickBtnClose="() => _showingViewModalWindow = false"/>
+	<View ViewModalClickBtnClose="CloseViewModal" UserId="_selectedUserId" />
 }
+@if (_showingEditModalWindow)
+{
+	<Edit EditModalClickBtnClose="CloseEditModal" UserId="_selectedUserId" />
+}
+
 <main class="container min-vh-90 py-nd-5">
     <h2 class="p-5">User List</h2>
 
@@ -50,7 +56,7 @@
                                     </button>
                                     <ul class="dropdown-menu" aria-labelledby="btnToggleActions">
                                         <li>
-																						<button @onclick="() => _showingViewModalWindow = true" class="btn dropdown-item">View</button>
+																						<button @onclick="() => ViewUser(user.Id)" class="btn dropdown-item">View</button>
                                         </li>
                                         <li>
                                             <button @onclick="() => EditUser(user.Id)" class="btn dropdown-item">Edit</button>
@@ -161,21 +167,41 @@
 		}
 	}
 
-		private void ViewUser(int userId)
-		{
-		// Handle edit user action
-		}
-    private void EditUser(int userId)
-    {
-        // Handle edit user action
-    }
-
     private void DeleteUser(int userId)
     {
         // Handle delete user action
     }
+	private int _selectedUserId;
+	public bool _showingViewModalWindow = false;
+	public bool _showingEditModalWindow = false;
+	@inject IJSRuntime JSRuntime
+	private async Task updateUrlWithoutNavigation(string route, int? userId)
+	{
+		string url = $"/list/{route}/{userId}";
+		await JSRuntime.InvokeVoidAsync("updateUrlWithoutNavigation", route, userId);
 
-	private bool _showingViewModalWindow = false;
+	}
+	private async void ViewUser(int userId)
+	{
+		_showingViewModalWindow = true;
+		_selectedUserId = userId;
+		await updateUrlWithoutNavigation("view", userId);
+	}
+	private async void EditUser(int userId)
+	{
+		_showingEditModalWindow = true; // Show the edit modal
+		_selectedUserId = userId;
+		await updateUrlWithoutNavigation("edit", userId);
+	}
+	private void CloseViewModal()
+	{
+		_showingEditModalWindow = false;
+	}
+	private void CloseEditModal()
+	{
+		_showingEditModalWindow = false;
+	}
+
 
 
 
