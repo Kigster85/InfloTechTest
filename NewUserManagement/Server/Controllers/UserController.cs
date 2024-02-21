@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using NewUserManagement.Server.Data;
 using NewUserManagement.Shared.DTOs;
+using NewUserManagement.Shared.Models;
 
 namespace NewUserManagement.Server.Controllers
 {
@@ -104,5 +105,82 @@ namespace NewUserManagement.Server.Controllers
 
             return Ok(userDTO);
         }
+        // PUT: api/User/{id}
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateUser(int id, [FromBody] UserDTO userDTO)
+        {
+            if (id != userDTO.Id)
+            {
+                return BadRequest();
+            }
+
+            var user = await _dbContext.Users.FindAsync(id);
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            // Update user properties with the new values
+            user.Forename = userDTO.Forename;
+            user.Surname = userDTO.Surname;
+            user.Email = userDTO.Email;
+            user.IsActive = userDTO.IsActive;
+            user.DateOfBirth = userDTO.DateOfBirth;
+
+            // Save changes to the database
+            await _dbContext.SaveChangesAsync();
+
+            return NoContent();
+        }
+        // POST: api/User
+        [HttpPost]
+        public async Task<ActionResult<UserDTO>> AddUser([FromBody] UserDTO userDTO)
+        {
+            // Assign a unique ID to the user
+            userDTO.Id = GenerateUniqueId();
+
+            // Map UserDTO to User entity
+            var user = new User
+            {
+                Forename = userDTO.Forename,
+                Surname = userDTO.Surname,
+                Email = userDTO.Email,
+                IsActive = userDTO.IsActive,
+                DateOfBirth = userDTO.DateOfBirth
+            };
+
+            // Add user to the database
+            _dbContext.Users.Add(user);
+            await _dbContext.SaveChangesAsync();
+
+            // Return the newly added user
+            return CreatedAtAction(nameof(GetUserById), new { id = user.Id }, userDTO);
+        }
+
+        // DELETE: api/User/{id}
+        [HttpDelete("{id}")]
+        public async Task<ActionResult<UserDTO>> DeleteUserById(int id)
+        {
+            var user = await _dbContext.Users.FindAsync(id);
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            _dbContext.Users.Remove(user);
+            await _dbContext.SaveChangesAsync();
+
+            return Ok();
+        }
+
+        // Helper method to generate a unique ID (you can implement your own logic here)
+        private int GenerateUniqueId()
+        {
+            // Implement your logic to generate a unique ID
+            // Example: You can query the database for the maximum ID and add 1 to it
+            var maxId = _dbContext.Users.Max(u => u.Id);
+            return maxId + 1;
+        }
+
     }
 }

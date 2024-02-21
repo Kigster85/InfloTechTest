@@ -13,12 +13,20 @@
 }
 @if (_showingEditModalWindow)
 {
-	<Edit EditModalClickBtnClose="CloseEditModal" UserId="_selectedUserId" />
+	<Edit EditModalClickBtnClose="CloseEditModal" UserId="_selectedUserId" OnEditModalClosed="HandleEditModalClosed" OnModalClosed="HandleModalClosed" />
 }
 
 <main class="container min-vh-90 py-nd-5">
     <h2 class="p-5">User List</h2>
-
+	@if (showSuccessMessage)
+	{
+		<div class="alert alert-success d-flex justify-content-between" role="alert">
+			<i class="fa-solid fa-circle-check"> </i>
+			User details updated successfully!
+			<button @onclick="CloseSuccessMessage" type="button" class="btn-close" aria-label="Close"></button>
+		</div>
+		Console.WriteLine("Show me this has worked!! ");
+	}
     <div class="container min-vh-90 py-nd-5 table-responsive">
 
         <table class="table table-striped">
@@ -38,7 +46,7 @@
                 <Loading />
             }
             else
-            {
+						{
                 <tbody>
                     @foreach (var user in DatabaseCache.Users)
                     {
@@ -202,8 +210,26 @@
 		_showingEditModalWindow = false;
 	}
 
+	private async Task HandleEditModalClosed()
+	{
+		// Fetch all users to refresh the user list
+		await FetchAllUsers();
+	}
 
+	public bool showSuccessMessage { get; set; }
 
+	private async Task HandleModalClosed()
+	{
+		// Delay before showing the success message
+		await Task.Delay(0);
 
-	
+		// Display the success message
+		showSuccessMessage = true;
+	}
+	private void CloseSuccessMessage()
+	{
+		// Reset the success message flag
+		showSuccessMessage = false;
+	}
+
 }

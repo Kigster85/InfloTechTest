@@ -1,5 +1,6 @@
 ﻿using System.Net.Http.Json;
 using NewUserManagement.Client.Static;
+using NewUserManagement.Shared.DTOs;
 using NewUserManagement.Shared.Models;
 
 
@@ -14,6 +15,7 @@ namespace NewUserManagement.Client.Services
         {
             _httpClient = httpClient;
             OnUsersDataChanged += delegate { }; // Initializing with an empty delegate
+            _httpClient.BaseAddress = new Uri("https://localhost:5167"); // Set your API base URL here
         }
 
         private List<User>? _users = null;
@@ -71,8 +73,61 @@ namespace NewUserManagement.Client.Services
                 }
             }
         }
+        private static readonly object lockObject = new object();
+        public async Task RefreshCache(HttpClient httpClient)
+        {
+            try
+            {
+                // Fetch the latest user data from the server
+                var users = await httpClient.GetFromJsonAsync<List<UserDTO>>("api/User");
 
+                // Update the cache with the latest data
+                lock (lockObject)
+                {
+                    Users = users?.Select(u => new User
+                    {
+                        Id = u.Id,
+                        Forename = u.Forename,
+                        Surname = u.Surname,
+                        Email = u.Email,
+                        IsActive = u.IsActive,
+                        DateOfBirth = u.DateOfBirth
+                    }).ToList() ?? new List<User>();
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle exceptions (e.g., network errors, server unreachable)
+                Console.WriteLine($"Failed to refresh cache: {ex.Message}");
+                // Log or display an error message as needed
+            }
+        }
 
+        public async Task<bool> UpdateUserOnServerAndRefreshCache(HttpClient httpClient, User user)
+        {
+            try
+            {
+                // Send an HTTP request to the server API to update the user data
+                HttpResponseMessage response = await httpClient.PutAsJsonAsync($"api/User/{user.Id}", user);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    // If the update was successful, refresh the cache
+                    await RefreshCache(httpClient);
+                    return true;
+                }
+                else
+                {
+                    // If the update failed, handle the error (e.g., log it, display a message)
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to update user and refresh cache: {ex.Message}");
+                return false;
+            }
+        }
         internal async Task<User?> GetUserDetails(int userId)
         {
             // Assuming you have a list of users in your cache, you can retrieve the user details by iterating through the list
