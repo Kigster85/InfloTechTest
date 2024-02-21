@@ -73,6 +73,12 @@ namespace NewUserManagement.Client.Services
         }
 
 
+        internal async Task<User?> GetUserDetails(int userId)
+        {
+            // Assuming you have a list of users in your cache, you can retrieve the user details by iterating through the list
+            return await Task.FromResult(Users.FirstOrDefault(u => u.Id == userId));
+        }
+
         internal async Task<List<User>> GetActiveUsers(int page, int pageSize)
         {
             if (_users == null)
