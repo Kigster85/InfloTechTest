@@ -33,9 +33,9 @@
 		</div>
 		Console.WriteLine("Show me this has worked!! ");
 	}
-    <div class="container min-vh-90 py-nd-5 table-responsive">
+    <div class="container min-vh-90 py-nd-5 table-responsive-xl">
 
-        <table class="table table-striped">
+		<table class="table table-striped table-bordered">
             <thead>
                 <tr>
 					<th><input type="checkbox" @bind="IsSelectAllChecked" /></th>
@@ -58,7 +58,7 @@
                     @foreach (var user in DatabaseCache.Users)
                     {
                         <tr>
-							<td><input type="checkbox" checked="@IsSelectAllChecked" @onchange="(e) => ToggleSelection(user?.Id ?? 0, e)" /></td>
+							<td><input type="checkbox" checked="@IsUserSelected(user.Id)" @onchange="(e) => ToggleSelection(user?.Id ?? 0, e)" /></td>
 
 
 
@@ -295,6 +295,13 @@
 		// Reset the success message flag
 		showSuccessMessage = false;
 	}
+	private void HideDeleteButton()
+	{
+		// Reset the success message flag
+		IsDeleteButtonVisible = false;
+		SelectedUserIds.Clear();
+
+	}
 	private async Task DeleteSelected()
 	{
 		try
@@ -322,13 +329,14 @@
 					DatabaseCache.Users.Remove(user);
 				}
 			}
+			// Clear the selected user IDs list and hide the delete button
 
 			// Reload the cache to reflect the updated data
 			await DatabaseCache.RefreshCache(HttpClient);
 
-			// Clear the selected user IDs list and hide the delete button
-			SelectedUserIds.Clear();
-			IsDeleteButtonVisible = false;
+			await FetchAllUsers();
+
+			HideDeleteButton();
 		}
 		catch (Exception ex)
 		{
@@ -371,23 +379,32 @@
 		// Update IsDeleteButtonVisible based on the number of selected users
 		IsDeleteButtonVisible = SelectedUserIds.Count > 0;
 	}
+
 	private bool IsSelectAllChecked { get; set; }
 
 	// Method to toggle the selection state of all users
 	private void ToggleSelectAll()
 	{
-		// Clear the existing selected user IDs list if the select all checkbox is unchecked
 		if (!IsSelectAllChecked)
 		{
+			// If the "Select All" checkbox is unchecked, clear the selected user IDs list
 			SelectedUserIds.Clear();
-			return;
+		}
+		else
+		{
+			// If the "Select All" checkbox is checked, add all user IDs to the selected user IDs list
+			SelectedUserIds.Clear();
+			foreach (var user in DatabaseCache.Users)
+			{
+				SelectedUserIds.Add(user.Id);
+			}
 		}
 
-		// If select all checkbox is checked, add all user IDs to the selected user IDs list
-		SelectedUserIds.Clear();
-		foreach (var user in DatabaseCache.Users)
-		{
-			SelectedUserIds.Add(user.Id);
-		}
+		// Update IsDeleteButtonVisible based on the number of selected users
+		IsDeleteButtonVisible = SelectedUserIds.Count > 0;
+	}
+	private bool IsUserSelected(int userId)
+	{
+		return SelectedUserIds.Contains(userId);
 	}
 }

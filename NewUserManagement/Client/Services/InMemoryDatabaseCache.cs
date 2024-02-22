@@ -8,7 +8,7 @@ namespace NewUserManagement.Client.Services
 {
     internal sealed class InMemoryDatabaseCache
     {
-        private const int PageSize = 10; // Number of users to fetch per page
+        private const int PageSize = 25; // Number of users to fetch per page
         private readonly HttpClient _httpClient;
 
         public InMemoryDatabaseCache(HttpClient httpClient)
