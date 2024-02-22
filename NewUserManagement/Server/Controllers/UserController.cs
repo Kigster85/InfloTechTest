@@ -19,12 +19,12 @@ namespace NewUserManagement.Server.Controllers
 
         // GET: api/User
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<UserDTO>>> GetAllUsers(int page, int pageSize)
+        public async Task<ActionResult<IEnumerable<User>>> GetAllUsers(int page, int pageSize)
         {
             var users = await _dbContext.Users
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .Select(u => new UserDTO
+                .Select(u => new User
                 {
                     Id = u.Id,
                     Forename = u.Forename,
@@ -40,13 +40,13 @@ namespace NewUserManagement.Server.Controllers
 
         // GET: api/User/active
         [HttpGet("active")]
-        public async Task<ActionResult<IEnumerable<UserDTO>>> GetActiveUsers(int page, int pageSize)
+        public async Task<ActionResult<IEnumerable<User>>> GetActiveUsers(int page, int pageSize)
         {
             var activeUsers = await _dbContext.Users
                 .Where(u => u.IsActive)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .Select(u => new UserDTO
+                .Select(u => new User
                 {
                     Id = u.Id,
                     Forename = u.Forename,
@@ -62,13 +62,13 @@ namespace NewUserManagement.Server.Controllers
 
         // GET: api/User/inactive
         [HttpGet("inactive")]
-        public async Task<ActionResult<IEnumerable<UserDTO>>> GetInactiveUsers(int page, int pageSize)
+        public async Task<ActionResult<IEnumerable<User>>> GetInactiveUsers(int page, int pageSize)
         {
             var inactiveUsers = await _dbContext.Users
                 .Where(u => !u.IsActive)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .Select(u => new UserDTO
+                .Select(u => new User
                 {
                     Id = u.Id,
                     Forename = u.Forename,
@@ -84,7 +84,7 @@ namespace NewUserManagement.Server.Controllers
 
         // GET: api/User/{Id}
         [HttpGet("{userId}")]
-        public async Task<ActionResult<UserDTO>> GetUserById([FromRoute] int userId)
+        public async Task<ActionResult<User>> GetUserById([FromRoute] int userId)
         {
             var user = await _dbContext.Users.FindAsync(userId);
 
@@ -93,7 +93,7 @@ namespace NewUserManagement.Server.Controllers
                 return NotFound();
             }
 
-            var userDTO = new UserDTO
+            var userDTO = new User
             {
                 Id = user.Id,
                 Forename = user.Forename,
@@ -103,11 +103,11 @@ namespace NewUserManagement.Server.Controllers
                 DateOfBirth = user.DateOfBirth
             };
 
-            return Ok(userDTO);
+            return Ok(user);
         }
         // PUT: api/User/{userId}
         [HttpPut("{userId}")]
-        public async Task<IActionResult> UpdateUser(int userId, [FromBody] UserDTO userDTO)
+        public async Task<IActionResult> UpdateUser(int userId, [FromBody] User userDTO)
         {
             if (userId != userDTO.Id)
             {
@@ -132,20 +132,16 @@ namespace NewUserManagement.Server.Controllers
 
             return NoContent();
         }
-        // POST: api/User
         [HttpPost]
         public async Task<ActionResult<UserDTO>> AddUser([FromBody] UserDTO userDTO)
         {
-            // Assign a unique ID to the user
-            userDTO.Id = GenerateUniqueId();
-
             // Map UserDTO to User entity
             var user = new User
             {
                 Forename = userDTO.Forename,
                 Surname = userDTO.Surname,
                 Email = userDTO.Email,
-                IsActive = userDTO.IsActive,
+                IsActive = true, // Set IsActive to a default value
                 DateOfBirth = userDTO.DateOfBirth
             };
 
@@ -153,8 +149,8 @@ namespace NewUserManagement.Server.Controllers
             _dbContext.Users.Add(user);
             await _dbContext.SaveChangesAsync();
 
-            // Return the newly added user
-            return CreatedAtAction(nameof(GetUserById), new { id = user.Id }, userDTO);
+            // Instead of CreatedAtAction, return the created user object directly
+            return Ok(userDTO);
         }
 
         [HttpDelete("{userId}")]

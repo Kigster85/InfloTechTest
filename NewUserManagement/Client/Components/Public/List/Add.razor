@@ -1,6 +1,8 @@
 ﻿@page "/list/add/{UserId:int}"
 @using NewUserManagement.Client.Services
+@using NewUserManagement.Client.Pages.Public
 @using NewUserManagement.Client.Components
+@using NewUserManagement.Shared.DTOs
 @using NewUserManagement.Shared.Models
 @using NewUserManagement.Client.Components.Public
 @using Microsoft.JSInterop
@@ -15,8 +17,21 @@
 				<button @onclick="CloseAddModal" type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 			</div>
 			<div class="modal-body">
-				<UserForm OnSubmit="@AddUserSubmit" />@* OnSuccess="@ShowSuccessMsg" OnFailure="@ShowFailureMsg" *@
+				<UserForm UserDetails="@UserDetails" OnSubmit="@AddUserSubmit" OnSuccess="@ShowSuccessMsg" OnFailure="@ShowFailureMsg" />
 
+				@if (showSuccessMessage)
+				{
+					<div class="alert alert-success" role="alert">
+						User details updated successfully!
+					</div>
+					Console.WriteLine("We have success but this doesn't show up on screen!'");
+				}
+				@if (showErrorMessage)
+				{
+					<div class="alert alert-danger" role="alert">
+						Failed to update user details. Please try again.
+					</div>
+				}
 
 			</div>
 			<div class="modal-footer">
@@ -34,63 +49,37 @@
 	@inject NavigationManager NavigationManager
 	@inject IJSRuntime JSRuntime
 	@inject HttpClient HttpClient
-
+	public bool showSuccessMessage = false;
+	public bool showErrorMessage = false;
 	[Parameter] public int UserId { get; set; }
-	private List<User> users = new List<User>();
 
 	private int _selectedUserId { get; set; }
-	private User UserDetails { get; set; } = new User(); // Initialize with a default user object
+	private User? UserDetails { get; set; }
 	protected override async Task OnInitializedAsync()
 	{
-		// Fetch user details based on the UserId parameter
+		// You can add an asynchronous operation that doesn't await anything to satisfy the requirement.
+		await Task.CompletedTask;
+		isLoading = false;
+
+		// Initialize UserDetails with default values or leave it as an empty object
 		UserDetails = await DatabaseCache.GetUserDetails(UserId) ?? new User();
-
 	}
 
 
-	private async void NextUser()
-	{
-		int index = DatabaseCache.Users.FindIndex(u => u.Id == UserDetails.Id);
-		if (index != -1)
-		{
-			index++; // Move to the next user
 
-			if (index >= DatabaseCache.Users.Count)
-			{
-				index = 0; // Wrap around to the first user if reached the end
-			}
-			UserDetails = DatabaseCache.Users[index];
-			await updateUrlWithoutNavigation("edit", UserDetails.Id);
-		}
-	}
-
-	private async void PreviousUser()
-	{
-		int index = DatabaseCache.Users.FindIndex(u => u.Id == UserDetails.Id);
-		if (index != -1)
-		{
-			index--; // Move to the previous user
-
-			if (index < 0)
-			{
-				index = DatabaseCache.Users.Count - 1; // Wrap around to the last user if reached the beginning
-			}
-			UserDetails = DatabaseCache.Users[index];
-			await updateUrlWithoutNavigation("edit", UserDetails.Id);
-		}
-	}
 	[Parameter] public EventCallback AddModalClickBtnClose { get; set; }
 	private string? _modalDisplay = null;
 	private string? _modalClass = null;
 	private bool _showBackdrop = false;
 	protected override void OnInitialized() => ShowAddModal();
+	private bool? isLoading = true; // Flag to indicate loading state
 
 	private async void ShowAddModal()
 	{
 		_modalDisplay = "block;";
 		_modalClass = "show";
 		_showBackdrop = true;
-		await updateUrlWithoutNavigation("edit", UserId);
+		await updateUrlWithoutNavigation("add", UserId);
 	}
 	[Parameter] public bool _showingAddModalWindow { get; set; }
 	private async Task CloseAddModal()
@@ -107,28 +96,75 @@
 		await JSRuntime.InvokeVoidAsync("updateUrlWithoutNavigation", route, UserId);
 
 	}
+	private async Task FetchAllUsers()
+	{
+		isLoading = true; // Set loading flag to true
+		try
+		{
+			await DatabaseCache.GetUsersFromDatabaseAndCache(null);
+		}
+		catch (Exception)
+		{
+			Console.WriteLine("User Loading from database failed. Please try again or contact a system administrator if the problem persists.");
+		}
+		finally
+		{
+			isLoading = false; // Set loading flag to false when loading completes or fails
+		}
+	}
+	[Parameter] public EventCallback OnAddModalClosed { get; set; }
+
 	private async Task AddUserSubmit()
 	{
 		if (IsValidUser())
 		{
-			var response = await HttpClient.PostAsJsonAsync("/api/User", UserDetails);
+			var user = new User
+				{
+					Forename = UserDetails?.Forename ?? "", // Check if UserDetails is null, if not, access Forename property; otherwise, use an empty string
+					Surname = UserDetails?.Surname ?? "",   // Check if UserDetails is null, if not, access Surname property; otherwise, use an empty string
+					Email = UserDetails?.Email ?? "",       // Check if UserDetails is null, if not, access Email property; otherwise, use an empty string
+					DateOfBirth = UserDetails?.DateOfBirth ?? DateTime.MinValue // Check if UserDetails is null, if not, access DateOfBirth property; otherwise, use a default DateTime value
+				};
+
+
+			var response = await HttpClient.PostAsJsonAsync("/api/User", user);
 			if (response.IsSuccessStatusCode)
 			{
 				Console.WriteLine("User added successfully!");
+				ShowSuccessMsg();
 				await DatabaseCache.RefreshCache(HttpClient);
-				// Consider showing a success message here
 				await CloseAddModal();
+				await OnAddModalClosed.InvokeAsync();
+
+				await FetchAllUsers();
+
 			}
 			else
 			{
 				Console.WriteLine("Failed to add user. Please try again.");
-				// Consider showing an error message here
+				ShowFailureMsg();
+				// Handle the case where adding user fails (e.g., show an error message)
 			}
 		}
 	}
+
 	private bool IsValidUser()
 	{
+		if (UserDetails == null)
+		{
+			Console.WriteLine("UserDetails is null.");
+			return false;
+		}
+
+		// Output UserDetails properties for debugging
+		Console.WriteLine($"Forename value: {UserDetails.Forename}");
+		Console.WriteLine($"Surname value: {UserDetails.Surname}");
+		Console.WriteLine($"Email value: {UserDetails.Email}");
+		Console.WriteLine($"DOB value: {UserDetails.DateOfBirth}");
+
+		// Create ValidationContext only if UserDetails is not null
 		var validationContext = new ValidationContext(UserDetails);
+
 		var validationResults = new List<ValidationResult>();
 
 		if (!Validator.TryValidateObject(UserDetails, validationContext, validationResults, true))
@@ -142,4 +178,19 @@
 
 		return true;
 	}
+	private void ShowSuccessMsg()
+	{
+		showSuccessMessage = false;
+
+	}
+
+	private void ShowFailureMsg()
+	{
+		showErrorMessage = false;
+
+	}
+
+	[Parameter] public EventCallback OnModalClosed { get; set; }
+
+
 }

@@ -16,11 +16,11 @@
 }
 @if (_showingEditModalWindow)
 {
-	<Edit EditModalClickBtnClose="CloseEditModal" UserId="_selectedUserId" OnEditModalClosed="HandleEditModalClosed" OnModalClosed="SuccessMsgOnClose" />
+	<Edit EditModalClickBtnClose="CloseEditModal" UserId="_selectedUserId" OnEditModalClosed="HandleModalClosed" OnModalClosed="SuccessMsgOnClose" />
 }
 @if (_showingAddModalWindow)
 {
-	<Add AddModalClickBtnClose="CloseAddModal" UserId="_selectedUserId"  />@* OnAddModalClosed="HandleAddModalClosed" OnModalClosed="HandleModalClosed" *@
+	<Add AddModalClickBtnClose="CloseAddModal" UserId="_selectedUserId" OnAddModalClosed="HandleModalClosed" OnModalClosed="SuccessMsgOnClose" />
 }
 <main class="container min-vh-90 py-nd-5">
     <h2 class="p-5">User List</h2>
@@ -274,7 +274,7 @@
 		_showingEditModalWindow = false;
 	}
 
-	private async Task HandleEditModalClosed()
+	private async Task HandleModalClosed()
 	{
 		// Fetch all users to refresh the user list
 		await FetchAllUsers();
@@ -325,8 +325,10 @@
 
 			// Reload the cache to reflect the updated data
 			await DatabaseCache.RefreshCache(HttpClient);
-			await FetchAllUsers();
 
+			// Clear the selected user IDs list and hide the delete button
+			SelectedUserIds.Clear();
+			IsDeleteButtonVisible = false;
 		}
 		catch (Exception ex)
 		{
@@ -334,6 +336,7 @@
 			Console.WriteLine($"An error occurred while deleting selected users: {ex.Message}");
 		}
 	}
+
 
 
 	// Method to retrieve selected user IDs
@@ -359,14 +362,14 @@
 		if (e.Value is bool isChecked && isChecked)
 		{
 			SelectedUserIds.Add(userId); // Add to selected list
-
 		}
 		else
 		{
 			SelectedUserIds.Remove(userId); // Remove from selected list
 		}
-		IsDeleteButtonVisible = SelectedUserIds.Count > 0;
 
+		// Update IsDeleteButtonVisible based on the number of selected users
+		IsDeleteButtonVisible = SelectedUserIds.Count > 0;
 	}
 	private bool IsSelectAllChecked { get; set; }
 

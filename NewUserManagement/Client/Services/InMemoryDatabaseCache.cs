@@ -125,11 +125,9 @@ namespace NewUserManagement.Client.Services
                 {
                     Users = users?.Select(u => new User
                     {
-                        Id = u.Id,
                         Forename = u.Forename,
                         Surname = u.Surname,
                         Email = u.Email,
-                        IsActive = u.IsActive,
                         DateOfBirth = u.DateOfBirth
                     }).ToList() ?? new List<User>();
                 }
