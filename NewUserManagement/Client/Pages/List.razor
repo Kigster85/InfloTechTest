@@ -1,4 +1,5 @@
 ﻿@page "/list"
+@using Microsoft.EntityFrameworkCore
 @using NewUserManagement.Shared.Models
 @using NewUserManagement.Client.Components.Public
 @using NewUserManagement.Client.Components.Public.List
@@ -97,7 +98,10 @@
 				<button @onclick="FetchInactiveUsers" class="btn btn-primary">Non Active</button>
 
 			</div>
-
+			@if (IsDeleteButtonVisible)
+			{
+				<button @onclick="DeleteSelected" class="btn btn-primary float-end">Delete User</button>
+			}
 			<button @onclick="AddUser" class="btn btn-primary float-end">Add User</button>
 		</div>
 
@@ -119,7 +123,9 @@
 				await DatabaseCache.GetUsersFromDatabaseAndCache(null);
 				isLoading = false;
     }
+	private bool IsDeleteButtonVisible { get; set; } = false;
 
+	
     
 	private async Task FetchAllUsers()
 	{
@@ -190,33 +196,41 @@
 	{
 		try
 		{
-			// Send a DELETE request to the API endpoint to delete the user with the specified ID
+			// Get the user to delete from the cache
+			var userToDelete = await DatabaseCache.GetUserDetails(userId);
+
+			// Check if the user exists
+			if (userToDelete == null)
+			{
+				// Handle case where user is not found
+				Console.WriteLine($"User with ID {userId} not found.");
+				return;
+			}
+
+			// Call the API to delete the user
 			var response = await HttpClient.DeleteAsync($"api/User/{userId}");
 
 			// Check if the request was successful (status code 200)
 			if (response.IsSuccessStatusCode)
 			{
-				// Optionally, you can handle a successful deletion, such as removing the user from the local list
-				// Remove the user from the local list (assuming 'users' is your list of users)
-				var userToDelete = users.FirstOrDefault(u => u.Id == userId);
-				if (userToDelete != null)
-				{
-					users.Remove(userToDelete);
-				}
+				// If the deletion was successful, remove the user from the cache
+				await DatabaseCache.RefreshCache(HttpClient);
+				Console.WriteLine($"User with ID {userId} deleted successfully.");
+				await FetchAllUsers();
 			}
 			else
 			{
 				// Handle the case where the server responded with an error status code
-				// You can display an error message or handle it as needed
 				Console.WriteLine($"Failed to delete user with ID {userId}. Status code: {response.StatusCode}");
 			}
 		}
 		catch (Exception ex)
 		{
-			// Handle any exceptions that occur during the request
+			// Handle any exceptions that occur during the deletion
 			Console.WriteLine($"An error occurred while deleting user with ID {userId}: {ex.Message}");
 		}
 	}
+
 
 	private int _selectedUserId;
 	public bool _showingViewModalWindow = false;
@@ -286,7 +300,7 @@
 		try
 		{
 			// Get the IDs of selected users
-			var selectedUserIds = users.Where(u => u.IsSelected).Select(u => u.Id).ToList();
+			var selectedUserIds = GetSelectedUserIds();
 			if (selectedUserIds.Count == 0)
 			{
 				// No users selected, display a message or handle it as needed
@@ -296,20 +310,23 @@
 			// Call the API to delete the selected users
 			var json = JsonSerializer.Serialize(selectedUserIds);
 			var content = new StringContent(json, Encoding.UTF8, "application/json");
-			var request = new HttpRequestMessage
+			var response = await HttpClient.PostAsync("api/User/delete-multiple", content);
+			response.EnsureSuccessStatusCode();
+
+			// Remove the deleted users from the cache
+			foreach (var userId in selectedUserIds)
+			{
+				var user = DatabaseCache.Users.FirstOrDefault(u => u.Id == userId);
+				if (user != null)
 				{
-					Method = HttpMethod.Delete,
-					RequestUri = new Uri("api/User/delete-multiple", UriKind.Relative),
-					Content = content
-				};
+					DatabaseCache.Users.Remove(user);
+				}
+			}
 
-			var response = await HttpClient.SendAsync(request); response.EnsureSuccessStatusCode();
+			// Reload the cache to reflect the updated data
+			await DatabaseCache.RefreshCache(HttpClient);
+			await FetchAllUsers();
 
-			// Remove the deleted users from the local list
-			users.RemoveAll(u => selectedUserIds.Contains(u.Id));
-
-			// Optionally, you can reload the user list from the server to reflect the changes immediately
-			// await FetchAllUsers();
 		}
 		catch (Exception ex)
 		{
@@ -317,26 +334,57 @@
 			Console.WriteLine($"An error occurred while deleting selected users: {ex.Message}");
 		}
 	}
+
+
+	// Method to retrieve selected user IDs
+	private List<int> GetSelectedUserIds()
+	{
+		var selectedUserIds = new List<int>();
+
+		// Iterate over the users and check if their IDs are in the selected user IDs list
+		foreach (var user in DatabaseCache.Users)
+		{
+			if (SelectedUserIds.Contains(user.Id))
+			{
+				// If the user ID is in the selected user IDs list, add it to the selectedUserIds list
+				selectedUserIds.Add(user.Id);
+			}
+		}
+
+		return selectedUserIds;
+	}
 	private List<int> SelectedUserIds { get; set; } = new List<int>();
 	private void ToggleSelection(int userId, ChangeEventArgs e)
 	{
 		if (e.Value is bool isChecked && isChecked)
 		{
 			SelectedUserIds.Add(userId); // Add to selected list
+
 		}
 		else
 		{
 			SelectedUserIds.Remove(userId); // Remove from selected list
 		}
+		IsDeleteButtonVisible = SelectedUserIds.Count > 0;
+
 	}
 	private bool IsSelectAllChecked { get; set; }
 
-	// Method to toggle the selection state of all checkboxes
+	// Method to toggle the selection state of all users
 	private void ToggleSelectAll()
 	{
+		// Clear the existing selected user IDs list if the select all checkbox is unchecked
+		if (!IsSelectAllChecked)
+		{
+			SelectedUserIds.Clear();
+			return;
+		}
+
+		// If select all checkbox is checked, add all user IDs to the selected user IDs list
+		SelectedUserIds.Clear();
 		foreach (var user in DatabaseCache.Users)
 		{
-			user.IsSelected = IsSelectAllChecked;
+			SelectedUserIds.Add(user.Id);
 		}
 	}
 }

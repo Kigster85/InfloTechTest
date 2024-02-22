@@ -1,4 +1,4 @@
-﻿@page "/logs"
+﻿@* @page "/logs"
 @using NewUserManagement.Models
 @using NewUserManagement.Services
 @inject ILoggingService LoggingService
@@ -43,3 +43,4 @@ else
 		logEntries = await LoggingService.GetLogEntries();
 	}
 }
+ *@

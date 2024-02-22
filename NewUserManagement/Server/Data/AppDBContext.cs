@@ -35,9 +35,17 @@ public class AppDBContext : DbContext
                 new User { Id = 10, Forename = "Johnny", Surname = "Blaze", Email = "jblaze@example.com", IsActive = true },
                 new User { Id = 11, Forename = "Robin", Surname = "Feld", Email = "rfeld@example.com", IsActive = true }
             });
+
+        base.OnModelCreating(modelBuilder);
+
+        // Apply configuration for LogEntry entity
+        modelBuilder.ApplyConfiguration(new LogEntryConfiguration());
+
+        // Add additional entity configurations if necessary
     }
 
     public DbSet<User> Users { get; set; }
+    public DbSet<LogEntry> LogEntries { get; set; }
 
     public IQueryable<TEntity> GetAll<TEntity>() where TEntity : class
     {
@@ -61,5 +69,7 @@ public class AppDBContext : DbContext
         Remove(entity);
         SaveChanges();
     }
+
+    
 }
 

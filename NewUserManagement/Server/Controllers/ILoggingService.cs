@@ -1,5 +1,6 @@
-﻿using Microsoft.Extensions.Logging.Abstractions;
+﻿using NewUserManagement.Server.Data;
 using NewUserManagement.Shared.Models;
+
 
 namespace NewUserManagement.Client.Services;
 
@@ -10,9 +11,9 @@ public interface ILoggingService
 
 public class LoggingService : ILoggingService
 {
-    private readonly ApplicationDbContext _dbContext;
+    private readonly AppDBContext _dbContext;
 
-    public LoggingService(ApplicationDbContext dbContext)
+    public LoggingService(AppDBContext dbContext)
     {
         _dbContext = dbContext;
     }

@@ -10,6 +10,5 @@ namespace NewUserManagement.Shared.DTOs
         public required string Email { get; set; }
         public bool IsActive { get; set; }
         public DateTime DateOfBirth { get; set; }
-        public bool IsSelected { get; set; }
     }
 }

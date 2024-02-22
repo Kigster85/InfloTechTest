@@ -14,6 +14,5 @@ public class User
     // New DOB property
     public DateTime DateOfBirth { get; set; } 
 
-    // Property to track whether the user is selected or not
-    public bool IsSelected { get; set; }
+
 }

@@ -83,10 +83,10 @@ namespace NewUserManagement.Server.Controllers
         }
 
         // GET: api/User/{Id}
-        [HttpGet("{Id}")]
-        public async Task<ActionResult<UserDTO>> GetUserById([FromRoute] int id)
+        [HttpGet("{userId}")]
+        public async Task<ActionResult<UserDTO>> GetUserById([FromRoute] int userId)
         {
-            var user = await _dbContext.Users.FindAsync(id);
+            var user = await _dbContext.Users.FindAsync(userId);
 
             if (user == null)
             {
@@ -105,16 +105,16 @@ namespace NewUserManagement.Server.Controllers
 
             return Ok(userDTO);
         }
-        // PUT: api/User/{id}
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateUser(int id, [FromBody] UserDTO userDTO)
+        // PUT: api/User/{userId}
+        [HttpPut("{userId}")]
+        public async Task<IActionResult> UpdateUser(int userId, [FromBody] UserDTO userDTO)
         {
-            if (id != userDTO.Id)
+            if (userId != userDTO.Id)
             {
                 return BadRequest();
             }
 
-            var user = await _dbContext.Users.FindAsync(id);
+            var user = await _dbContext.Users.FindAsync(userId);
             if (user == null)
             {
                 return NotFound();
@@ -157,28 +157,47 @@ namespace NewUserManagement.Server.Controllers
             return CreatedAtAction(nameof(GetUserById), new { id = user.Id }, userDTO);
         }
 
-        // DELETE: api/User/{id}
-        [HttpDelete("{id}")]
-        public async Task<ActionResult<UserDTO>> DeleteUserById(int id)
-        {
-            var user = await _dbContext.Users.FindAsync(id);
-            if (user == null)
-            {
-                return NotFound();
-            }
-
-            _dbContext.Users.Remove(user);
-            await _dbContext.SaveChangesAsync();
-
-            return Ok();
-        }
-        // DELETE: api/User/delete-multiple
-        [HttpDelete("delete-multiple")]
-        public async Task<ActionResult> DeleteMultipleUsers(List<int> ids)
+        [HttpDelete("{userId}")]
+        public async Task<IActionResult> DeleteUser(int userId)
         {
             try
             {
-                var usersToDelete = await _dbContext.Users.Where(u => ids.Contains(u.Id)).ToListAsync();
+                // Get the user to delete from the database
+                var userToDelete = await _dbContext.Users.FindAsync(userId);
+
+                // Check if the user exists
+                if (userToDelete == null)
+                {
+                    // User not found, return a not found response
+                    return NotFound();
+                }
+
+                // Remove the user from the database
+                _dbContext.Users.Remove(userToDelete);
+                await _dbContext.SaveChangesAsync();
+
+                // Optionally, you can handle a successful deletion (e.g., return a success response)
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                // Handle any exceptions that occur during the deletion process
+                return StatusCode(500, $"An error occurred while deleting user with ID {userId}: {ex.Message}");
+            }
+        }
+
+        // POST: api/User/delete-multiple
+        [HttpPost("delete-multiple")]
+        public async Task<ActionResult> DeleteMultipleUsers(List<int> selectedUserIds)
+        {
+            try
+            {
+                if (selectedUserIds == null || selectedUserIds.Count == 0)
+                {
+                    return BadRequest("No user IDs provided for deletion.");
+                }
+
+                var usersToDelete = await _dbContext.Users.Where(u => selectedUserIds.Contains(u.Id)).ToListAsync();
                 if (usersToDelete == null || usersToDelete.Count == 0)
                 {
                     return NotFound("No users found with the provided IDs.");
@@ -194,6 +213,7 @@ namespace NewUserManagement.Server.Controllers
                 return StatusCode(500, $"An error occurred: {ex.Message}");
             }
         }
+
         // Helper method to generate a unique ID (you can implement your own logic here)
         private int GenerateUniqueId()
         {
@@ -202,6 +222,7 @@ namespace NewUserManagement.Server.Controllers
             var maxId = _dbContext.Users.Max(u => u.Id);
             return maxId + 1;
         }
-
     }
+
 }
+
