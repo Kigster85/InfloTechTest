@@ -35,8 +35,7 @@
 
 			</div>
 			<div class="modal-footer">
-				<button @onclick="PreviousUser" type="button" class="btn btn-primary shadow">Previous</button>
-				<button @onclick="NextUser" type="button" class="btn btn-primary shadow">Next</button>
+
 				<button @onclick="CloseEditModal" type="button" class="btn btn-primary shadow" data-bs-dismiss="modal">Close</button>
 			</div>
 		</div>
@@ -149,7 +148,7 @@
 
 				// Close the modal after a delay
 			  await CloseEditModalSubmit();
-				await OnEditModalClosed.InvokeAsync();
+				await OnModalClosed.InvokeAsync();
 			}
 			else
 			{
@@ -175,7 +174,7 @@
 		// Close the modal
 		await EditModalClickBtnClose.InvokeAsync();
 		NavigationManager.NavigateTo("/list");
-		await OnModalClosed.InvokeAsync();
+		await OnEditModalClosed.InvokeAsync();
 
 	}
 	private void ShowSuccessMsg()

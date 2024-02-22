@@ -17,9 +17,32 @@ namespace NewUserManagement.Server.Migrations
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "7.0.16");
 
+            modelBuilder.Entity("NewUserManagement.Shared.Models.LogEntry", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Action")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Details")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("LogEntries", (string)null);
+                });
+
             modelBuilder.Entity("NewUserManagement.Shared.Models.User", b =>
                 {
-                    b.Property<long>("Id")
+                    b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
@@ -48,7 +71,7 @@ namespace NewUserManagement.Server.Migrations
                     b.HasData(
                         new
                         {
-                            Id = 1L,
+                            Id = 1,
                             DateOfBirth = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "ploew@example.com",
                             Forename = "Peter",
@@ -57,7 +80,7 @@ namespace NewUserManagement.Server.Migrations
                         },
                         new
                         {
-                            Id = 2L,
+                            Id = 2,
                             DateOfBirth = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "bfgates@example.com",
                             Forename = "Benjamin Franklin",
@@ -66,7 +89,7 @@ namespace NewUserManagement.Server.Migrations
                         },
                         new
                         {
-                            Id = 3L,
+                            Id = 3,
                             DateOfBirth = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "ctroy@example.com",
                             Forename = "Castor",
@@ -75,7 +98,7 @@ namespace NewUserManagement.Server.Migrations
                         },
                         new
                         {
-                            Id = 4L,
+                            Id = 4,
                             DateOfBirth = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "mraines@example.com",
                             Forename = "Memphis",
@@ -84,7 +107,7 @@ namespace NewUserManagement.Server.Migrations
                         },
                         new
                         {
-                            Id = 5L,
+                            Id = 5,
                             DateOfBirth = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "sgodspeed@example.com",
                             Forename = "Stanley",
@@ -93,7 +116,7 @@ namespace NewUserManagement.Server.Migrations
                         },
                         new
                         {
-                            Id = 6L,
+                            Id = 6,
                             DateOfBirth = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "himcdunnough@example.com",
                             Forename = "H.I.",
@@ -102,7 +125,7 @@ namespace NewUserManagement.Server.Migrations
                         },
                         new
                         {
-                            Id = 7L,
+                            Id = 7,
                             DateOfBirth = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "cpoe@example.com",
                             Forename = "Cameron",
@@ -111,7 +134,7 @@ namespace NewUserManagement.Server.Migrations
                         },
                         new
                         {
-                            Id = 8L,
+                            Id = 8,
                             DateOfBirth = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "emalus@example.com",
                             Forename = "Edward",
@@ -120,7 +143,7 @@ namespace NewUserManagement.Server.Migrations
                         },
                         new
                         {
-                            Id = 9L,
+                            Id = 9,
                             DateOfBirth = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "dmacready@example.com",
                             Forename = "Damon",
@@ -129,7 +152,7 @@ namespace NewUserManagement.Server.Migrations
                         },
                         new
                         {
-                            Id = 10L,
+                            Id = 10,
                             DateOfBirth = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "jblaze@example.com",
                             Forename = "Johnny",
@@ -138,7 +161,7 @@ namespace NewUserManagement.Server.Migrations
                         },
                         new
                         {
-                            Id = 11L,
+                            Id = 11,
                             DateOfBirth = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "rfeld@example.com",
                             Forename = "Robin",

@@ -1,35 +1,34 @@
 ﻿using NewUserManagement.Server.Data;
 using NewUserManagement.Shared.Models;
 
-
-namespace NewUserManagement.Client.Services;
-
-public interface ILoggingService
+namespace NewUserManagement.Server.Services
 {
-    Task LogAction(int userId, string action, string details);
-}
-
-public class LoggingService : ILoggingService
-{
-    private readonly AppDBContext _dbContext;
-
-    public LoggingService(AppDBContext dbContext)
+    public interface ILoggingService
     {
-        _dbContext = dbContext;
+        Task LogAction(int userId, string action, string details);
     }
 
-    public async Task LogAction(int userId, string action, string details)
+    public class LoggingService : ILoggingService
     {
-        var logEntry = new LogEntry
+        private readonly AppDBContext _dbContext;
+
+        public LoggingService(AppDBContext dbContext)
         {
-            Timestamp = DateTime.UtcNow,
-            UserId = userId,
-            Action = action,
-            Details = details
-        };
+            _dbContext = dbContext;
+        }
 
-        _dbContext.LogEntries.Add(logEntry);
-        await _dbContext.SaveChangesAsync();
+        public async Task LogAction(int userId, string action, string details)
+        {
+            var logEntry = new LogEntry
+            {
+                Timestamp = DateTime.UtcNow,
+                UserId = userId,
+                Action = action,
+                Details = details
+            };
+
+            _dbContext.LogEntries.Add(logEntry);
+            await _dbContext.SaveChangesAsync();
+        }
     }
 }
-

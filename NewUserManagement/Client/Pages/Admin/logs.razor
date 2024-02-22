@@ -1,11 +1,16 @@
 ﻿@* @page "/logs"
-@using NewUserManagement.Models
-@using NewUserManagement.Services
-@inject ILoggingService LoggingService
 
-<h1>Log Entries</h1>
+<h3>Logs</h3>
 
-@if (logEntries != null && logEntries.Any())
+@if (logEntries == null)
+{
+	<p>Loading...</p>
+}
+else if (logEntries.Count == 0)
+{
+	<p>No logs found.</p>
+}
+else
 {
 	<table class="table">
 		<thead>
@@ -29,17 +34,13 @@
 		</tbody>
 	</table>
 }
-else
-{
-	<p>No log entries found.</p>
-}
 
 @code {
-	private List<LogEntry> logEntries;
+	List<NewUserManagement.Shared.Models.LogEntry> logEntries;
 
 	protected override async Task OnInitializedAsync()
 	{
-		// Retrieve log entries from the database
+		// Fetch log entries from the server
 		logEntries = await LoggingService.GetLogEntries();
 	}
 }
