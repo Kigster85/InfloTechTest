@@ -11,8 +11,8 @@ using NewUserManagement.Server.Data;
 namespace NewUserManagement.Server.Migrations
 {
     [DbContext(typeof(AppDBContext))]
-    [Migration("20240222184303_InitialCreate")]
-    partial class InitialCreate
+    [Migration("20240222212718_InitialMigration")]
+    partial class InitialMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

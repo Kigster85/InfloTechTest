@@ -16,22 +16,40 @@
 }
 @if (_showingEditModalWindow)
 {
-	<Edit EditModalClickBtnClose="CloseEditModal" UserId="_selectedUserId" OnEditModalClosed="HandleModalClosed" OnModalClosed="SuccessMsgOnClose" />
+	<Edit EditModalClickBtnClose="CloseEditModal" UserId="_selectedUserId" OnEditModalClosed="HandleModalClosed" OnModalClosed="SuccessEditMsgOnClose" />
 }
 @if (_showingAddModalWindow)
 {
-	<Add AddModalClickBtnClose="CloseAddModal" UserId="_selectedUserId" OnAddModalClosed="HandleModalClosed" OnModalClosed="SuccessMsgOnClose" />
+	<Add AddModalClickBtnClose="CloseAddModal" OnAddModalClosed="HandleModalClosed" OnModalClosed="SuccessAddMsgOnClose" />
 }
 <main class="container min-vh-90 py-nd-5">
     <h2 class="p-5">User List</h2>
-	@if (showSuccessMessage)
+	@if (showEditSuccessMessage)
 	{
-		<div class="alert alert-success d-flex justify-content-between" role="alert">
+		<div class="alert alert-success d-flex justify-content-between fade-out" role="alert">
 			<i class="fa-solid fa-circle-check"> </i>
-			User details updated successfully!
+			<dt>Updated User Details Successfully!</dt>
 			<button @onclick="CloseSuccessMessage" type="button" class="btn-close" aria-label="Close"></button>
 		</div>
-		Console.WriteLine("Show me this has worked!! ");
+		Console.WriteLine("Updated User Details Successfully!");
+	}
+	@if (showAddSuccessMessage)
+	{
+		<div class="alert alert-success d-flex justify-content-between fade-out" role="alert">
+			<i class="fa-solid fa-circle-check"> </i>
+			<dt>Added User Details Successfully!</dt>
+			<button @onclick="CloseSuccessMessage" type="button" class="btn-close" aria-label="Close"></button>
+		</div>
+		Console.WriteLine("Added User Details Successfully!");
+	}
+	@if (showDeleteSuccessMessage)
+	{
+		<div class="alert alert-success d-flex justify-content-between fade-out" role="alert">
+			<i class="fa-solid fa-circle-check"> </i>
+			<dt>Deleted User/s Successfully!</dt>
+			<button @onclick="CloseSuccessMessage" type="button" class="btn-close" aria-label="Close"></button>
+		</div>
+		Console.WriteLine("Deleted User/s Successfully!");
 	}
     <div class="container min-vh-90 py-nd-5 table-responsive-xl">
 
@@ -216,7 +234,9 @@
 				// If the deletion was successful, remove the user from the cache
 				await DatabaseCache.RefreshCache(HttpClient);
 				Console.WriteLine($"User with ID {userId} deleted successfully.");
+				await SuccessDeleteMsgOnClose();
 				await FetchAllUsers();
+
 			}
 			else
 			{
@@ -280,20 +300,47 @@
 		await FetchAllUsers();
 	}
 
-	public bool showSuccessMessage { get; set; }
+	public bool showEditSuccessMessage { get; set; }
+	public bool showAddSuccessMessage { get; set; }
+	public bool showDeleteSuccessMessage { get; set; }
 
-	private async Task SuccessMsgOnClose()
+
+	private async Task SuccessEditMsgOnClose()
 	{
+		// Display the success message
+		showEditSuccessMessage = true;
 		// Delay before showing the success message
-		await Task.Delay(0);
+		await Task.Delay(3000);
+		CloseSuccessMessage();
+
+
+	}
+	private async Task SuccessAddMsgOnClose()
+	{
 
 		// Display the success message
-		showSuccessMessage = true;
+		showAddSuccessMessage = true;
+		// Delay before showing the success message
+		await Task.Delay(3000);
+		CloseSuccessMessage();
+
+	}
+	private async Task SuccessDeleteMsgOnClose()
+	{
+		// Display the success message
+		showDeleteSuccessMessage = true;
+		// Delay before showing the success message
+		await Task.Delay(3000);
+		CloseSuccessMessage();
+
 	}
 	private void CloseSuccessMessage()
 	{
+		Task.Delay(2000);
 		// Reset the success message flag
-		showSuccessMessage = false;
+		showEditSuccessMessage = false;
+		showAddSuccessMessage = false;
+		showDeleteSuccessMessage = false;
 	}
 	private void HideDeleteButton()
 	{
@@ -333,9 +380,8 @@
 
 			// Reload the cache to reflect the updated data
 			await DatabaseCache.RefreshCache(HttpClient);
-
+			await SuccessDeleteMsgOnClose();
 			await FetchAllUsers();
-
 			HideDeleteButton();
 		}
 		catch (Exception ex)

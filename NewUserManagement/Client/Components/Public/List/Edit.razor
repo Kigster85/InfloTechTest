@@ -148,7 +148,7 @@
 
 				// Close the modal after a delay
 			  await CloseEditModalSubmit();
-				await OnEditModalClosed.InvokeAsync();
+				await OnModalClosed.InvokeAsync();
 			}
 			else
 			{
@@ -174,7 +174,7 @@
 		// Close the modal
 		await EditModalClickBtnClose.InvokeAsync();
 		NavigationManager.NavigateTo("/list");
-		await OnModalClosed.InvokeAsync();
+		await OnEditModalClosed.InvokeAsync();
 
 	}
 	private void ShowSuccessMsg()
