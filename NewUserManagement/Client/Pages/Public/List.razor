@@ -234,9 +234,9 @@
 				// If the deletion was successful, remove the user from the cache
 				await DatabaseCache.RefreshCache(HttpClient);
 				Console.WriteLine($"User with ID {userId} deleted successfully.");
-				await SuccessDeleteMsgOnClose();
 				await FetchAllUsers();
-
+				showDeleteSuccessMessage = true;
+				await SuccessDeleteMsgOnClose();
 			}
 			else
 			{
@@ -302,7 +302,7 @@
 
 	public bool showEditSuccessMessage { get; set; }
 	public bool showAddSuccessMessage { get; set; }
-	public bool showDeleteSuccessMessage { get; set; }
+	public bool showDeleteSuccessMessage { get; set; } = false;
 
 
 	private async Task SuccessEditMsgOnClose()
@@ -327,21 +327,24 @@
 	}
 	private async Task SuccessDeleteMsgOnClose()
 	{
-		// Display the success message
 		showDeleteSuccessMessage = true;
-		// Delay before showing the success message
-		await Task.Delay(3000);
-		CloseSuccessMessage();
+		HideDeleteButton();
+		StateHasChanged(); // Refresh the UI to display the success message
+		await Task.Delay(3000); // Delay for 3 seconds
+		showDeleteSuccessMessage = false; // Hide the success message
+
+
 
 	}
 	private void CloseSuccessMessage()
 	{
-		Task.Delay(2000);
 		// Reset the success message flag
 		showEditSuccessMessage = false;
 		showAddSuccessMessage = false;
 		showDeleteSuccessMessage = false;
 	}
+
+
 	private void HideDeleteButton()
 	{
 		// Reset the success message flag
@@ -380,9 +383,9 @@
 
 			// Reload the cache to reflect the updated data
 			await DatabaseCache.RefreshCache(HttpClient);
-			await SuccessDeleteMsgOnClose();
 			await FetchAllUsers();
-			HideDeleteButton();
+			showDeleteSuccessMessage = true;
+			await SuccessDeleteMsgOnClose();
 		}
 		catch (Exception ex)
 		{
