@@ -10,5 +10,10 @@ public class User
     public string Surname { get; set; } = default!;
     public string Email { get; set; } = default!;
     public bool IsActive { get; set; }
-    public DateTime DateOfBirth { get; set; } // New DOB property
+
+    // New DOB property
+    public DateTime DateOfBirth { get; set; } 
+
+    // Property to track whether the user is selected or not
+    public bool IsSelected { get; set; }
 }

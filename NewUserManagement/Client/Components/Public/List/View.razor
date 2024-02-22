@@ -15,22 +15,13 @@
 				<h5 class="modal-title">View User Details</h5>
 				<button @onclick="CloseViewModal" type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 			</div>
+
 			<div class="modal-body">
-				@if (UserDetails != null)
-				{
-					<div class="">
-						<p><strong>Id:</strong> @UserDetails.Id</p>
-						<p><strong>Forename:</strong> @UserDetails.Forename</p>
-						<p><strong>Surname:</strong> @UserDetails.Surname</p>
-						<p><strong>Email:</strong> @UserDetails.Email</p>
-						<p><strong>Active:</strong> @(UserDetails.IsActive ? "Yes" : "No")</p>
-						<p><strong>Date of Birth:</strong> @UserDetails.DateOfBirth.ToShortDateString()</p>
-					</div>
-				}
-				else
-				{
-					<p>Loading user details...</p>
-				}
+				<div class="d-flex justify-content-end p-2">
+				<dt>Id:</dt><span> @UserDetails.Id</span>
+				</div>
+				<UserForm UserDetails="@UserDetails" ShowInputFields = "false" />
+
 			</div>
 			<div class="modal-footer">
 @* 				<button @onclick="() => EditUser(UserId)" class="btn dropdown-item">Edit</button>
@@ -111,6 +102,7 @@
 	// 	await ViewModalClickBtnClose.InvokeAsync();
 
 	// }
+	private bool ShowInputFields { get; set; }
 	private string? _modalDisplay = null;
 	private string? _modalClass = null;
 	private bool _showBackdrop = false;
@@ -121,7 +113,8 @@
 		_modalDisplay = "block;";
 		_modalClass = "show";
 		_showBackdrop = true;
-		await updateUrlWithoutNavigation("view", UserId);
+		ShowInputFields = false;
+		await Task.Delay(0);
 	}
 
 	private async void CloseViewModal()
@@ -129,6 +122,7 @@
 		_modalDisplay = "none;";
 		_modalClass = string.Empty;
 		_showBackdrop = false;
+		ShowInputFields = true;
 		await ViewModalClickBtnClose.InvokeAsync();
 		NavigationManager.NavigateTo("/list");
 	}

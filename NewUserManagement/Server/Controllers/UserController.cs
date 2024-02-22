@@ -172,7 +172,28 @@ namespace NewUserManagement.Server.Controllers
 
             return Ok();
         }
+        // DELETE: api/User/delete-multiple
+        [HttpDelete("delete-multiple")]
+        public async Task<ActionResult> DeleteMultipleUsers(List<int> ids)
+        {
+            try
+            {
+                var usersToDelete = await _dbContext.Users.Where(u => ids.Contains(u.Id)).ToListAsync();
+                if (usersToDelete == null || usersToDelete.Count == 0)
+                {
+                    return NotFound("No users found with the provided IDs.");
+                }
 
+                _dbContext.Users.RemoveRange(usersToDelete);
+                await _dbContext.SaveChangesAsync();
+
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"An error occurred: {ex.Message}");
+            }
+        }
         // Helper method to generate a unique ID (you can implement your own logic here)
         private int GenerateUniqueId()
         {

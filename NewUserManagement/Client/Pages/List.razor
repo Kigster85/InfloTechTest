@@ -5,17 +5,22 @@
 @using System.Net.Http.Json
 @using System.Net.Http
 @using NewUserManagement.Client.Services
+@using System.Text
+@using System.Text.Json
 
 <NavBar />
 @if (_showingViewModalWindow)
 {
-	<View ViewModalClickBtnClose="CloseViewModal" UserId="_selectedUserId" />
+	<View ViewModalClickBtnClose="CloseViewModal" UserId="_selectedUserId"  />
 }
 @if (_showingEditModalWindow)
 {
-	<Edit EditModalClickBtnClose="CloseEditModal" UserId="_selectedUserId" OnEditModalClosed="HandleEditModalClosed" OnModalClosed="HandleModalClosed" />
+	<Edit EditModalClickBtnClose="CloseEditModal" UserId="_selectedUserId" OnEditModalClosed="HandleEditModalClosed" OnModalClosed="SuccessMsgOnClose" />
 }
-
+@if (_showingAddModalWindow)
+{
+	<Add AddModalClickBtnClose="CloseAddModal" UserId="_selectedUserId"  />@* OnAddModalClosed="HandleAddModalClosed" OnModalClosed="HandleModalClosed" *@
+}
 <main class="container min-vh-90 py-nd-5">
     <h2 class="p-5">User List</h2>
 	@if (showSuccessMessage)
@@ -32,6 +37,7 @@
         <table class="table table-striped">
             <thead>
                 <tr>
+					<th><input type="checkbox" @bind="IsSelectAllChecked" /></th>
                     <th>Id</th>
                     <th>Forename</th>
                     <th>Surname</th>
@@ -51,7 +57,11 @@
                     @foreach (var user in DatabaseCache.Users)
                     {
                         <tr>
-                            <td>@user.Id</td>
+							<td><input type="checkbox" checked="@IsSelectAllChecked" @onchange="(e) => ToggleSelection(user?.Id ?? 0, e)" /></td>
+
+
+
+														<td>@user.Id</td>
                             <td>@user.Forename</td>
                             <td>@user.Surname</td>
                             <td>@user.Email</td>
@@ -88,7 +98,7 @@
 
 			</div>
 
-			<a asp-controller="Shared" asp-action="AddUser" class="btn btn-primary float-end">Add User</a>
+			<button @onclick="AddUser" class="btn btn-primary float-end">Add User</button>
 		</div>
 
     </div>
@@ -100,6 +110,7 @@
 
 @code {
 		@inject InMemoryDatabaseCache DatabaseCache
+		@inject HttpClient HttpClient
 		private bool showingActiveUsers = false;
 		private List<User> users = new List<User>();
     private bool isLoading = true; // Flag to indicate loading state
@@ -175,13 +186,43 @@
 		}
 	}
 
-    private void DeleteUser(int userId)
-    {
-        // Handle delete user action
-    }
+	private async Task DeleteUser(int userId)
+	{
+		try
+		{
+			// Send a DELETE request to the API endpoint to delete the user with the specified ID
+			var response = await HttpClient.DeleteAsync($"api/User/{userId}");
+
+			// Check if the request was successful (status code 200)
+			if (response.IsSuccessStatusCode)
+			{
+				// Optionally, you can handle a successful deletion, such as removing the user from the local list
+				// Remove the user from the local list (assuming 'users' is your list of users)
+				var userToDelete = users.FirstOrDefault(u => u.Id == userId);
+				if (userToDelete != null)
+				{
+					users.Remove(userToDelete);
+				}
+			}
+			else
+			{
+				// Handle the case where the server responded with an error status code
+				// You can display an error message or handle it as needed
+				Console.WriteLine($"Failed to delete user with ID {userId}. Status code: {response.StatusCode}");
+			}
+		}
+		catch (Exception ex)
+		{
+			// Handle any exceptions that occur during the request
+			Console.WriteLine($"An error occurred while deleting user with ID {userId}: {ex.Message}");
+		}
+	}
+
 	private int _selectedUserId;
 	public bool _showingViewModalWindow = false;
 	public bool _showingEditModalWindow = false;
+	public bool _showingAddModalWindow = false;
+
 	@inject IJSRuntime JSRuntime
 	private async Task updateUrlWithoutNavigation(string route, int? userId)
 	{
@@ -201,9 +242,18 @@
 		_selectedUserId = userId;
 		await updateUrlWithoutNavigation("edit", userId);
 	}
+	private async void AddUser()
+	{
+		_showingAddModalWindow = true; // Show the edit modal
+		await Task.Delay(0);
+	}
+	private void CloseAddModal()
+	{
+		_showingAddModalWindow = false;
+	}
 	private void CloseViewModal()
 	{
-		_showingEditModalWindow = false;
+		_showingViewModalWindow = false;
 	}
 	private void CloseEditModal()
 	{
@@ -218,7 +268,7 @@
 
 	public bool showSuccessMessage { get; set; }
 
-	private async Task HandleModalClosed()
+	private async Task SuccessMsgOnClose()
 	{
 		// Delay before showing the success message
 		await Task.Delay(0);
@@ -231,5 +281,62 @@
 		// Reset the success message flag
 		showSuccessMessage = false;
 	}
+	private async Task DeleteSelected()
+	{
+		try
+		{
+			// Get the IDs of selected users
+			var selectedUserIds = users.Where(u => u.IsSelected).Select(u => u.Id).ToList();
+			if (selectedUserIds.Count == 0)
+			{
+				// No users selected, display a message or handle it as needed
+				return;
+			}
 
+			// Call the API to delete the selected users
+			var json = JsonSerializer.Serialize(selectedUserIds);
+			var content = new StringContent(json, Encoding.UTF8, "application/json");
+			var request = new HttpRequestMessage
+				{
+					Method = HttpMethod.Delete,
+					RequestUri = new Uri("api/User/delete-multiple", UriKind.Relative),
+					Content = content
+				};
+
+			var response = await HttpClient.SendAsync(request); response.EnsureSuccessStatusCode();
+
+			// Remove the deleted users from the local list
+			users.RemoveAll(u => selectedUserIds.Contains(u.Id));
+
+			// Optionally, you can reload the user list from the server to reflect the changes immediately
+			// await FetchAllUsers();
+		}
+		catch (Exception ex)
+		{
+			// Handle the error, such as displaying an error message
+			Console.WriteLine($"An error occurred while deleting selected users: {ex.Message}");
+		}
+	}
+	private List<int> SelectedUserIds { get; set; } = new List<int>();
+	private void ToggleSelection(int userId, ChangeEventArgs e)
+	{
+		if (e.Value is bool isChecked && isChecked)
+		{
+			SelectedUserIds.Add(userId); // Add to selected list
+		}
+		else
+		{
+			SelectedUserIds.Remove(userId); // Remove from selected list
+		}
+	}
+	private bool IsSelectAllChecked { get; set; }
+
+	// Method to toggle the selection state of all checkboxes
+	private void ToggleSelectAll()
+	{
+		foreach (var user in DatabaseCache.Users)
+		{
+			user.IsSelected = IsSelectAllChecked;
+		}
+	}
 }
