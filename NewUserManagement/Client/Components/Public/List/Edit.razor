@@ -16,17 +16,7 @@
 				<button @onclick="CloseEditModal" type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 			</div>
 			<div class="modal-body">
-				@if (UserDetails != null)
-				{
-					<div class="">
-						<p><strong>Forename:</strong><InputText @bind-Value="@UserDetails.Forename"> </InputText></p>
-						<p><strong>Surname:</strong> <InputText @bind-Value="@UserDetails.Surname"></InputText></p>
-						<p><strong>Email:</strong> <InputText @bind-Value="@UserDetails.Email"></InputText></p>
-						<p><strong>Date of Birth:</strong><InputDate @bind-Value="@UserDetails.DateOfBirth" format="MM/dd/yyyy"> </InputDate></p>
-					</div>
-					<div class="d-flex justify-content-end">
-						<button @onclick="SubmitForm" type="button" class="btn btn-success shadow text-end">Save Changes</button>
-					</div>
+				<UserForm UserDetails="@UserDetails" OnSubmit="@SubmitForm" OnSuccess="@ShowSuccessMsg" OnFailure="@ShowFailureMsg" />
 
 					@if (showSuccessMessage)
 					{
@@ -35,18 +25,14 @@
 						</div>
 						Console.WriteLine("We have success but this doesn't show up on screen!'");
 					}
-
 					@if (showErrorMessage)
 					{
 						<div class="alert alert-danger" role="alert">
 							Failed to update user details. Please try again.
 						</div>
 					}
-				}
-				else
-				{
-					<p>Loading user details...</p>
-				}
+				
+
 			</div>
 			<div class="modal-footer">
 				<button @onclick="PreviousUser" type="button" class="btn btn-primary shadow">Previous</button>
@@ -192,7 +178,17 @@
 		await OnModalClosed.InvokeAsync();
 
 	}
+	private void ShowSuccessMsg()
+	{
+		showSuccessMessage = false;
 
+	}
+
+	private void ShowFailureMsg()
+	{
+		showErrorMessage = false;
+
+	}
 	[Parameter] public EventCallback OnModalClosed { get; set; }
 
 	

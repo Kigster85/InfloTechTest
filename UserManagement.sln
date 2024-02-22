@@ -25,11 +25,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UserManagement.Services.Tes
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UserManagement.Web.Tests", "UserManagement.Web.Tests\UserManagement.Web.Tests.csproj", "{C0F78DDD-C753-432C-8E1B-F88A2DB459FD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NewUserManagement.Server", "NewUserManagement\Server\NewUserManagement.Server.csproj", "{4C0CA2F5-F3DB-4E9F-BF2A-39F5AF6FA858}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NewUserManagement.Server", "NewUserManagement\Server\NewUserManagement.Server.csproj", "{4C0CA2F5-F3DB-4E9F-BF2A-39F5AF6FA858}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NewUserManagement.Client", "NewUserManagement\Client\NewUserManagement.Client.csproj", "{DB2457E9-DBFA-4329-AA83-BAE36FAA5015}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NewUserManagement.Client", "NewUserManagement\Client\NewUserManagement.Client.csproj", "{DB2457E9-DBFA-4329-AA83-BAE36FAA5015}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NewUserManagement.Shared", "NewUserManagement\Shared\NewUserManagement.Shared.csproj", "{1F0F4276-CC48-45BE-A4BC-75C06C374A03}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NewUserManagement.Shared", "NewUserManagement\Shared\NewUserManagement.Shared.csproj", "{1F0F4276-CC48-45BE-A4BC-75C06C374A03}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

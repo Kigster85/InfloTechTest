@@ -35,6 +35,45 @@ namespace NewUserManagement.Client.Services
         // Pagination properties
         internal int TotalPages { get; private set; }
         internal int CurrentPage { get; private set; }
+        public List<int> SelectedUserIds { get; private set; } = new List<int>();
+
+        public void ToggleUserSelection(int userId)
+        {
+            if (SelectedUserIds.Contains(userId))
+            {
+                SelectedUserIds.Remove(userId); // Deselect user if already selected
+            }
+            else
+            {
+                SelectedUserIds.Add(userId); // Select user if not already selected
+            }
+        }
+
+        public void ClearSelectedUsers()
+        {
+            SelectedUserIds.Clear();
+        }
+
+        public async Task DeleteSelectedUsers()
+        {
+            try
+            {
+                // Send a DELETE request to the API endpoint to delete the selected users
+                var response = await _httpClient.DeleteAsync($"api/User/delete-multiple?ids={string.Join(",", SelectedUserIds)}");
+                response.EnsureSuccessStatusCode();
+
+                // Remove the deleted users from the local list
+                Users.RemoveAll(u => SelectedUserIds.Contains(u.Id));
+
+                // Clear the list of selected user IDs
+                ClearSelectedUsers();
+            }
+            catch (Exception ex)
+            {
+                // Handle the error, such as displaying an error message
+                Console.WriteLine($"An error occurred while deleting selected users: {ex.Message}");
+            }
+        }
 
         // Sorting properties
         internal string SortBy { get; private set; } = "Id"; // Default sorting by user ID
@@ -86,11 +125,9 @@ namespace NewUserManagement.Client.Services
                 {
                     Users = users?.Select(u => new User
                     {
-                        Id = u.Id,
                         Forename = u.Forename,
                         Surname = u.Surname,
                         Email = u.Email,
-                        IsActive = u.IsActive,
                         DateOfBirth = u.DateOfBirth
                     }).ToList() ?? new List<User>();
                 }
