@@ -15,10 +15,9 @@
 				<h5 class="modal-title">View User Details</h5>
 				<button @onclick="CloseViewModal" type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 			</div>
-
 			<div class="modal-body">
 				<div class="d-flex justify-content-end p-2">
-				<dt>Id:</dt><span> @UserDetails.Id</span>
+				<dt>Id:</dt><span> @UserDetails?.Id</span>
 				</div>
 				<UserForm UserDetails="@UserDetails" ShowInputFields = "false" />
 			</div>
@@ -54,6 +53,14 @@
 
 	}
 
+	private async Task IncrementViewCount()
+	{
+		// Increment view count locally
+		viewCount++;
+
+		// Update view count on the server
+		await LoggingServiceClient.LogViewCount(UserId, viewCount);
+	}
 
 	private async void NextUser()
 	{
@@ -101,7 +108,6 @@
 	// 	await ViewModalClickBtnClose.InvokeAsync();
 
 	// }
-	private bool ShowInputFields { get; set; }
 	private string? _modalDisplay = null;
 	private string? _modalClass = null;
 	private bool _showBackdrop = false;
@@ -112,8 +118,7 @@
 		_modalDisplay = "block;";
 		_modalClass = "show";
 		_showBackdrop = true;
-		ShowInputFields = false;
-		await Task.Delay(0);
+		await updateUrlWithoutNavigation("view", UserId);
 	}
 
 	private async void CloseViewModal()
@@ -121,7 +126,6 @@
 		_modalDisplay = "none;";
 		_modalClass = string.Empty;
 		_showBackdrop = false;
-		ShowInputFields = true;
 		await ViewModalClickBtnClose.InvokeAsync();
 		NavigationManager.NavigateTo("/list");
 	}
