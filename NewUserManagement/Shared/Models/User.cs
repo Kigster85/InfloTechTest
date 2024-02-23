@@ -25,5 +25,4 @@ public class User
     [Required(ErrorMessage = "Date Of Birth is required")]
     public DateTime DateOfBirth { get; set; } 
 
-
 }

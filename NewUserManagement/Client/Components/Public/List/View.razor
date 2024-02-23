@@ -8,6 +8,7 @@
 
 
 
+
 <div class="modal @_modalClass" id="informationalModal" tabindex="-1" aria-labelledby="informationalModalLabel" role="dialog" style="display:@_modalDisplay">
 	<div class="modal-dialog" role="document">
 		<div class="modal-content">
@@ -38,20 +39,35 @@
 	@inject InMemoryDatabaseCache DatabaseCache
 	@inject NavigationManager NavigationManager
 	@inject IJSRuntime JSRuntime
-
+	@inject LoggingServiceClient LoggingServiceClient
+	@inject HttpClient HttpClient
 	[Parameter]	public int UserId { get; set; }
-
 	private List<User> users = new List<User>();
 	private int _selectedUserId { get; set; }
-
-	private User UserDetails { get; set; } = new User(); // Initialize with a default user object
+	private int viewCount;
+	private User? UserDetails { get; set; } = new User(); // Initialize with a default user object
 	protected override async Task OnInitializedAsync()
 	{
 			// Fetch user details based on the UserId parameter
 		UserDetails = await DatabaseCache.GetUserDetails(UserId) ?? new User();
-
+		await LoadUserData();
+		await IncrementViewCount();
 
 	}
+private async Task LoadUserData()
+{
+    UserDetails = await HttpClient.GetFromJsonAsync<User>($"api/User/{UserId}");
+    
+    if (UserDetails == null)
+    {
+        // Handle the case where UserDetails is null, such as displaying an error message
+        Console.WriteLine("User details not found.");
+        return;
+    }
+
+    // Proceed with processing UserDetails
+    viewCount = UserDetails.ViewCount;
+}
 
 	private async Task IncrementViewCount()
 	{
@@ -64,6 +80,13 @@
 
 	private async void NextUser()
 	{
+		// Check if UserDetails is null
+		if (UserDetails == null)
+		{
+			// Handle the case where UserDetails is null
+			return;
+		}
+
 		int index = DatabaseCache.Users.FindIndex(u => u.Id == UserDetails.Id);
 		if (index != -1)
 		{
@@ -74,12 +97,36 @@
 				index = 0; // Wrap around to the first user if reached the end
 			}
 			UserDetails = DatabaseCache.Users[index];
+
+			// Check if the user has been viewed before
+			if (UserDetails.ViewCount == 0)
+			{
+				// If the user hasn't been viewed before, initialize their view count to 1
+				UserDetails.ViewCount = 1;
+			}
+			else
+			{
+				// If the user has been viewed before, increment their view count
+				UserDetails.ViewCount++;
+			}
+
+			// Log the view count
+			await LoggingServiceClient.LogViewCount(UserDetails.Id, UserDetails.ViewCount);
+
 			await updateUrlWithoutNavigation("view", UserDetails.Id);
 		}
 	}
 
+
 	private async void PreviousUser()
 	{
+		// Check if UserDetails is null
+		if (UserDetails == null)
+		{
+			// Handle the case where UserDetails is null
+			return;
+		}
+
 		int index = DatabaseCache.Users.FindIndex(u => u.Id == UserDetails.Id);
 		if (index != -1)
 		{
@@ -90,6 +137,22 @@
 				index = DatabaseCache.Users.Count - 1; // Wrap around to the last user if reached the beginning
 			}
 			UserDetails = DatabaseCache.Users[index];
+
+			// Check if the user has been viewed before
+			if (UserDetails.ViewCount == 0)
+			{
+				// If the user hasn't been viewed before, initialize their view count to 1
+				UserDetails.ViewCount = 1;
+			}
+			else
+			{
+				// If the user has been viewed before, increment their view count
+				UserDetails.ViewCount++;
+			}
+
+			// Log the view count
+			await LoggingServiceClient.LogViewCount(UserDetails.Id, UserDetails.ViewCount);
+
 			await updateUrlWithoutNavigation("view", UserDetails.Id);
 		}
 	}
