@@ -285,8 +285,15 @@ else if (_showingAddModalWindow)
 			// Clear the selected user IDs list and hide the delete button
 			SelectedUserIds.Clear();
 			IsSelectAllChecked = false; // Reset the IsSelectAllChecked property
+
+			// Notify Blazor to re-render the component and update the UI
+			StateHasChanged();
 			await FetchAllUsers();
+
+			// Display success message or perform any other necessary actions
 			await SuccessDeleteMsgOnClose();
+	
+
 		}
 		catch (Exception ex)
 		{
@@ -294,6 +301,7 @@ else if (_showingAddModalWindow)
 			Console.WriteLine($"An error occurred while deleting selected users: {ex.Message}");
 		}
 	}
+
 	// Method to retrieve selected user IDs
 	private List<int> GetSelectedUserIds()
 	{
