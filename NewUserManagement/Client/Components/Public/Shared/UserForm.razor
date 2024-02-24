@@ -78,10 +78,6 @@
 
 			// Invoke the OnSubmit event callback
 			await OnSubmit.InvokeAsync(UserDetails);
-			Console.WriteLine($"Forename value: {UserDetails.Forename}");
-			Console.WriteLine($"Surname value: {UserDetails.Surname}");
-			Console.WriteLine($"Email value: {UserDetails.Email}");
-			Console.WriteLine($"DOB value: {UserDetails.DateOfBirth}");
 			// If successful, invoke the OnSuccess event callback
 			await OnSuccess.InvokeAsync();
 		}

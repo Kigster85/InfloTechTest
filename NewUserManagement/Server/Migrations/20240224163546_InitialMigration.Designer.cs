@@ -11,7 +11,7 @@ using NewUserManagement.Server.Data;
 namespace NewUserManagement.Server.Migrations
 {
     [DbContext(typeof(AppDBContext))]
-    [Migration("20240224153519_InitialMigration")]
+    [Migration("20240224163546_InitialMigration")]
     partial class InitialMigration
     {
         /// <inheritdoc />

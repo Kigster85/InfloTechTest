@@ -1,4 +1,4 @@
-﻿@page "/list/add/{UserId:int}"
+﻿@page "/list/add"
 @using NewUserManagement.Client.Services
 @using NewUserManagement.Client.Pages.Public
 @using NewUserManagement.Client.Components
@@ -19,13 +19,6 @@
 			<div class="modal-body">
 				<UserForm UserDetails="@UserDetails" OnSubmit="@AddUserSubmit" OnSuccess="@ShowSuccessMsg" OnFailure="@ShowFailureMsg" />
 
-				@if (showSuccessMessage)
-				{
-					<div class="alert alert-success" role="alert">
-						User details updated successfully!
-					</div>
-					Console.WriteLine("We have success but this doesn't show up on screen!'");
-				}
 				@if (showErrorMessage)
 				{
 					<div class="alert alert-danger" role="alert">
@@ -45,41 +38,39 @@
 	<div class="modal-backdrop fade show"></div>
 }
 @code {
-	@inject InMemoryDatabaseCache DatabaseCache
+@inject InMemoryDatabaseCache DatabaseCache
 	@inject NavigationManager NavigationManager
 	@inject IJSRuntime JSRuntime
 	@inject HttpClient HttpClient
 	public bool showSuccessMessage = false;
 	public bool showErrorMessage = false;
 	[Parameter] public int UserId { get; set; }
+	[Parameter] public EventCallback OnModalClosed { get; set; }
+	[Parameter] public EventCallback AddModalClickBtnClose { get; set; }
+	[Parameter] public EventCallback OnAddModalClosed { get; set; }
 
-	private int _selectedUserId { get; set; }
+	private string? _modalDisplay { get; set;}
+	private string? _modalClass { get; set; }
+	private bool _showBackdrop { get; set; }
+	private bool? isLoading = true; // Flag to indicate loading state
+
 	private User? UserDetails { get; set; }
 	protected override async Task OnInitializedAsync()
 	{
 		// You can add an asynchronous operation that doesn't await anything to satisfy the requirement.
 		await Task.CompletedTask;
 		isLoading = false;
-
 		// Initialize UserDetails with default values or leave it as an empty object
-		UserDetails = await DatabaseCache.GetUserDetails(UserId) ?? new User();
+		UserDetails = new User();
 	}
-
-
-
-	[Parameter] public EventCallback AddModalClickBtnClose { get; set; }
-	private string? _modalDisplay = null;
-	private string? _modalClass = null;
-	private bool _showBackdrop = false;
 	protected override void OnInitialized() => ShowAddModal();
-	private bool? isLoading = true; // Flag to indicate loading state
 
 	private async void ShowAddModal()
 	{
 		_modalDisplay = "block;";
 		_modalClass = "show";
 		_showBackdrop = true;
-		await updateUrlWithoutNavigation("add", UserId);
+		await updateUrlWithoutNavigation("add");
 	}
 	[Parameter] public bool _showingAddModalWindow { get; set; }
 	private async Task CloseAddModal()
@@ -87,13 +78,15 @@
 		_modalDisplay = "none;";
 		_modalClass = string.Empty;
 		_showBackdrop = false;
-		await AddModalClickBtnClose.InvokeAsync();
+
+
+		await Task.Delay(0);
 		NavigationManager.NavigateTo("/list");
 	}
-	private async Task updateUrlWithoutNavigation(string route, int? UserId)
+	private async Task updateUrlWithoutNavigation(string route)
 	{
-		string url = $"/list/{route}/{UserId}";
-		await JSRuntime.InvokeVoidAsync("updateUrlWithoutNavigation", route, UserId);
+		string url = $"/list/{route}";
+		await JSRuntime.InvokeVoidAsync("updateUrlWithoutNavigation", route);
 
 	}
 	private async Task FetchAllUsers()
@@ -112,7 +105,7 @@
 			isLoading = false; // Set loading flag to false when loading completes or fails
 		}
 	}
-	[Parameter] public EventCallback OnAddModalClosed { get; set; }
+
 
 	private async Task AddUserSubmit()
 	{
@@ -131,12 +124,11 @@
 			if (response.IsSuccessStatusCode)
 			{
 				Console.WriteLine("User added successfully!");
-				ShowSuccessMsg();
 				await DatabaseCache.RefreshCache(HttpClient);
 				await CloseAddModal();
 				await OnAddModalClosed.InvokeAsync();
 
-				await FetchAllUsers();
+
 
 			}
 			else
@@ -178,9 +170,11 @@
 
 		return true;
 	}
-	private void ShowSuccessMsg()
+	private async void ShowSuccessMsg()
 	{
-		showSuccessMessage = false;
+		await CloseAddModal();
+		await OnModalClosed.InvokeAsync();
+
 
 	}
 
@@ -190,7 +184,6 @@
 
 	}
 
-	[Parameter] public EventCallback OnModalClosed { get; set; }
 
 
 }

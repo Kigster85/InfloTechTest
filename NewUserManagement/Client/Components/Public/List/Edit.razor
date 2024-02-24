@@ -18,13 +18,6 @@
 			<div class="modal-body">
 				<UserForm UserDetails="@UserDetails" OnSubmit="@SubmitForm" OnSuccess="@ShowSuccessMsg" OnFailure="@ShowFailureMsg" />
 
-					@if (showSuccessMessage)
-					{
-						<div class="alert alert-success" role="alert">
-							User details updated successfully!
-						</div>
-						Console.WriteLine("We have success but this doesn't show up on screen!'");
-					}
 					@if (showErrorMessage)
 					{
 						<div class="alert alert-danger" role="alert">
@@ -55,14 +48,19 @@
 	public bool showErrorMessage = false;
 	[Parameter] public int UserId { get; set; }
 	private List<User> users = new List<User>();
-
+	private string? _modalDisplay = null;
+	private string? _modalClass = null;
+	private bool _showBackdrop = false;
 	private int _selectedUserId { get; set; }
 	private User UserDetails { get; set; } = new User(); // Initialize with a default user object
+	[Parameter] public EventCallback OnModalClosed { get; set; }
+	[Parameter] public EventCallback OnEditModalClosed { get; set; }
+	[Parameter] public EventCallback EditModalClickBtnClose { get; set; }
+
 	protected override async Task OnInitializedAsync()
 	{
 		// Fetch user details based on the UserId parameter
 		UserDetails = await DatabaseCache.GetUserDetails(UserId) ?? new User();
-
 	}
 
 
@@ -97,10 +95,6 @@
 			await updateUrlWithoutNavigation("edit", UserDetails.Id);
 		}
 	}
-	[Parameter] public EventCallback EditModalClickBtnClose { get; set; }
-	private string? _modalDisplay = null;
-	private string? _modalClass = null;
-	private bool _showBackdrop = false;
 	protected override void OnInitialized() => ShowEditModal();
 
 	private async void ShowEditModal()
@@ -116,8 +110,8 @@
 		_modalDisplay = "none;";
 		_modalClass = string.Empty;
 		_showBackdrop = false;
-		await EditModalClickBtnClose.InvokeAsync();
 		NavigationManager.NavigateTo("/list");
+		await Task.Delay(0);
 	}
 	private async Task updateUrlWithoutNavigation(string route, int? UserId)
 	{
@@ -125,7 +119,7 @@
 		await JSRuntime.InvokeVoidAsync("updateUrlWithoutNavigation", route, UserId);
 
 	}
-	[Parameter] public EventCallback OnEditModalClosed { get; set; }
+
 
 	private async Task SubmitForm()
 	{
@@ -148,8 +142,8 @@
 				await DatabaseCache.UpdateUserOnServerAndRefreshCache(HttpClient, UserDetails);
 
 				// Close the modal after a delay
-			  await CloseEditModalSubmit();
 				await OnEditModalClosed.InvokeAsync();
+				await CloseEditModalSubmit();
 			}
 			else
 			{
@@ -173,14 +167,13 @@
 		showErrorMessage = false;
 
 		// Close the modal
-		await EditModalClickBtnClose.InvokeAsync();
 		NavigationManager.NavigateTo("/list");
 		await OnModalClosed.InvokeAsync();
 
 	}
-	private void ShowSuccessMsg()
+	private async void ShowSuccessMsg()
 	{
-		showSuccessMessage = false;
+		await OnModalClosed.InvokeAsync();
 
 	}
 
@@ -189,7 +182,6 @@
 		showErrorMessage = false;
 
 	}
-	[Parameter] public EventCallback OnModalClosed { get; set; }
 
 	
 
