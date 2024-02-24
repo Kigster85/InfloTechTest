@@ -282,13 +282,11 @@ else if (_showingAddModalWindow)
 
 			// Reload the cache to reflect the updated data
 			await DatabaseCache.RefreshCache(HttpClient);
-
 			// Clear the selected user IDs list and hide the delete button
 			SelectedUserIds.Clear();
 			IsSelectAllChecked = false; // Reset the IsSelectAllChecked property
 			await FetchAllUsers();
 			await SuccessDeleteMsgOnClose();
-			IsDeleteButtonVisible = false;
 		}
 		catch (Exception ex)
 		{
@@ -416,9 +414,10 @@ else if (_showingAddModalWindow)
 	{
 		showSuccessMessage = true;
 		successMessageType = SuccessMessageType.Delete;
-		HideDeleteButton();
+		IsDeleteButtonVisible = false;
+		StateHasChanged();
 		await Task.Delay(3000); // Delay for 3 seconds
-
+		HideDeleteButton();
 		CloseSuccessMessage();
 
 	}
