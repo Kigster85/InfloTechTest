@@ -1,35 +1,38 @@
-﻿using NewUserManagement.Server.Data;
+﻿using Microsoft.AspNetCore.Mvc;
+using NewUserManagement.Server.Data;
 using NewUserManagement.Shared.Models;
 
-
-namespace NewUserManagement.Client.Services;
-
-public interface ILoggingService
+namespace NewUserManagement.Server.Controllers
 {
-    Task LogAction(int userId, string action, string details);
-}
-
-public class LoggingService : ILoggingService
-{
-    private readonly AppDBContext _dbContext;
-
-    public LoggingService(AppDBContext dbContext)
+    [ApiController]
+    [Route("api/[controller]")]
+    public class LogEntriesController : ControllerBase
     {
-        _dbContext = dbContext;
-    }
+        private readonly AppDBContext _dbContext;
 
-    public async Task LogAction(int userId, string action, string details)
-    {
-        var logEntry = new LogEntry
+        public LogEntriesController(AppDBContext dbContext)
         {
-            Timestamp = DateTime.UtcNow,
-            UserId = userId,
-            Action = action,
-            Details = details
-        };
+            _dbContext = dbContext;
+        }
 
-        _dbContext.LogEntries.Add(logEntry);
-        await _dbContext.SaveChangesAsync();
+        [HttpPost]
+        public async Task<IActionResult> LogAction(LogEntry logEntry)
+        {
+            try
+            {
+                // Set timestamp to current UTC time
+                logEntry.Timestamp = DateTime.UtcNow;
+
+                // Add log entry to the database
+                _dbContext.LogEntries.Add(logEntry);
+                await _dbContext.SaveChangesAsync();
+
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"An error occurred while logging: {ex.Message}");
+            }
+        }
     }
 }
-

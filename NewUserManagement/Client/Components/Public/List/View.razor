@@ -1,5 +1,6 @@
 ﻿@page "/list/view/{UserId:int}"
 @using NewUserManagement.Client.Services
+@using static NewUserManagement.Client.Services.LoggingClientService
 @using NewUserManagement.Client.Components
 @using NewUserManagement.Shared.Models
 @using NewUserManagement.Client.Components.Public
@@ -16,7 +17,7 @@
 
 			<div class="modal-body">
 				<div class="d-flex justify-content-end p-2">
-				<dt>Id:</dt><span> @UserDetails.Id</span>
+				<strong>Id:</strong><span> @UserDetails.Id</span>
 				</div>
 				<UserForm UserDetails="@UserDetails" ShowInputFields = "false" />
 			</div>
@@ -37,8 +38,9 @@
 	@inject InMemoryDatabaseCache DatabaseCache
 	@inject NavigationManager NavigationManager
 	@inject IJSRuntime JSRuntime
-
-	[Parameter]	public int UserId { get; set; }
+	@inject ILogger<View> Logger // Inject ILogger service
+	@inject LoggingClientService.ILogService logService
+	[Parameter] public int UserId { get; set; }
 
 	private List<User> users = new List<User>();
 	private int _selectedUserId { get; set; }
@@ -48,9 +50,32 @@
 	{
 			// Fetch user details based on the UserId parameter
 		UserDetails = await DatabaseCache.GetUserDetails(UserId) ?? new User();
-
+		await LogUserView(UserId);
 
 	}
+	private async Task LogUserView(int userId)
+	{
+		// Log the view event
+		Logger.LogInformation("User viewed: UserID = {UserID}", userId);
+
+		try
+		{
+			// Increment the view count for the user
+			await DatabaseCache.IncrementUserViewCount(userId);
+
+			// Optionally, you can log the view count for the user
+			int viewCount = DatabaseCache.GetUserViewCount(userId);
+			Logger.LogInformation("View count for user {UserID}: {ViewCount}", userId, viewCount);
+		}
+		catch (Exception ex)
+		{
+			// Handle or log any exceptions that occur during view count increment
+			Logger.LogError(ex, "Error occurred while incrementing view count for user {UserID}: {ErrorMessage}", userId, ex.Message);
+		}
+	}
+
+
+
 
 
 	private async void NextUser()

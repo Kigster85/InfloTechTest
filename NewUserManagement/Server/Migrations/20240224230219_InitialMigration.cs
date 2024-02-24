@@ -22,7 +22,9 @@ namespace NewUserManagement.Server.Migrations
                     Timestamp = table.Column<DateTime>(type: "TEXT", nullable: false),
                     UserId = table.Column<int>(type: "INTEGER", nullable: false),
                     Action = table.Column<string>(type: "TEXT", nullable: true),
-                    Details = table.Column<string>(type: "TEXT", nullable: true)
+                    Details = table.Column<string>(type: "TEXT", nullable: true),
+                    ViewCount = table.Column<int>(type: "INTEGER", nullable: false),
+                    EditCount = table.Column<int>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {

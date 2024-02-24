@@ -1,46 +1,32 @@
 ﻿@* @page "/logs"
-@using NewUserManagement.Models
-@using NewUserManagement.Services
-@inject ILoggingService LoggingService
+@using YourApplication.Services // Update with your service namespace
 
-<h1>Log Entries</h1>
+<h3>Log Entries</h3>
 
-@if (logEntries != null && logEntries.Any())
+@if (LogEntries == null)
 {
-	<table class="table">
-		<thead>
-			<tr>
-				<th>Timestamp</th>
-				<th>User ID</th>
-				<th>Action</th>
-				<th>Details</th>
-			</tr>
-		</thead>
-		<tbody>
-			@foreach (var logEntry in logEntries)
-			{
-				<tr>
-					<td>@logEntry.Timestamp</td>
-					<td>@logEntry.UserId</td>
-					<td>@logEntry.Action</td>
-					<td>@logEntry.Details</td>
-				</tr>
-			}
-		</tbody>
-	</table>
+	<p>Loading...</p>
 }
-else
+else if (LogEntries.Count == 0)
 {
 	<p>No log entries found.</p>
 }
+else
+{
+	<ul>
+		@foreach (var logEntry in LogEntries)
+		{
+			<li>@logEntry.Timestamp - @logEntry.Message</li>
+		}
+	</ul>
+}
 
 @code {
-	private List<LogEntry> logEntries;
+	List<LogEntry> LogEntries { get; set; }
 
 	protected override async Task OnInitializedAsync()
 	{
-		// Retrieve log entries from the database
-		logEntries = await LoggingService.GetLogEntries();
+		// Fetch log entries from the service
+		LogEntries = await LogService.GetLogEntriesAsync();
 	}
-}
- *@
+} *@

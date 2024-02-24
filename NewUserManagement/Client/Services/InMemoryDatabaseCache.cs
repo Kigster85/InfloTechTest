@@ -203,6 +203,32 @@ namespace NewUserManagement.Client.Services
         internal event Action? OnUsersDataChanged;
 
         private void NotifyUsersDataChanged() => OnUsersDataChanged?.Invoke();
-    }
 
+        // Dictionary to store view counts for users
+        private Dictionary<int, int> _userViewCounts = new Dictionary<int, int>();
+
+        // Increment the view count for the specified user ID
+        public Task IncrementUserViewCount(int userId)
+        {
+            if (_userViewCounts.ContainsKey(userId))
+            {
+                _userViewCounts[userId]++;
+            }
+            else
+            {
+                _userViewCounts[userId] = 1; // Initialize view count to 1 for new user
+            }
+
+            return Task.CompletedTask; // Return a completed task
+        }
+
+
+        // Get the view count for the specified user ID
+        public int GetUserViewCount(int userId)
+        {
+            return _userViewCounts.ContainsKey(userId) ? _userViewCounts[userId] : 0;
+        }
+    }
 }
+
+

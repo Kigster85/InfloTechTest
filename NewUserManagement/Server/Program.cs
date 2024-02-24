@@ -1,7 +1,22 @@
 using Microsoft.EntityFrameworkCore;
 using NewUserManagement.Server.Data;
+using Serilog;
+using Serilog.Events;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Configure Serilog
+Log.Logger = new LoggerConfiguration()
+    .MinimumLevel.Debug()
+    .MinimumLevel.Override("Microsoft", LogEventLevel.Information) // Adjust log levels as needed
+    .WriteTo.Console() // Log to the console for development
+    .WriteTo.SQLite("LogEntries.db", restrictedToMinimumLevel: LogEventLevel.Information, storeTimestampInUtc: true) // Log to SQLite database
+    .CreateLogger();
+
+// Replace the default logging configuration with Serilog
+builder.Logging.ClearProviders();
+builder.Logging.AddSerilog(Log.Logger);
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowLocalhost",
@@ -39,7 +54,6 @@ app.UseStaticFiles();
 
 app.UseRouting();
 app.UseCors("AllowLocalhost");
-
 
 app.MapRazorPages();
 
