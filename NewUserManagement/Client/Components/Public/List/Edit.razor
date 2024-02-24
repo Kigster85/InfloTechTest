@@ -142,8 +142,9 @@
 				await DatabaseCache.UpdateUserOnServerAndRefreshCache(HttpClient, UserDetails);
 
 				// Close the modal after a delay
-				await OnEditModalClosed.InvokeAsync();
+				await CloseEditModal();
 				await CloseEditModalSubmit();
+				await OnEditModalClosed.InvokeAsync();
 			}
 			else
 			{
@@ -165,10 +166,9 @@
 		// Reset message states
 		showSuccessMessage = false;
 		showErrorMessage = false;
-
+		await Task.Delay(0);
 		// Close the modal
 		NavigationManager.NavigateTo("/list");
-		await OnModalClosed.InvokeAsync();
 
 	}
 	private async void ShowSuccessMsg()
