@@ -1,0 +1,137 @@
+﻿@page "/list/view/{UserId:int}"
+@using NewUserManagement.Client.Services
+@using NewUserManagement.Client.Components
+@using NewUserManagement.Shared.Models
+@using NewUserManagement.Client.Components.Public
+@using NewUserManagement.Client.Components.Public.List
+@using Microsoft.JSInterop
+
+
+
+<div class="modal @_modalClass" id="informationalModal" tabindex="-1" aria-labelledby="informationalModalLabel" role="dialog" style="display:@_modalDisplay">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title">View User Details</h5>
+				<button @onclick="CloseViewModal" type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+
+			<div class="modal-body">
+				<div class="d-flex justify-content-end p-2">
+				<dt>Id:</dt><span> @UserDetails.Id</span>
+				</div>
+				<UserForm UserDetails="@UserDetails" ShowInputFields = "false" />
+			</div>
+			<div class="modal-footer">
+@* 				<button @onclick="() => EditUser(UserId)" class="btn dropdown-item">Edit</button>
+ *@				<button @onclick="PreviousUser" type="button" class="btn btn-primary shadow">Previous</button>
+				<button @onclick="NextUser" type="button" class="btn btn-primary shadow">Next</button>
+				<button @onclick="CloseViewModal" type="button" class="btn btn-primary shadow" data-bs-dismiss="modal">Close</button>
+			</div>
+		</div>
+	</div>
+</div>
+@if (_showBackdrop == true)
+{
+	<div class="modal-backdrop fade show"></div>
+}
+@code {
+	@inject InMemoryDatabaseCache DatabaseCache
+	@inject NavigationManager NavigationManager
+	@inject IJSRuntime JSRuntime
+
+	[Parameter]	public int UserId { get; set; }
+
+	private List<User> users = new List<User>();
+	private int _selectedUserId { get; set; }
+
+	private User UserDetails { get; set; } = new User(); // Initialize with a default user object
+	protected override async Task OnInitializedAsync()
+	{
+			// Fetch user details based on the UserId parameter
+		UserDetails = await DatabaseCache.GetUserDetails(UserId) ?? new User();
+
+
+	}
+
+
+	private async void NextUser()
+	{
+		int index = DatabaseCache.Users.FindIndex(u => u.Id == UserDetails.Id);
+		if (index != -1)
+		{
+			index++; // Move to the next user
+
+			if (index >= DatabaseCache.Users.Count)
+			{
+				index = 0; // Wrap around to the first user if reached the end
+			}
+			UserDetails = DatabaseCache.Users[index];
+			await updateUrlWithoutNavigation("view", UserDetails.Id);
+		}
+	}
+
+	private async void PreviousUser()
+	{
+		int index = DatabaseCache.Users.FindIndex(u => u.Id == UserDetails.Id);
+		if (index != -1)
+		{
+			index--; // Move to the previous user
+
+			if (index < 0)
+			{
+				index = DatabaseCache.Users.Count - 1; // Wrap around to the last user if reached the beginning
+			}
+			UserDetails = DatabaseCache.Users[index];
+			await updateUrlWithoutNavigation("view", UserDetails.Id);
+		}
+	}
+
+
+
+	[Parameter] public EventCallback ViewModalClickBtnClose { get; set; }
+	[Parameter] public EventCallback OpenEditUser { get; set; }
+
+
+	// private async Task EditUser(int userId)
+	// {
+	// 	await OpenEditUser.InvokeAsync();
+	// 	_selectedUserId = userId;
+	// 	await updateUrlWithoutNavigation("edit", userId);
+	// 	await ViewModalClickBtnClose.InvokeAsync();
+
+	// }
+	private bool ShowInputFields { get; set; }
+	private string? _modalDisplay = null;
+	private string? _modalClass = null;
+	private bool _showBackdrop = false;
+	protected override void OnInitialized() => ShowViewModal();
+
+	private async void ShowViewModal()
+	{
+		_modalDisplay = "block;";
+		_modalClass = "show";
+		_showBackdrop = true;
+		ShowInputFields = false;
+		await Task.Delay(0);
+	}
+
+	private async void CloseViewModal()
+	{
+		_modalDisplay = "none;";
+		_modalClass = string.Empty;
+		_showBackdrop = false;
+		ShowInputFields = true;
+		await ViewModalClickBtnClose.InvokeAsync();
+		NavigationManager.NavigateTo("/list");
+	}
+	private async Task updateUrlWithoutNavigation(string route, int? UserId)
+	{
+		string url = $"/list/{route}/{UserId}";
+		await JSRuntime.InvokeVoidAsync("updateUrlWithoutNavigation", route, UserId);
+
+	}
+
+
+
+}

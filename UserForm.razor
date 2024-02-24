@@ -1,0 +1,95 @@
+﻿@using Microsoft.AspNetCore.Components.Forms
+@using System.ComponentModel.DataAnnotations
+@using NewUserManagement.Shared.Models
+@using System.Threading.Tasks
+
+<!-- UserForm.razor -->
+
+	@if (ShowInputFields == false)
+	{
+		<div class="container">
+
+				<div class ="mb-2 p-2">
+					<dt class="form-label">Forename:</dt>
+					<span class="p-2">@UserDetails.Forename</span>
+				</div>
+				<div class="mb-2 p-2">
+					<dt class="form-label">Surname:</dt>
+					<span class="p-2">@UserDetails.Surname</span>
+				</div>
+				<div class="mb-2 p-2">
+					<dt class="form-label">Email:</dt>
+					<span class="p-2">@UserDetails.Email</span>
+				</div>
+				<div class="mb-2 p-2">
+					<dt class="form-label">Date of Birth:</dt>
+					<span class="p-2">@UserDetails.DateOfBirth</span>
+				</div>
+		</div>
+	}
+	else
+	{
+			<div class="container">
+
+				<EditForm Model="@UserDetails" OnValidSubmit="@HandleSubmit">
+					<DataAnnotationsValidator />
+
+					<ValidationSummary />
+					<div class="mb-2 p-2">
+						<label class="form-label">Forename:</label>
+						<InputText id="forename" class="form-control" @bind-Value="UserDetails.Forename" />
+						<ValidationMessage For="@(() => UserDetails.Forename)" />
+					</div>
+					<div class="mb-2 p-2">
+						<label class="form-label">Surname:</label>
+						<InputText id="surname" class="form-control" @bind-Value="UserDetails.Surname" />
+						<ValidationMessage For="@(() => UserDetails.Surname)" />
+					</div>
+					<div class="mb-2 p-2">
+						<label class="form-label">Email:</label>
+						<InputText id="email" class="form-control" @bind-Value="UserDetails.Email" />
+						<ValidationMessage For="@(() => UserDetails.Email)" />
+					</div>
+					<div class="mb-2 p-2">
+						<label class="form-label">Date of Birth:</label>
+						<InputDate id="dateofbirth" class="form-control" @bind-Value="UserDetails.DateOfBirth" />
+						<ValidationMessage For="@(() => UserDetails.DateOfBirth)" />
+					</div>
+
+					<div class="d-flex justify-content-end">
+						<button type="submit" class="btn btn-success shadow">Submit</button>
+					</div>
+				</EditForm>
+			</div>
+	}
+
+@code {
+	[Parameter]	public bool ShowInputFields { get; set; } = true; // Default to true to show input fields
+	[Parameter] public User UserDetails { get; set; } = new User();
+	[Parameter] public EventCallback<User> OnSubmit { get; set; }
+	[Parameter] public EventCallback OnSuccess { get; set; }
+	[Parameter] public EventCallback OnFailure { get; set; }
+
+	private async Task HandleSubmit()
+	{
+		try
+		{
+			// Perform any necessary form validation or processing
+
+			// Invoke the OnSubmit event callback
+			await OnSubmit.InvokeAsync(UserDetails);
+			Console.WriteLine($"Forename value: {UserDetails.Forename}");
+			Console.WriteLine($"Surname value: {UserDetails.Surname}");
+			Console.WriteLine($"Email value: {UserDetails.Email}");
+			Console.WriteLine($"DOB value: {UserDetails.DateOfBirth}");
+			// If successful, invoke the OnSuccess event callback
+			await OnSuccess.InvokeAsync();
+		}
+		catch (Exception ex)
+		{
+			// If an error occurs, invoke the OnFailure event callback
+			await OnFailure.InvokeAsync(ex.Message);
+		}
+	}
+}
+
