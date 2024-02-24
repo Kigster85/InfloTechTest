@@ -1,0 +1,393 @@
+﻿@page "/list"
+@using Microsoft.EntityFrameworkCore
+@using NewUserManagement.Shared.Models
+@using NewUserManagement.Client.Components.Public
+@using NewUserManagement.Client.Components.Public.List
+@using System.Net.Http.Json
+@using System.Net.Http
+@using NewUserManagement.Client.Services
+@using System.Text
+@using System.Text.Json
+
+<NavBar />
+@if (_showingViewModalWindow)
+{
+	<View ViewModalClickBtnClose="CloseViewModal" UserId="_selectedUserId"  />
+}
+@if (_showingEditModalWindow)
+{
+	<Edit EditModalClickBtnClose="CloseEditModal" UserId="_selectedUserId" OnEditModalClosed="HandleModalClosed" OnModalClosed="SuccessMsgOnClose" />
+}
+@if (_showingAddModalWindow)
+{
+	<Add AddModalClickBtnClose="CloseAddModal" UserId="_selectedUserId" OnAddModalClosed="HandleModalClosed" OnModalClosed="SuccessMsgOnClose" />
+}
+<main class="container min-vh-90 py-nd-5">
+    <h2 class="p-5">User List</h2>
+	@if (showSuccessMessage)
+	{
+		<div class="alert alert-success d-flex justify-content-between" role="alert">
+			<i class="fa-solid fa-circle-check"> </i>
+			User details updated successfully!
+			<button @onclick="CloseSuccessMessage" type="button" class="btn-close" aria-label="Close"></button>
+		</div>
+		Console.WriteLine("Show me this has worked!! ");
+	}
+    <div class="container min-vh-90 py-nd-5 table-responsive">
+
+        <table class="table table-striped">
+            <thead>
+                <tr>
+					<th><input type="checkbox" @bind="IsSelectAllChecked" /></th>
+                    <th>Id</th>
+                    <th>Forename</th>
+                    <th>Surname</th>
+                    <th>Email</th>
+                    <th>Account Active</th>
+                    <th>Date Of Birth</th>
+                    <th style="width: 1px;"></th>
+                </tr>
+            </thead>
+            @if (isLoading)
+            {
+                <Loading />
+            }
+            else
+						{
+                <tbody>
+                    @foreach (var user in DatabaseCache.Users)
+                    {
+                        <tr>
+							<td><input type="checkbox" checked="@IsSelectAllChecked" @onchange="(e) => ToggleSelection(user?.Id ?? 0, e)" /></td>
+
+
+
+														<td>@user.Id</td>
+                            <td>@user.Forename</td>
+                            <td>@user.Surname</td>
+                            <td>@user.Email</td>
+                            <td>@(user.IsActive ? "Yes" : "No")</td>
+                            <td>@user.DateOfBirth.ToShortDateString()</td>
+                            <td>
+                                <div class="dropdown">
+                                    <button type="button" class="btn btn-default dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" id="btnToggleActions">
+                                        Actions
+                                    </button>
+                                    <ul class="dropdown-menu" aria-labelledby="btnToggleActions">
+                                        <li>
+																						<button @onclick="() => ViewUser(user.Id)" class="btn dropdown-item">View</button>
+                                        </li>
+                                        <li>
+                                            <button @onclick="() => EditUser(user.Id)" class="btn dropdown-item">Edit</button>
+                                        </li>
+                                        <li>
+                                            <button @onclick="() => DeleteUser(user.Id)" class="btn dropdown-item">Delete</button>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            }
+        </table>
+		<div class="container py-nd-5">
+			<div class="btn-group" role="group">
+				<button @onclick="FetchAllUsers" class="btn btn-primary">Show All</button>
+				<button @onclick="FetchActiveUsers" class="btn btn-primary">Active Only</button>
+				<button @onclick="FetchInactiveUsers" class="btn btn-primary">Non Active</button>
+
+			</div>
+			@if (IsDeleteButtonVisible)
+			{
+				<button @onclick="DeleteSelected" class="btn btn-primary float-end">Delete User</button>
+			}
+			<button @onclick="AddUser" class="btn btn-primary float-end">Add User</button>
+		</div>
+
+    </div>
+
+
+
+</main>
+<FooterBar />
+
+@code {
+		@inject InMemoryDatabaseCache DatabaseCache
+		@inject HttpClient HttpClient
+		private bool showingActiveUsers = false;
+		private List<User> users = new List<User>();
+    private bool isLoading = true; // Flag to indicate loading state
+    protected override async Task OnInitializedAsync()
+    {
+				await DatabaseCache.GetUsersFromDatabaseAndCache(null);
+				isLoading = false;
+    }
+	private bool IsDeleteButtonVisible { get; set; } = false;
+
+	
+    
+	private async Task FetchAllUsers()
+	{
+		isLoading = true; // Set loading flag to true
+		try
+		{
+			await DatabaseCache.GetUsersFromDatabaseAndCache(null);
+		}
+		catch (Exception)
+		{
+			Console.WriteLine("User Loading from database failed. Please try again or contact a system administrator if the problem persists.");
+		}
+		finally
+		{
+			isLoading = false; // Set loading flag to false when loading completes or fails
+		}
+	}
+
+	private async Task FetchActiveUsers()
+	{
+		try
+		{
+			// Check if active users are currently being displayed
+			if (!showingActiveUsers)
+			{
+				// Fetch all users first
+				await FetchAllUsers();
+				showingActiveUsers = true;
+			}
+
+			// Call the GetActiveUsers method from the cache service with appropriate page and pageSize parameters
+			var activeUsers = await DatabaseCache.GetActiveUsers(DatabaseCache.CurrentPage, 10); // Assuming pageSize is 10
+
+			// Update the list of users displayed in the UI with activeUsers
+			DatabaseCache.Users = activeUsers;
+		}
+		catch (Exception)
+		{
+			// Handle any errors
+		}
+	}
+
+	private async Task FetchInactiveUsers()
+	{
+		try
+		{
+			// Check if inactive users are currently being displayed
+			if (showingActiveUsers)
+			{
+				// Fetch all users first
+				await FetchAllUsers();
+				showingActiveUsers = false;
+			}
+
+			// Call the GetInactiveUsers method from the cache service with appropriate page and pageSize parameters
+			var inactiveUsers = await DatabaseCache.GetInactiveUsers(DatabaseCache.CurrentPage, 10); // Assuming pageSize is 10
+
+			// Update the list of users displayed in the UI with inactiveUsers
+			DatabaseCache.Users = inactiveUsers;
+		}
+		catch (Exception)
+		{
+			// Handle any errors
+		}
+	}
+
+	private async Task DeleteUser(int userId)
+	{
+		try
+		{
+			// Get the user to delete from the cache
+			var userToDelete = await DatabaseCache.GetUserDetails(userId);
+
+			// Check if the user exists
+			if (userToDelete == null)
+			{
+				// Handle case where user is not found
+				Console.WriteLine($"User with ID {userId} not found.");
+				return;
+			}
+
+			// Call the API to delete the user
+			var response = await HttpClient.DeleteAsync($"api/User/{userId}");
+
+			// Check if the request was successful (status code 200)
+			if (response.IsSuccessStatusCode)
+			{
+				// If the deletion was successful, remove the user from the cache
+				await DatabaseCache.RefreshCache(HttpClient);
+				Console.WriteLine($"User with ID {userId} deleted successfully.");
+				await FetchAllUsers();
+			}
+			else
+			{
+				// Handle the case where the server responded with an error status code
+				Console.WriteLine($"Failed to delete user with ID {userId}. Status code: {response.StatusCode}");
+			}
+		}
+		catch (Exception ex)
+		{
+			// Handle any exceptions that occur during the deletion
+			Console.WriteLine($"An error occurred while deleting user with ID {userId}: {ex.Message}");
+		}
+	}
+
+
+	private int _selectedUserId;
+	public bool _showingViewModalWindow = false;
+	public bool _showingEditModalWindow = false;
+	public bool _showingAddModalWindow = false;
+
+	@inject IJSRuntime JSRuntime
+	private async Task updateUrlWithoutNavigation(string route, int? userId)
+	{
+		string url = $"/list/{route}/{userId}";
+		await JSRuntime.InvokeVoidAsync("updateUrlWithoutNavigation", route, userId);
+
+	}
+	private async void ViewUser(int userId)
+	{
+		_showingViewModalWindow = true;
+		_selectedUserId = userId;
+		await updateUrlWithoutNavigation("view", userId);
+	}
+	private async void EditUser(int userId)
+	{
+		_showingEditModalWindow = true; // Show the edit modal
+		_selectedUserId = userId;
+		await updateUrlWithoutNavigation("edit", userId);
+	}
+	private async void AddUser()
+	{
+		_showingAddModalWindow = true; // Show the edit modal
+		await Task.Delay(0);
+	}
+	private void CloseAddModal()
+	{
+		_showingAddModalWindow = false;
+	}
+	private void CloseViewModal()
+	{
+		_showingViewModalWindow = false;
+	}
+	private void CloseEditModal()
+	{
+		_showingEditModalWindow = false;
+	}
+
+	private async Task HandleModalClosed()
+	{
+		// Fetch all users to refresh the user list
+		await FetchAllUsers();
+	}
+
+	public bool showSuccessMessage { get; set; }
+
+	private async Task SuccessMsgOnClose()
+	{
+		// Delay before showing the success message
+		await Task.Delay(0);
+
+		// Display the success message
+		showSuccessMessage = true;
+	}
+	private void CloseSuccessMessage()
+	{
+		// Reset the success message flag
+		showSuccessMessage = false;
+	}
+	private async Task DeleteSelected()
+	{
+		try
+		{
+			// Get the IDs of selected users
+			var selectedUserIds = GetSelectedUserIds();
+			if (selectedUserIds.Count == 0)
+			{
+				// No users selected, display a message or handle it as needed
+				return;
+			}
+
+			// Call the API to delete the selected users
+			var json = JsonSerializer.Serialize(selectedUserIds);
+			var content = new StringContent(json, Encoding.UTF8, "application/json");
+			var response = await HttpClient.PostAsync("api/User/delete-multiple", content);
+			response.EnsureSuccessStatusCode();
+
+			// Remove the deleted users from the cache
+			foreach (var userId in selectedUserIds)
+			{
+				var user = DatabaseCache.Users.FirstOrDefault(u => u.Id == userId);
+				if (user != null)
+				{
+					DatabaseCache.Users.Remove(user);
+				}
+			}
+
+			// Reload the cache to reflect the updated data
+			await DatabaseCache.RefreshCache(HttpClient);
+
+			// Clear the selected user IDs list and hide the delete button
+			SelectedUserIds.Clear();
+			IsDeleteButtonVisible = false;
+		}
+		catch (Exception ex)
+		{
+			// Handle the error, such as displaying an error message
+			Console.WriteLine($"An error occurred while deleting selected users: {ex.Message}");
+		}
+	}
+
+
+
+	// Method to retrieve selected user IDs
+	private List<int> GetSelectedUserIds()
+	{
+		var selectedUserIds = new List<int>();
+
+		// Iterate over the users and check if their IDs are in the selected user IDs list
+		foreach (var user in DatabaseCache.Users)
+		{
+			if (SelectedUserIds.Contains(user.Id))
+			{
+				// If the user ID is in the selected user IDs list, add it to the selectedUserIds list
+				selectedUserIds.Add(user.Id);
+			}
+		}
+
+		return selectedUserIds;
+	}
+	private List<int> SelectedUserIds { get; set; } = new List<int>();
+	private void ToggleSelection(int userId, ChangeEventArgs e)
+	{
+		if (e.Value is bool isChecked && isChecked)
+		{
+			SelectedUserIds.Add(userId); // Add to selected list
+		}
+		else
+		{
+			SelectedUserIds.Remove(userId); // Remove from selected list
+		}
+
+		// Update IsDeleteButtonVisible based on the number of selected users
+		IsDeleteButtonVisible = SelectedUserIds.Count > 0;
+	}
+	private bool IsSelectAllChecked { get; set; }
+
+	// Method to toggle the selection state of all users
+	private void ToggleSelectAll()
+	{
+		// Clear the existing selected user IDs list if the select all checkbox is unchecked
+		if (!IsSelectAllChecked)
+		{
+			SelectedUserIds.Clear();
+			return;
+		}
+
+		// If select all checkbox is checked, add all user IDs to the selected user IDs list
+		SelectedUserIds.Clear();
+		foreach (var user in DatabaseCache.Users)
+		{
+			SelectedUserIds.Add(user.Id);
+		}
+	}
+}

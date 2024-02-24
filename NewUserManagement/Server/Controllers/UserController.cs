@@ -19,12 +19,12 @@ namespace NewUserManagement.Server.Controllers
 
         // GET: api/User
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<UserDTO>>> GetAllUsers(int page, int pageSize)
+        public async Task<ActionResult<IEnumerable<User>>> GetAllUsers(int page, int pageSize)
         {
             var users = await _dbContext.Users
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .Select(u => new UserDTO
+                .Select(u => new User
                 {
                     Id = u.Id,
                     Forename = u.Forename,
@@ -40,13 +40,13 @@ namespace NewUserManagement.Server.Controllers
 
         // GET: api/User/active
         [HttpGet("active")]
-        public async Task<ActionResult<IEnumerable<UserDTO>>> GetActiveUsers(int page, int pageSize)
+        public async Task<ActionResult<IEnumerable<User>>> GetActiveUsers(int page, int pageSize)
         {
             var activeUsers = await _dbContext.Users
                 .Where(u => u.IsActive)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .Select(u => new UserDTO
+                .Select(u => new User
                 {
                     Id = u.Id,
                     Forename = u.Forename,
@@ -62,13 +62,13 @@ namespace NewUserManagement.Server.Controllers
 
         // GET: api/User/inactive
         [HttpGet("inactive")]
-        public async Task<ActionResult<IEnumerable<UserDTO>>> GetInactiveUsers(int page, int pageSize)
+        public async Task<ActionResult<IEnumerable<User>>> GetInactiveUsers(int page, int pageSize)
         {
             var inactiveUsers = await _dbContext.Users
                 .Where(u => !u.IsActive)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .Select(u => new UserDTO
+                .Select(u => new User
                 {
                     Id = u.Id,
                     Forename = u.Forename,
@@ -83,17 +83,17 @@ namespace NewUserManagement.Server.Controllers
         }
 
         // GET: api/User/{Id}
-        [HttpGet("{Id}")]
-        public async Task<ActionResult<UserDTO>> GetUserById([FromRoute] int id)
+        [HttpGet("{userId}")]
+        public async Task<ActionResult<User>> GetUserById([FromRoute] int userId)
         {
-            var user = await _dbContext.Users.FindAsync(id);
+            var user = await _dbContext.Users.FindAsync(userId);
 
             if (user == null)
             {
                 return NotFound();
             }
 
-            var userDTO = new UserDTO
+            var userDTO = new User
             {
                 Id = user.Id,
                 Forename = user.Forename,
@@ -103,18 +103,18 @@ namespace NewUserManagement.Server.Controllers
                 DateOfBirth = user.DateOfBirth
             };
 
-            return Ok(userDTO);
+            return Ok(user);
         }
-        // PUT: api/User/{id}
-        [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateUser(int id, [FromBody] UserDTO userDTO)
+        // PUT: api/User/{userId}
+        [HttpPut("{userId}")]
+        public async Task<IActionResult> UpdateUser(int userId, [FromBody] User userDTO)
         {
-            if (id != userDTO.Id)
+            if (userId != userDTO.Id)
             {
                 return BadRequest();
             }
 
-            var user = await _dbContext.Users.FindAsync(id);
+            var user = await _dbContext.Users.FindAsync(userId);
             if (user == null)
             {
                 return NotFound();
@@ -132,20 +132,16 @@ namespace NewUserManagement.Server.Controllers
 
             return NoContent();
         }
-        // POST: api/User
         [HttpPost]
         public async Task<ActionResult<UserDTO>> AddUser([FromBody] UserDTO userDTO)
         {
-            // Assign a unique ID to the user
-            userDTO.Id = GenerateUniqueId();
-
             // Map UserDTO to User entity
             var user = new User
             {
                 Forename = userDTO.Forename,
                 Surname = userDTO.Surname,
                 Email = userDTO.Email,
-                IsActive = userDTO.IsActive,
+                IsActive = true, // Set IsActive to a default value
                 DateOfBirth = userDTO.DateOfBirth
             };
 
@@ -153,24 +149,65 @@ namespace NewUserManagement.Server.Controllers
             _dbContext.Users.Add(user);
             await _dbContext.SaveChangesAsync();
 
-            // Return the newly added user
-            return CreatedAtAction(nameof(GetUserById), new { id = user.Id }, userDTO);
+            // Instead of CreatedAtAction, return the created user object directly
+            return Ok(userDTO);
         }
 
-        // DELETE: api/User/{id}
-        [HttpDelete("{id}")]
-        public async Task<ActionResult<UserDTO>> DeleteUserById(int id)
+        [HttpDelete("{userId}")]
+        public async Task<IActionResult> DeleteUser(int userId)
         {
-            var user = await _dbContext.Users.FindAsync(id);
-            if (user == null)
+            try
             {
-                return NotFound();
+                // Get the user to delete from the database
+                var userToDelete = await _dbContext.Users.FindAsync(userId);
+
+                // Check if the user exists
+                if (userToDelete == null)
+                {
+                    // User not found, return a not found response
+                    return NotFound();
+                }
+
+                // Remove the user from the database
+                _dbContext.Users.Remove(userToDelete);
+                await _dbContext.SaveChangesAsync();
+
+                // Optionally, you can handle a successful deletion (e.g., return a success response)
+                return Ok();
             }
+            catch (Exception ex)
+            {
+                // Handle any exceptions that occur during the deletion process
+                return StatusCode(500, $"An error occurred while deleting user with ID {userId}: {ex.Message}");
+            }
+        }
 
-            _dbContext.Users.Remove(user);
-            await _dbContext.SaveChangesAsync();
+        // POST: api/User/delete-multiple
+        [HttpPost("delete-multiple")]
+        public async Task<ActionResult> DeleteMultipleUsers(List<int> selectedUserIds)
+        {
+            try
+            {
+                if (selectedUserIds == null || selectedUserIds.Count == 0)
+                {
+                    return BadRequest("No user IDs provided for deletion.");
+                }
 
-            return Ok();
+                var usersToDelete = await _dbContext.Users.Where(u => selectedUserIds.Contains(u.Id)).ToListAsync();
+                if (usersToDelete == null || usersToDelete.Count == 0)
+                {
+                    return NotFound("No users found with the provided IDs.");
+                }
+
+                _dbContext.Users.RemoveRange(usersToDelete);
+                await _dbContext.SaveChangesAsync();
+
+                return Ok();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"An error occurred: {ex.Message}");
+            }
         }
 
         // Helper method to generate a unique ID (you can implement your own logic here)
@@ -181,6 +218,7 @@ namespace NewUserManagement.Server.Controllers
             var maxId = _dbContext.Users.Max(u => u.Id);
             return maxId + 1;
         }
-
     }
+
 }
+
