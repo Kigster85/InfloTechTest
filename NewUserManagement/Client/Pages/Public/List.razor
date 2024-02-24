@@ -16,22 +16,40 @@
 }
 @if (_showingEditModalWindow)
 {
-	<Edit EditModalClickBtnClose="CloseEditModal" UserId="_selectedUserId" OnEditModalClosed="HandleModalClosed" OnModalClosed="SuccessMsgOnClose" />
+	<Edit EditModalClickBtnClose="CloseEditModal" UserId="_selectedUserId" OnEditModalClosed="HandleModalClosed" OnModalClosed="SuccessEditMsgOnClose" />
 }
 @if (_showingAddModalWindow)
 {
-	<Add AddModalClickBtnClose="CloseAddModal" UserId="_selectedUserId" OnAddModalClosed="HandleModalClosed" OnModalClosed="SuccessMsgOnClose" />
+	<Add AddModalClickBtnClose="CloseAddModal" UserId="_selectedUserId" OnAddModalClosed="HandleModalClosed" OnModalClosed="SuccessAddMsgOnClose" />
 }
 <main class="container min-vh-90 py-nd-5">
     <h2 class="p-5">User List</h2>
-	@if (showSuccessMessage)
+	@if (showSuccessMessage == true)
 	{
-		<div class="alert alert-success d-flex justify-content-between" role="alert">
+		<div class="alert alert-success d-flex justify-content-between fade-out" role="alert">
 			<i class="fa-solid fa-circle-check"> </i>
-			User details updated successfully!
+			@{
+				string message = "";
+				switch (successMessageType)
+				{
+					case SuccessMessageType.Edit:
+						message = "Updated User Details Successfully!";
+						break;
+					case SuccessMessageType.Add:
+						message = "Added User Details Successfully!";
+						break;
+					case SuccessMessageType.Delete:
+						message = "Deleted User/s Successfully!";
+						break;
+					default:
+						break;
+				}
+			}
+			<dt>@message</dt>
 			<button @onclick="CloseSuccessMessage" type="button" class="btn-close" aria-label="Close"></button>
 		</div>
-		Console.WriteLine("Show me this has worked!! ");
+		Console.WriteLine(message)
+		;
 	}
     <div class="container min-vh-90 py-nd-5 table-responsive">
 
@@ -217,6 +235,8 @@
 				await DatabaseCache.RefreshCache(HttpClient);
 				Console.WriteLine($"User with ID {userId} deleted successfully.");
 				await FetchAllUsers();
+				await SuccessDeleteMsgOnClose();
+
 			}
 			else
 			{
@@ -230,7 +250,91 @@
 			Console.WriteLine($"An error occurred while deleting user with ID {userId}: {ex.Message}");
 		}
 	}
+	private async Task DeleteSelected()
+	{
+		try
+		{
+			// Get the IDs of selected users
+			var selectedUserIds = GetSelectedUserIds();
+			if (selectedUserIds.Count == 0)
+			{
+				// No users selected, display a message or handle it as needed
+				return;
+			}
 
+			// Call the API to delete the selected users
+			var json = JsonSerializer.Serialize(selectedUserIds);
+			var content = new StringContent(json, Encoding.UTF8, "application/json");
+			var response = await HttpClient.PostAsync("api/User/delete-multiple", content);
+			response.EnsureSuccessStatusCode();
+
+			// Remove the deleted users from the cache
+			foreach (var userId in selectedUserIds)
+			{
+				var user = DatabaseCache.Users.FirstOrDefault(u => u.Id == userId);
+				if (user != null)
+				{
+					DatabaseCache.Users.Remove(user);
+				}
+			}
+
+			// Reload the cache to reflect the updated data
+			await DatabaseCache.RefreshCache(HttpClient);
+
+			// Clear the selected user IDs list and hide the delete button
+			SelectedUserIds.Clear();
+			IsSelectAllChecked = false; // Reset the IsSelectAllChecked property
+			await FetchAllUsers();
+			await SuccessDeleteMsgOnClose();
+			StateHasChanged();
+			IsDeleteButtonVisible = false;
+		}
+		catch (Exception ex)
+		{
+			// Handle the error, such as displaying an error message
+			Console.WriteLine($"An error occurred while deleting selected users: {ex.Message}");
+		}
+	}
+	// Method to retrieve selected user IDs
+	private List<int> GetSelectedUserIds()
+	{
+		return SelectedUserIds.ToList(); // Return a copy of the SelectedUserIds list
+	}
+
+	private List<int> SelectedUserIds { get; set; } = new List<int>();
+	private void ToggleSelection(int userId, ChangeEventArgs e)
+	{
+		if (e.Value is bool isChecked && isChecked)
+		{
+			SelectedUserIds.Add(userId); // Add to selected list
+		}
+		else
+		{
+			SelectedUserIds.Remove(userId); // Remove from selected list
+		}
+
+		// Update IsDeleteButtonVisible based on the number of selected users
+		IsDeleteButtonVisible = SelectedUserIds.Count > 0;
+	}
+	private bool IsSelectAllChecked { get; set; }
+
+	// Method to toggle the selection state of all users
+	private void ToggleSelectAll()
+	{
+		// Clear the existing selected user IDs list if the select all checkbox is unchecked
+		if (!IsSelectAllChecked)
+		{
+			SelectedUserIds.Clear();
+			return;
+		}
+
+		// If select all checkbox is checked, add all user IDs to the selected user IDs list
+		SelectedUserIds.Clear();
+		foreach (var user in DatabaseCache.Users)
+		{
+			SelectedUserIds.Add(user.Id);
+		}
+	}
 
 	private int _selectedUserId;
 	public bool _showingViewModalWindow = false;
@@ -280,114 +384,66 @@
 		await FetchAllUsers();
 	}
 
-	public bool showSuccessMessage { get; set; }
-
-	private async Task SuccessMsgOnClose()
+	public bool showEditSuccessMessage { get; set; }
+	public bool showAddSuccessMessage { get; set; }
+	public bool showDeleteSuccessMessage { get; set; } = false;
+	// Define SuccessMessageType enum
+	enum SuccessMessageType
 	{
-		// Delay before showing the success message
-		await Task.Delay(0);
+		Edit,
+		Add,
+		Delete
+	}
 
-		// Display the success message
+	// Properties
+	private bool showSuccessMessage { get; set; } = false; // Example condition to show the message
+	private SuccessMessageType successMessageType { get; set; }
+	private async Task SuccessEditMsgOnClose()
+	{
 		showSuccessMessage = true;
+		successMessageType = SuccessMessageType.Edit;
+		// Display the success message
+		// Delay before showing the success message
+		await Task.Delay(3000);
+		CloseSuccessMessage();
+
+
+	}
+	private async Task SuccessAddMsgOnClose()
+	{
+		showSuccessMessage = true;
+		successMessageType = SuccessMessageType.Add;
+		// Display the success message
+		// Delay before showing the success message
+		await Task.Delay(3000);
+		CloseSuccessMessage();
+
+	}
+	private async Task SuccessDeleteMsgOnClose()
+	{
+		showSuccessMessage = true;
+		successMessageType = SuccessMessageType.Delete;
+		HideDeleteButton();
+		StateHasChanged(); // Refresh the UI to display the success message
+		await Task.Delay(3000); // Delay for 3 seconds
+
+		CloseSuccessMessage();
+
 	}
 	private void CloseSuccessMessage()
 	{
 		// Reset the success message flag
 		showSuccessMessage = false;
-	}
-	private async Task DeleteSelected()
-	{
-		try
-		{
-			// Get the IDs of selected users
-			var selectedUserIds = GetSelectedUserIds();
-			if (selectedUserIds.Count == 0)
-			{
-				// No users selected, display a message or handle it as needed
-				return;
-			}
 
-			// Call the API to delete the selected users
-			var json = JsonSerializer.Serialize(selectedUserIds);
-			var content = new StringContent(json, Encoding.UTF8, "application/json");
-			var response = await HttpClient.PostAsync("api/User/delete-multiple", content);
-			response.EnsureSuccessStatusCode();
-
-			// Remove the deleted users from the cache
-			foreach (var userId in selectedUserIds)
-			{
-				var user = DatabaseCache.Users.FirstOrDefault(u => u.Id == userId);
-				if (user != null)
-				{
-					DatabaseCache.Users.Remove(user);
-				}
-			}
-
-			// Reload the cache to reflect the updated data
-			await DatabaseCache.RefreshCache(HttpClient);
-
-			// Clear the selected user IDs list and hide the delete button
-			SelectedUserIds.Clear();
-			IsDeleteButtonVisible = false;
-		}
-		catch (Exception ex)
-		{
-			// Handle the error, such as displaying an error message
-			Console.WriteLine($"An error occurred while deleting selected users: {ex.Message}");
-		}
 	}
 
 
-
-	// Method to retrieve selected user IDs
-	private List<int> GetSelectedUserIds()
+	private void HideDeleteButton()
 	{
-		var selectedUserIds = new List<int>();
-
-		// Iterate over the users and check if their IDs are in the selected user IDs list
-		foreach (var user in DatabaseCache.Users)
-		{
-			if (SelectedUserIds.Contains(user.Id))
-			{
-				// If the user ID is in the selected user IDs list, add it to the selectedUserIds list
-				selectedUserIds.Add(user.Id);
-			}
-		}
-
-		return selectedUserIds;
-	}
-	private List<int> SelectedUserIds { get; set; } = new List<int>();
-	private void ToggleSelection(int userId, ChangeEventArgs e)
-	{
-		if (e.Value is bool isChecked && isChecked)
-		{
-			SelectedUserIds.Add(userId); // Add to selected list
-		}
-		else
-		{
-			SelectedUserIds.Remove(userId); // Remove from selected list
-		}
-
-		// Update IsDeleteButtonVisible based on the number of selected users
-		IsDeleteButtonVisible = SelectedUserIds.Count > 0;
-	}
-	private bool IsSelectAllChecked { get; set; }
-
-	// Method to toggle the selection state of all users
-	private void ToggleSelectAll()
-	{
-		// Clear the existing selected user IDs list if the select all checkbox is unchecked
-		if (!IsSelectAllChecked)
-		{
-			SelectedUserIds.Clear();
-			return;
-		}
-
-		// If select all checkbox is checked, add all user IDs to the selected user IDs list
+		// Reset the success message flag
+		IsDeleteButtonVisible = false;
 		SelectedUserIds.Clear();
-		foreach (var user in DatabaseCache.Users)
-		{
-			SelectedUserIds.Add(user.Id);
-		}
+
 	}
+
 }
