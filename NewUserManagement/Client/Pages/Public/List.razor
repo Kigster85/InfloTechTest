@@ -12,16 +12,17 @@
 <NavBar />
 @if (_showingViewModalWindow)
 {
-	<View ViewModalClickBtnClose="CloseViewModal" UserId="_selectedUserId"  />
+	<View ViewModalClickBtnClose="CloseModal" UserId="_selectedUserId" />
 }
-@if (_showingEditModalWindow)
+else if (_showingEditModalWindow)
 {
-	<Edit EditModalClickBtnClose="CloseEditModal" UserId="_selectedUserId" OnEditModalClosed="HandleModalClosed" OnModalClosed="SuccessEditMsgOnClose" />
+	<Edit EditModalClickBtnClose="CloseModal" UserId="_selectedUserId" OnModalClosed="SuccessEditMsgOnClose" OnEditModalClosed="HandleModalClosed" />
 }
-@if (_showingAddModalWindow)
+else if (_showingAddModalWindow)
 {
-	<Add AddModalClickBtnClose="CloseAddModal" UserId="_selectedUserId" OnAddModalClosed="HandleModalClosed" OnModalClosed="SuccessAddMsgOnClose" />
+	<Add AddModalClickBtnClose="CloseModal" UserId="_selectedUserId" OnModalClosed="SuccessAddMsgOnClose" OnAddModalClosed="HandleModalClosed" />
 }
+
 <main class="container min-vh-90 py-nd-5">
     <h2 class="p-5">User List</h2>
 	@if (showSuccessMessage == true)
@@ -116,11 +117,12 @@
 				<button @onclick="FetchInactiveUsers" class="btn btn-primary">Non Active</button>
 
 			</div>
+			<button @onclick="AddUser" class="btn btn-primary float-end">Add User</button>
+
 			@if (IsDeleteButtonVisible)
 			{
 				<button @onclick="DeleteSelected" class="btn btn-primary float-end">Delete User</button>
 			}
-			<button @onclick="AddUser" class="btn btn-primary float-end">Add User</button>
 		</div>
 
     </div>
@@ -280,14 +282,11 @@
 
 			// Reload the cache to reflect the updated data
 			await DatabaseCache.RefreshCache(HttpClient);
-
 			// Clear the selected user IDs list and hide the delete button
 			SelectedUserIds.Clear();
 			IsSelectAllChecked = false; // Reset the IsSelectAllChecked property
 			await FetchAllUsers();
 			await SuccessDeleteMsgOnClose();
-			StateHasChanged();
-			IsDeleteButtonVisible = false;
 		}
 		catch (Exception ex)
 		{
@@ -342,47 +341,39 @@
 	public bool _showingAddModalWindow = false;
 
 	@inject IJSRuntime JSRuntime
-	private async Task updateUrlWithoutNavigation(string route, int? userId)
+	private async Task UpdateUrlWithoutNavigation(string route, int? userId)
 	{
-		string url = $"/list/{route}/{userId}";
-		await JSRuntime.InvokeVoidAsync("updateUrlWithoutNavigation", route, userId);
+		// Construct the URL based on the route and userId
+		string url = userId.HasValue ? $"/list/{route}/{userId}" : $"/list/{route}";
 
+		// Invoke the JavaScript function to update the URL
+		await JSRuntime.InvokeVoidAsync("updateUrlWithoutNavigation", route, userId);
 	}
+
 	private async void ViewUser(int userId)
 	{
 		_showingViewModalWindow = true;
 		_selectedUserId = userId;
-		await updateUrlWithoutNavigation("view", userId);
+		await UpdateUrlWithoutNavigation("view", userId);
 	}
 	private async void EditUser(int userId)
 	{
 		_showingEditModalWindow = true; // Show the edit modal
 		_selectedUserId = userId;
-		await updateUrlWithoutNavigation("edit", userId);
+		await UpdateUrlWithoutNavigation("edit", userId);
 	}
-	private async void AddUser()
+	private void AddUser()
 	{
-		_showingAddModalWindow = true; // Show the edit modal
-		await Task.Delay(0);
+		_showingAddModalWindow = true; // Show the add modal
 	}
-	private void CloseAddModal()
+	private void CloseModal()
 	{
 		_showingAddModalWindow = false;
-	}
-	private void CloseViewModal()
-	{
 		_showingViewModalWindow = false;
-	}
-	private void CloseEditModal()
-	{
 		_showingEditModalWindow = false;
+
 	}
 
-	private async Task HandleModalClosed()
-	{
-		// Fetch all users to refresh the user list
-		await FetchAllUsers();
-	}
 
 	public bool showEditSuccessMessage { get; set; }
 	public bool showAddSuccessMessage { get; set; }
@@ -423,10 +414,10 @@
 	{
 		showSuccessMessage = true;
 		successMessageType = SuccessMessageType.Delete;
-		HideDeleteButton();
-		StateHasChanged(); // Refresh the UI to display the success message
+		IsDeleteButtonVisible = false;
+		StateHasChanged();
 		await Task.Delay(3000); // Delay for 3 seconds
-
+		HideDeleteButton();
 		CloseSuccessMessage();
 
 	}
@@ -434,7 +425,7 @@
 	{
 		// Reset the success message flag
 		showSuccessMessage = false;
-
+		CloseModal();
 	}
 
 
@@ -445,5 +436,9 @@
 		SelectedUserIds.Clear();
 
 	}
-
+	private async Task HandleModalClosed()
+	{
+		// Fetch all users to refresh the user list
+		await FetchAllUsers();
+	}
 }

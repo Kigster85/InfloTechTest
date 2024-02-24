@@ -67,7 +67,7 @@
 				index = 0; // Wrap around to the first user if reached the end
 			}
 			UserDetails = DatabaseCache.Users[index];
-			await updateUrlWithoutNavigation("view", UserDetails.Id);
+			await UpdateUrlWithoutNavigation("view", UserDetails.Id);
 		}
 	}
 
@@ -83,7 +83,7 @@
 				index = DatabaseCache.Users.Count - 1; // Wrap around to the last user if reached the beginning
 			}
 			UserDetails = DatabaseCache.Users[index];
-			await updateUrlWithoutNavigation("view", UserDetails.Id);
+			await UpdateUrlWithoutNavigation("view", UserDetails.Id);
 		}
 	}
 
@@ -125,7 +125,7 @@
 		await ViewModalClickBtnClose.InvokeAsync();
 		NavigationManager.NavigateTo("/list");
 	}
-	private async Task updateUrlWithoutNavigation(string route, int? UserId)
+	private async Task UpdateUrlWithoutNavigation(string route, int? UserId)
 	{
 		string url = $"/list/{route}/{UserId}";
 		await JSRuntime.InvokeVoidAsync("updateUrlWithoutNavigation", route, UserId);
