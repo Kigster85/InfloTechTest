@@ -48,6 +48,7 @@
 	[Parameter] public EventCallback OnModalClosed { get; set; }
 	[Parameter] public EventCallback AddModalClickBtnClose { get; set; }
 	[Parameter] public EventCallback OnAddModalClosed { get; set; }
+	[Parameter] public bool _showingAddModalWindow { get; set; }
 
 	private string? _modalDisplay { get; set;}
 	private string? _modalClass { get; set; }
@@ -62,6 +63,7 @@
 		isLoading = false;
 		// Initialize UserDetails with default values or leave it as an empty object
 		UserDetails = new User();
+		ShowAddModal();
 	}
 	protected override void OnInitialized() => ShowAddModal();
 
@@ -72,16 +74,16 @@
 		_showBackdrop = true;
 		await updateUrlWithoutNavigation("add");
 	}
-	[Parameter] public bool _showingAddModalWindow { get; set; }
 	private async Task CloseAddModal()
 	{
 		_modalDisplay = "none;";
 		_modalClass = string.Empty;
 		_showBackdrop = false;
-
-
 		await Task.Delay(0);
-		NavigationManager.NavigateTo("/list");
+		await AddModalClickBtnClose.InvokeAsync();
+		_showingAddModalWindow = false;
+		await updateUrlWithoutNavigation("");
+
 	}
 	private async Task updateUrlWithoutNavigation(string route)
 	{
@@ -125,7 +127,7 @@
 			{
 				Console.WriteLine("User added successfully!");
 				await DatabaseCache.RefreshCache(HttpClient);
-				await CloseAddModal();
+				await AddModalClickBtnClose.InvokeAsync();
 				await OnAddModalClosed.InvokeAsync();
 
 
