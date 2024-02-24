@@ -89,7 +89,7 @@
 	}
 
 
-	private async void NextUser()
+	private async Task NextUser()
 	{
 		int index = DatabaseCache.Users.FindIndex(u => u.Id == UserDetails.Id);
 		if (index != -1)
@@ -102,10 +102,12 @@
 			}
 			UserDetails = DatabaseCache.Users[index];
 			await UpdateUrlWithoutNavigation("view", UserDetails.Id);
+			// Log the view action for the current user
+			await LogUserView(UserDetails.Id);
 		}
 	}
 
-	private async void PreviousUser()
+	private async Task PreviousUser()
 	{
 		int index = DatabaseCache.Users.FindIndex(u => u.Id == UserDetails.Id);
 		if (index != -1)
@@ -118,6 +120,8 @@
 			}
 			UserDetails = DatabaseCache.Users[index];
 			await UpdateUrlWithoutNavigation("view", UserDetails.Id);
+			await LogUserView(UserDetails.Id);
+
 		}
 	}
 
