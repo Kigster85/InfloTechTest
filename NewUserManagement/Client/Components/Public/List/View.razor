@@ -39,7 +39,7 @@
 	@inject NavigationManager NavigationManager
 	@inject IJSRuntime JSRuntime
 	@inject ILogger<View> Logger // Inject ILogger service
-	@inject LoggingClientService.ILogService logService
+	@inject LoggingClientService.ILogService _logService
 	[Parameter] public int UserId { get; set; }
 
 	private List<User> users = new List<User>();
@@ -66,16 +66,27 @@
 			// Optionally, you can log the view count for the user
 			int viewCount = DatabaseCache.GetUserViewCount(userId);
 			Logger.LogInformation("View count for user {UserID}: {ViewCount}", userId, viewCount);
+
+			// Create a log entry for the user view event
+			var logEntry = new LogEntry
+				{
+					Timestamp = DateTime.UtcNow,
+					UserId = userId,
+					Action = "Viewed",
+					Details = $"User with ID {userId} viewed",
+					ViewCount = viewCount,
+					EditCount = 0 // Assuming edit count is not applicable for view events
+				};
+
+			// Add the log entry to the log service
+			await _logService.AddLogEntryAsync(logEntry);
 		}
 		catch (Exception ex)
 		{
-			// Handle or log any exceptions that occur during view count increment
-			Logger.LogError(ex, "Error occurred while incrementing view count for user {UserID}: {ErrorMessage}", userId, ex.Message);
+			// Handle or log any exceptions that occur during view count increment or logging
+			Logger.LogError(ex, "Error occurred while logging user view event: {ErrorMessage}", ex.Message);
 		}
 	}
-
-
-
 
 
 	private async void NextUser()

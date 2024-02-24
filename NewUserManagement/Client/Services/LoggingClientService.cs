@@ -87,6 +87,7 @@ namespace NewUserManagement.Client.Services
                     throw; // Re-throw the exception to propagate it to the caller
                 }
             }
+
         }
     }
 }

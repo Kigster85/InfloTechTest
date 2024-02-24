@@ -208,7 +208,7 @@ namespace NewUserManagement.Client.Services
         private Dictionary<int, int> _userViewCounts = new Dictionary<int, int>();
 
         // Increment the view count for the specified user ID
-        public Task IncrementUserViewCount(int userId)
+        public async Task IncrementUserViewCount(int userId)
         {
             if (_userViewCounts.ContainsKey(userId))
             {
@@ -219,8 +219,9 @@ namespace NewUserManagement.Client.Services
                 _userViewCounts[userId] = 1; // Initialize view count to 1 for new user
             }
 
-            return Task.CompletedTask; // Return a completed task
+            await Task.CompletedTask; // Await a completed task
         }
+
 
 
         // Get the view count for the specified user ID

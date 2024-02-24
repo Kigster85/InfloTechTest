@@ -16,7 +16,7 @@ namespace NewUserManagement.Server.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> LogAction(LogEntry logEntry)
+        public async Task<IActionResult> LogAction(LogDBEntry logEntry)
         {
             try
             {

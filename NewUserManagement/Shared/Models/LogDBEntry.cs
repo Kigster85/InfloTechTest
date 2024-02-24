@@ -1,5 +1,5 @@
 ﻿namespace NewUserManagement.Shared.Models;
-public class LogEntry
+public class LogDBEntry
 {
     public int Id { get; set; }
     public DateTime Timestamp { get; set; }
