@@ -8,6 +8,8 @@
 @using NewUserManagement.Client.Services
 @using System.Text
 @using System.Text.Json
+@using static NewUserManagement.Client.Services.LoggingClientService
+
 
 <NavBar />
 @if (_showingViewModalWindow)
@@ -135,6 +137,9 @@ else if (_showingAddModalWindow)
 @code {
 		@inject InMemoryDatabaseCache DatabaseCache
 		@inject HttpClient HttpClient
+		@inject ILogger<List> Logger // Inject ILogger service
+		@inject LoggingClientService.ILogService _logService
+
 		private bool showingActiveUsers = false;
 		private List<User> users = new List<User>();
     private bool isLoading = true; // Flag to indicate loading state
@@ -144,6 +149,37 @@ else if (_showingAddModalWindow)
 				isLoading = false;
     }
 	private bool IsDeleteButtonVisible { get; set; } = false;
+	// In your logging service
+
+	// In your logging service
+
+	public async Task LogUserDeletion(int userId, string action, string details)
+	{
+		try
+		{
+			// Create a log entry for the user deletion action
+			var logEntry = new LogEntry
+				{
+					Timestamp = DateTime.UtcNow,
+					UserId = userId,
+					Action = action,
+					Details = details
+				};
+
+			// Call the method to add the log entry
+			await _logService.AddLogEntryAsync(logEntry);
+
+			// Optionally, you can log a message indicating that the user deletion was successfully logged
+			Logger.LogInformation("User deletion logged successfully.");
+		}
+		catch (Exception ex)
+		{
+			// Log or handle any exceptions that occur during user deletion logging
+			Logger.LogError(ex, "Error occurred while logging user deletion: {ErrorMessage}", ex.Message);
+			throw; // Re-throw the exception to propagate it to the caller
+		}
+	}
+
 
 	
     
@@ -233,12 +269,14 @@ else if (_showingAddModalWindow)
 			// Check if the request was successful (status code 200)
 			if (response.IsSuccessStatusCode)
 			{
+				// Log the user deletion with forename and surname included in details
+				await LogUserDeletion(userId, "SingleUserDeletion", $"User with ID {userId}, Forename: {userToDelete.Forename}, Surname: {userToDelete.Surname} deleted successfully.");
+
 				// If the deletion was successful, remove the user from the cache
 				await DatabaseCache.RefreshCache(HttpClient);
 				Console.WriteLine($"User with ID {userId} deleted successfully.");
 				await FetchAllUsers();
 				await SuccessDeleteMsgOnClose();
-
 			}
 			else
 			{
@@ -276,6 +314,7 @@ else if (_showingAddModalWindow)
 				var user = DatabaseCache.Users.FirstOrDefault(u => u.Id == userId);
 				if (user != null)
 				{
+					await LogUserDeletion(userId, "MultipleUserDeletion", $"User with ID {userId}, Forename: {user.Forename}, Surname: {user.Surname} deleted successfully.");
 					DatabaseCache.Users.Remove(user);
 				}
 			}
