@@ -15,7 +15,6 @@ namespace NewUserManagement.Client.Services
         {
             _httpClient = httpClient;
             OnUsersDataChanged += delegate { }; // Initializing with an empty delegate
-            _httpClient.BaseAddress = new Uri("https://localhost:5167"); // Set your API base URL here
         }
 
         private List<User>? _users = null;

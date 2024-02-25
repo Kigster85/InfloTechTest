@@ -166,7 +166,7 @@
 				Console.WriteLine("Request succeeded.");
 
 				// Log the user edit
-				await LogUserEdit(UserId, "User Edited", "User information updated successfully.");
+				await LogUserEdit(UserId, "Edited", "User information updated successfully.");
 				await DatabaseCache.IncrementUserEditCount(UserId);
 				// Show success message
 				// Update the cache with the latest data from the server
