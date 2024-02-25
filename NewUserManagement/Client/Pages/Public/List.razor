@@ -56,7 +56,7 @@ else if (_showingAddModalWindow)
 	}
     <div class="container min-vh-90 py-nd-5 table-responsive">
 
-        <table class="table table-striped">
+		<table class="table table-primary table-bordered table-hover">
             <thead>
                 <tr>
 					<th><input type="checkbox" @bind="IsSelectAllChecked" /></th>
@@ -78,11 +78,8 @@ else if (_showingAddModalWindow)
                 <tbody>
                     @foreach (var user in DatabaseCache.Users)
                     {
-                        <tr>
-							<td><input type="checkbox" checked="@IsSelectAllChecked" @onchange="(e) => ToggleSelection(user?.Id ?? 0, e)" /></td>
-
-
-
+												<tr class="pointer" @onclick="@(e => ViewUser(user.Id))">
+														<td><input type="checkbox" checked="@IsSelectAllChecked" @onchange="(e) => ToggleSelection(user?.Id ?? 0, e)" /></td>
 														<td>@user.Id</td>
                             <td>@user.Forename</td>
                             <td>@user.Surname</td>

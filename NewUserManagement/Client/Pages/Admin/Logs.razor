@@ -16,17 +16,15 @@ else if (LogEntries.Count == 0)
 	<p>No log entries found.</p>
 }
 else
-		{ 
-			<table class="table table-striped">
+		{
+			<table class="table table-primary table-bordered table-hover">
 				<thead>
 					<tr>
 						<th>Id</th>
 						<th>Time</th>
 						<th>UserId</th>
 						<th>Action</th>
-						<th>Details</th>
-						<th>ViewCount</th>
-						<th>EditCount</th>
+						<th></th>
 					</tr>
 				</thead>
 				@if (isLoading)
@@ -38,15 +36,15 @@ else
 					<tbody>
 						@foreach (var logEntry in LogEntries)
 						{
-							<tr>
+
+							<tr class="pointer" @onclick="@(e => NavigateToDetails(logEntry.Id))">
 								<td>@logEntry.Timestamp</td>
 								<td>@logEntry.Id</td>
 								<td>@logEntry.UserId</td>
 								<td>@logEntry.Action</td>
-								<td>@logEntry.Details</td>
-								<td>@logEntry.ViewCount</td>
-								<td>@logEntry.EditCount</td>
+								<td><button class="btn btn-dark">More Info</button></td>
 							</tr>
+							
 						}
 					</tbody>
 				}
@@ -62,6 +60,7 @@ else
 	@inject LoggingClientService.ILogService _logService
 	@inject HttpClient httpClient
 	@inject LoggingService _loggingService
+	@inject NavigationManager NavigationManager
 
 
 	private bool isLoading = true; // Flag to indicate loading state
@@ -85,5 +84,10 @@ else
 			Logger.LogError(ex, "Error fetching log entries");
 			// Handle error (e.g., display error message)
 		}
+	}
+
+	private void NavigateToDetails(int logEntryId)
+	{
+		NavigationManager.NavigateTo($"/details/{logEntryId}");
 	}
 }

@@ -23,7 +23,9 @@ body {
 .btn {
     border-radius: 10px;
 }
-
+.pointer {
+    cursor: pointer;
+}
 .btns {
     border-radius: 0px;
 }
