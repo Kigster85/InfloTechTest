@@ -2,9 +2,9 @@
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using NewUserManagement.Shared.Models;
 
-public class LogEntryConfiguration : IEntityTypeConfiguration<LogEntry>
+public class LogEntryConfiguration : IEntityTypeConfiguration<LogDBEntry>
 {
-    public void Configure(EntityTypeBuilder<LogEntry> builder)
+    public void Configure(EntityTypeBuilder<LogDBEntry> builder)
     {
         builder.ToTable("LogEntries"); // Set table name
         builder.HasKey(e => e.Id);      // Set primary key

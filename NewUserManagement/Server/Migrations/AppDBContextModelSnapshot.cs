@@ -29,10 +29,16 @@ namespace NewUserManagement.Server.Migrations
                     b.Property<string>("Details")
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("EditCount")
+                        .HasColumnType("INTEGER");
+
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("TEXT");
 
                     b.Property<int>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ViewCount")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");

@@ -11,7 +11,7 @@ using NewUserManagement.Server.Data;
 namespace NewUserManagement.Server.Migrations
 {
     [DbContext(typeof(AppDBContext))]
-    [Migration("20240224201418_InitialMigration")]
+    [Migration("20240224230219_InitialMigration")]
     partial class InitialMigration
     {
         /// <inheritdoc />
@@ -32,10 +32,16 @@ namespace NewUserManagement.Server.Migrations
                     b.Property<string>("Details")
                         .HasColumnType("TEXT");
 
+                    b.Property<int>("EditCount")
+                        .HasColumnType("INTEGER");
+
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("TEXT");
 
                     b.Property<int>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("ViewCount")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");

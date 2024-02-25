@@ -45,7 +45,7 @@ public class AppDBContext : DbContext
     }
 
     public DbSet<User> Users { get; set; }
-    public DbSet<LogEntry> LogEntries { get; set; }
+    public DbSet<LogDBEntry> LogEntries { get; set; }
 
     public IQueryable<TEntity> GetAll<TEntity>() where TEntity : class
     {

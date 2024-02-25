@@ -1,12 +1,13 @@
 ﻿@page "/list/view/{UserId:int}"
 @using NewUserManagement.Client.Services
+@using static NewUserManagement.Client.Services.LoggingClientService
 @using NewUserManagement.Client.Components
 @using NewUserManagement.Shared.Models
 @using NewUserManagement.Client.Components.Public
 @using NewUserManagement.Client.Components.Public.List
 @using Microsoft.JSInterop
 
-<div class="modal @_modalClass" id="informationalModal" tabindex="-1" aria-labelledby="informationalModalLabel" role="dialog" style="display:@_modalDisplay">
+<div class="modal @(_modalClass)" id="informationalModal" tabindex="-1" aria-labelledby="informationalModalLabel" role="dialog" style="display:@_modalDisplay">
 	<div class="modal-dialog" role="document">
 		<div class="modal-content">
 			<div class="modal-header">
@@ -16,7 +17,7 @@
 
 			<div class="modal-body">
 				<div class="d-flex justify-content-end p-2">
-				<dt>Id:</dt><span> @UserDetails.Id</span>
+				<strong>Id:</strong><span> @UserDetails.Id</span>
 				</div>
 				<UserForm UserDetails="@UserDetails" ShowInputFields = "false" />
 			</div>
@@ -37,8 +38,9 @@
 	@inject InMemoryDatabaseCache DatabaseCache
 	@inject NavigationManager NavigationManager
 	@inject IJSRuntime JSRuntime
-
-	[Parameter]	public int UserId { get; set; }
+	@inject ILogger<View> Logger // Inject ILogger service
+	@inject LoggingClientService.ILogService _logService
+	[Parameter] public int UserId { get; set; }
 
 	private List<User> users = new List<User>();
 	private int _selectedUserId { get; set; }
@@ -48,12 +50,46 @@
 	{
 			// Fetch user details based on the UserId parameter
 		UserDetails = await DatabaseCache.GetUserDetails(UserId) ?? new User();
+		await LogUserView(UserId);
 
+	}
+	private async Task LogUserView(int userId)
+	{
+		// Log the view event
+		Logger.LogInformation("User viewed: UserID = {UserID}", userId);
 
+		try
+		{
+			// Increment the view count for the user
+			await DatabaseCache.IncrementUserViewCount(userId);
+
+			// Optionally, you can log the view count for the user
+			int viewCount = DatabaseCache.GetUserViewCount(userId);
+			Logger.LogInformation("View count for user {UserID}: {ViewCount}", userId, viewCount);
+
+			// Create a log entry for the user view event
+			var logEntry = new LogEntry
+				{
+					Timestamp = DateTime.UtcNow,
+					UserId = userId,
+					Action = "Viewed",
+					Details = $"User with ID {userId} viewed",
+					ViewCount = viewCount,
+					EditCount = 0 // Assuming edit count is not applicable for view events
+				};
+
+			// Add the log entry to the log service
+			await _logService.AddLogEntryAsync(logEntry);
+		}
+		catch (Exception ex)
+		{
+			// Handle or log any exceptions that occur during view count increment or logging
+			Logger.LogError(ex, "Error occurred while logging user view event: {ErrorMessage}", ex.Message);
+		}
 	}
 
 
-	private async void NextUser()
+	private async Task NextUser()
 	{
 		int index = DatabaseCache.Users.FindIndex(u => u.Id == UserDetails.Id);
 		if (index != -1)
@@ -66,10 +102,12 @@
 			}
 			UserDetails = DatabaseCache.Users[index];
 			await UpdateUrlWithoutNavigation("view", UserDetails.Id);
+			// Log the view action for the current user
+			await LogUserView(UserDetails.Id);
 		}
 	}
 
-	private async void PreviousUser()
+	private async Task PreviousUser()
 	{
 		int index = DatabaseCache.Users.FindIndex(u => u.Id == UserDetails.Id);
 		if (index != -1)
@@ -82,6 +120,8 @@
 			}
 			UserDetails = DatabaseCache.Users[index];
 			await UpdateUrlWithoutNavigation("view", UserDetails.Id);
+			await LogUserView(UserDetails.Id);
+
 		}
 	}
 
