@@ -7,6 +7,8 @@
 @using NewUserManagement.Client.Components.Public
 @using Microsoft.JSInterop
 @using System.ComponentModel.DataAnnotations
+@using static NewUserManagement.Client.Services.LoggingClientService
+
 
 
 <div class="modal @(_modalClass)" id="informationalModal" tabindex="-1" aria-labelledby="informationalModalLabel" role="dialog" style="display:@_modalDisplay">
@@ -42,6 +44,9 @@
 	@inject NavigationManager NavigationManager
 	@inject IJSRuntime JSRuntime
 	@inject HttpClient HttpClient
+	@inject ILogger<Add> Logger // Inject ILogger service
+	@inject LoggingClientService.ILogService _logService
+
 	public bool showSuccessMessage = false;
 	public bool showErrorMessage = false;
 	[Parameter] public int UserId { get; set; }
@@ -63,8 +68,34 @@
 		isLoading = false;
 		// Initialize UserDetails with default values or leave it as an empty object
 		UserDetails = new User();
-		ShowAddModal();
 	}
+	public async Task LogUserCreation(int userId, string action, string details)
+	{
+		try
+		{
+			// Create a log entry for the user creation action
+			var logEntry = new LogEntry
+				{
+					Timestamp = DateTime.UtcNow,
+					UserId = userId,
+					Action = action,
+					Details = details
+				};
+
+			// Call the method to add the log entry
+			await _logService.AddLogEntryAsync(logEntry);
+
+			// Optionally, you can log a message indicating that the user creation was successfully logged
+			Logger.LogInformation("User creation logged successfully.");
+		}
+		catch (Exception ex)
+		{
+			// Log or handle any exceptions that occur during user creation logging
+			Logger.LogError(ex, "Error occurred while logging user creation: {ErrorMessage}", ex.Message);
+			throw; // Re-throw the exception to propagate it to the caller
+		}
+	}
+
 	protected override void OnInitialized() => ShowAddModal();
 
 	private async void ShowAddModal()
@@ -126,18 +157,31 @@
 			if (response.IsSuccessStatusCode)
 			{
 				Console.WriteLine("User added successfully!");
-				await DatabaseCache.RefreshCache(HttpClient);
 				await AddModalClickBtnClose.InvokeAsync();
 				await OnAddModalClosed.InvokeAsync();
+				// Retrieve the UserId from the refreshed cache
+				// Fetch the last user from the database
+				var lastUser = DatabaseCache.Users.LastOrDefault();
 
+				// Check if a user was found
+				if (lastUser != null)
+				{
+					// Obtain the UserId of the last user
+					int userId = lastUser.Id;
 
-
+					// Now you can use the userId for logging or other operations
+					await LogUserCreation(userId, "UserAdded", $"User {lastUser.Forename} {lastUser.Surname} successfully added to the database.");
+				}
+				else
+				{
+					Console.WriteLine("Failed to retrieve added user from cache.");
+					ShowFailureMsg();
+				}
 			}
 			else
 			{
 				Console.WriteLine("Failed to add user. Please try again.");
 				ShowFailureMsg();
-				// Handle the case where adding user fails (e.g., show an error message)
 			}
 		}
 	}
