@@ -79,14 +79,14 @@ else if (_showingAddModalWindow)
 										{
                     @foreach (var user in DatabaseCache.Users)
                     {
-												<tr class="pointer" @onclick="@(e => ViewUser(user.Id))">
-														<td><input type="checkbox" checked="@IsSelectAllChecked" @onchange="(e) => ToggleSelection(user?.Id ?? 0, e)" /></td>
-														<td>@user.Id</td>
-                            <td>@user.Forename</td>
-                            <td>@user.Surname</td>
-                            <td>@user.Email</td>
-                            <td>@(user.IsActive ? "Yes" : "No")</td>
-                            <td>@user.DateOfBirth.ToShortDateString()</td>
+												<tr class="pointer" >
+														<td @onclick="@(e => ViewUser(user.Id))"><input type="checkbox" checked="@IsSelectAllChecked" @onchange="(e) => ToggleSelection(user?.Id ?? 0, e)" /></td>
+														<td @onclick="@(e => ViewUser(user.Id))">@user.Id</td>
+														<td @onclick="@(e => ViewUser(user.Id))">@user.Forename</td>
+														<td @onclick="@(e => ViewUser(user.Id))">@user.Surname</td>
+														<td @onclick="@(e => ViewUser(user.Id))">@user.Email</td>
+														<td @onclick="@(e => ViewUser(user.Id))">@(user.IsActive ? "Yes" : "No")</td>
+														<td @onclick="@(e => ViewUser(user.Id))">@user.DateOfBirth.ToShortDateString()</td>
                             <td>
                                 <div class="dropdown">
                                     <button type="button" class="btn btn-default dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" id="btnToggleActions">
