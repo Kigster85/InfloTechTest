@@ -5,10 +5,11 @@
 @using NewUserManagement.Shared.Models
 @using NewUserManagement.Client.Components.Public
 @using Microsoft.JSInterop
+@using static NewUserManagement.Client.Services.LoggingClientService
 
 
 
-<div class="modal @_modalClass" id="informationalModal" tabindex="-1" aria-labelledby="informationalModalLabel" role="dialog" style="display:@_modalDisplay">
+<div class="modal @(_modalClass)" id="informationalModal" tabindex="-1" aria-labelledby="informationalModalLabel" role="dialog" style="display:@_modalDisplay">
 	<div class="modal-dialog" role="document">
 		<div class="modal-content">
 			<div class="modal-header">
@@ -25,11 +26,10 @@
 						</div>
 					}
 				
-
 			</div>
 			<div class="modal-footer">
-				<button @onclick="PreviousUser" type="button" class="btn btn-primary shadow">Previous</button>
-				<button @onclick="NextUser" type="button" class="btn btn-primary shadow">Next</button>
+@* 				<button @onclick="PreviousUser" type="button" class="btn btn-primary shadow">Previous</button>
+				<button @onclick="NextUser" type="button" class="btn btn-primary shadow">Next</button> *@
 				<button @onclick="CloseEditModal" type="button" class="btn btn-primary shadow" data-bs-dismiss="modal">Close</button>
 			</div>
 		</div>
@@ -44,6 +44,8 @@
 	@inject NavigationManager NavigationManager
 	@inject IJSRuntime JSRuntime
 	@inject HttpClient HttpClient
+	@inject ILogger<View> Logger // Inject ILogger service
+	@inject LoggingClientService.ILogService _logService
 	public bool showSuccessMessage = false;
 	public bool showErrorMessage = false;
 	[Parameter] public int UserId { get; set; }
@@ -63,38 +65,62 @@
 		UserDetails = await DatabaseCache.GetUserDetails(UserId) ?? new User();
 	}
 
-
-	private async void NextUser()
+	public async Task LogUserEdit(int userId, string action, string details)
 	{
-		int index = DatabaseCache.Users.FindIndex(u => u.Id == UserDetails.Id);
-		if (index != -1)
+		try
 		{
-			index++; // Move to the next user
+			var logEntry = new LogEntry
+				{
+					Timestamp = DateTime.UtcNow,
+					UserId = userId,
+					Action = action,
+					Details = details
+				};
 
-			if (index >= DatabaseCache.Users.Count)
-			{
-				index = 0; // Wrap around to the first user if reached the end
-			}
-			UserDetails = DatabaseCache.Users[index];
-			await updateUrlWithoutNavigation("edit", UserDetails.Id);
+			// Call the method to add the log entry
+			await _logService.AddLogEntryAsync(logEntry);
+
+			// Optionally, you can log a message indicating that the user edit was successfully logged
+			Logger.LogInformation("User edit logged successfully.");
+		}
+		catch (Exception ex)
+		{
+			// Log or handle any exceptions that occur during user edit logging
+			Logger.LogError(ex, "Error occurred while logging user edit: {ErrorMessage}", ex.Message);
+			throw; // Re-throw the exception to propagate it to the caller
 		}
 	}
+	// private async void NextUser()
+	// {
+	// 	int index = DatabaseCache.Users.FindIndex(u => u.Id == UserDetails.Id);
+	// 	if (index != -1)
+	// 	{
+	// 		index++; // Move to the next user
 
-	private async void PreviousUser()
-	{
-		int index = DatabaseCache.Users.FindIndex(u => u.Id == UserDetails.Id);
-		if (index != -1)
-		{
-			index--; // Move to the previous user
+	// 		if (index >= DatabaseCache.Users.Count)
+	// 		{
+	// 			index = 0; // Wrap around to the first user if reached the end
+	// 		}
+	// 		UserDetails = DatabaseCache.Users[index];
+	// 		await updateUrlWithoutNavigation("edit", UserDetails.Id);
+	// 	}
+	// }
 
-			if (index < 0)
-			{
-				index = DatabaseCache.Users.Count - 1; // Wrap around to the last user if reached the beginning
-			}
-			UserDetails = DatabaseCache.Users[index];
-			await updateUrlWithoutNavigation("edit", UserDetails.Id);
-		}
-	}
+	// private async void PreviousUser()
+	// {
+	// 	int index = DatabaseCache.Users.FindIndex(u => u.Id == UserDetails.Id);
+	// 	if (index != -1)
+	// 	{
+	// 		index--; // Move to the previous user
+
+	// 		if (index < 0)
+	// 		{
+	// 			index = DatabaseCache.Users.Count - 1; // Wrap around to the last user if reached the beginning
+	// 		}
+	// 		UserDetails = DatabaseCache.Users[index];
+	// 		await updateUrlWithoutNavigation("edit", UserDetails.Id);
+	// 	}
+	// }
 	protected override void OnInitialized() => ShowEditModal();
 
 	private async void ShowEditModal()
@@ -134,10 +160,12 @@
 
 			if (response.IsSuccessStatusCode)
 			{
-
 				Console.WriteLine("Request succeeded.");
-				// Show success message
 
+				// Log the user edit
+				await LogUserEdit(UserId, "User Edited", "User information updated successfully.");
+
+				// Show success message
 				// Update the cache with the latest data from the server
 				Console.WriteLine("Refreshing cache...");
 				await DatabaseCache.UpdateUserOnServerAndRefreshCache(HttpClient, UserDetails);
@@ -146,7 +174,6 @@
 				await CloseEditModalSubmit();
 				await EditModalClickBtnClose.InvokeAsync();
 				await OnEditModalClosed.InvokeAsync();
-
 			}
 			else
 			{
@@ -162,6 +189,7 @@
 			showErrorMessage = true;
 		}
 	}
+
 
 	private async Task CloseEditModalSubmit()
 	{
