@@ -229,7 +229,33 @@ namespace NewUserManagement.Client.Services
         {
             return _userViewCounts.ContainsKey(userId) ? _userViewCounts[userId] : 0;
         }
+
+        // Dictionary to store edit counts for users
+        private Dictionary<int, int> _userEditCounts = new Dictionary<int, int>();
+
+        // Increment the edit count for the specified user ID
+        public async Task IncrementUserEditCount(int userId)
+        {
+            if (_userEditCounts.ContainsKey(userId))
+            {
+                _userEditCounts[userId]++;
+            }
+            else
+            {
+                _userEditCounts[userId] = 1; // Initialize view count to 1 for new user
+            }
+
+            await Task.CompletedTask; // Await a completed task
+        }
+
+        // Get the edit count for the specified user ID
+        public int GetUserEditCount(int userId)
+        {
+            return _userEditCounts.ContainsKey(userId) ? _userEditCounts[userId] : 0;
+        }
     }
 }
+
+
 
 
