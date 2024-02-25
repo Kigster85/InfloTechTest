@@ -25,6 +25,11 @@
                 </a>
             </li>
 						<li class="nav-item">
+						<a href="@LogsUri" role="button" class=" mx-5 md-and-smaller-my-3 @(IsPageActive(LogsUri) ? "active" : string.Empty)">
+								Logs
+						</a>
+						</li>
+						<li class="nav-item">
 								<a href="@SignInUri" role="button" class=" mx-5 md-and-smaller-my-3 @(IsPageActive(SignInUri) ? "active" : string.Empty)">
                     Sign In
                 </a>
@@ -44,6 +49,7 @@
 
 	private const string HomePageUri = "/";
   private const string ListUri = "/list";
+	private const string LogsUri = "/Logs";
 	private const string SignInUri = "/login";
 
 

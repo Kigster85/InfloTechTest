@@ -6,6 +6,9 @@ using NewUserManagement.Client.Services;
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
 builder.Services.AddBlazoredLocalStorage();
+builder.Services.AddScoped<LoggingService>();
+builder.Services.AddScoped<LoggingCache>();
+
 // Register the LoggingClientService and its implementation
 builder.Services.AddScoped<LoggingClientService.ILogService, LoggingClientService.LogService>();
 // Register HttpClient with a base address
