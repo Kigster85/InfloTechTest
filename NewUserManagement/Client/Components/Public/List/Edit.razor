@@ -69,14 +69,17 @@
 	{
 		try
 		{
+			// Increment the edit count for the user
+			int editCount = DatabaseCache.GetUserEditCount(userId);
 			var logEntry = new LogEntry
 				{
 					Timestamp = DateTime.UtcNow,
 					UserId = userId,
-					Action = action,
-					Details = details
+					Action = "Edited",
+					Details = $"User {userId} was Edited",
+					ViewCount = 0,
+					EditCount = editCount // Assuming edit count is not applicable for view events
 				};
-
 			// Call the method to add the log entry
 			await _logService.AddLogEntryAsync(logEntry);
 
@@ -164,7 +167,7 @@
 
 				// Log the user edit
 				await LogUserEdit(UserId, "User Edited", "User information updated successfully.");
-
+				await DatabaseCache.IncrementUserEditCount(UserId);
 				// Show success message
 				// Update the cache with the latest data from the server
 				Console.WriteLine("Refreshing cache...");
