@@ -1,8 +1,27 @@
 ﻿window.updateUrlWithoutNavigation = function (route, userId) {
-    // Construct the URL based on the route and userId
-    var url = userId !== undefined ? `/list/${route}/${userId}` : `/list/${route}`;
+    // Get the current pathname
+    var pathname = window.location.pathname;
+
+    // Check if the pathname contains "/logs/" or "/list/"
+    var logsIndex = pathname.indexOf("/logs/");
+    var listIndex = pathname.indexOf("/list/");
+
+    // Determine the base path
+    var basePath = "";
+    if (logsIndex !== -1) {
+        basePath = "/logs/";
+    } else if (listIndex !== -1) {
+        basePath = "/list/";
+    }
+
+    // Construct the URL based on the base path and route
+    var url = `${basePath}${route}`;
+
+    // If userId is provided, append it to the URL
+    if (userId !== undefined) {
+        url += `/${userId}`;
+    }
 
     // Update the URL without causing navigation
     history.replaceState({}, "", url);
 };
-
