@@ -80,7 +80,7 @@ else if (_showingAddModalWindow)
                     @foreach (var user in DatabaseCache.Users)
                     {
 												<tr class="pointer" >
-														<td @onclick="@(e => ViewUser(user.Id))"><input type="checkbox" checked="@IsSelectAllChecked" @onchange="(e) => ToggleSelection(user?.Id ?? 0, e)" /></td>
+														<td><input type="checkbox" checked="@IsSelectAllChecked" @onchange="(e) => ToggleSelection(user?.Id ?? 0, e)" /></td>
 														<td @onclick="@(e => ViewUser(user.Id))">@user.Id</td>
 														<td @onclick="@(e => ViewUser(user.Id))">@user.Forename</td>
 														<td @onclick="@(e => ViewUser(user.Id))">@user.Surname</td>

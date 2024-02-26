@@ -16,22 +16,22 @@
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
 		<ul class="nav">
 						<li class="nav-item">
-								<a href="@HomePageUri" role="button" class="nav-link mx-5 md-and-smaller-my-3 @(IsPageActive(HomePageUri) ? "active" : string.Empty)">
+				<a href="@HomePageUri" role="button" class="btn nav-link @(IsPageActive(HomePageUri) ? "active" : string.Empty)">
                     Home
                 </a>
             </li>
 						<li class="nav-item">
-                <a href="@ListUri" role="button" class="nav-link mx-5 md-and-smaller-my-3 @(IsPageActive(ListUri) ? "active" : string.Empty)">
+				<a href="@ListUri" role="button" class="btn nav-link @(IsPageActive(ListUri) ? "active" : string.Empty)">
                     List
                 </a>
             </li>
 						<li class="nav-item">
-				<a href="@LogsUri" role="button" class="nav-link mx-5 md-and-smaller-my-3 @(IsPageActive(LogsUri) ? "active" : string.Empty)">
+				<a href="@LogsUri" role="button" class="btn nav-link @(IsPageActive(LogsUri) ? "active" : string.Empty)">
 								Logs
 						</a>
 						</li>
 						<li class="nav-item">
-				<a href="@SignInUri" role="button" class="nav-link mx-5 md-and-smaller-my-3 @(IsPageActive(SignInUri) ? "active" : string.Empty)">
+				<a href="@SignInUri" role="button" class="btn nav-link @(IsPageActive(SignInUri) ? "active" : string.Empty)">
                     Sign In
                 </a>
             </li>
