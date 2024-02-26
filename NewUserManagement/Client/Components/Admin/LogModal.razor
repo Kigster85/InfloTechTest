@@ -1,4 +1,4 @@
-﻿@page "/list/view/{UserId:int}"
+﻿@* @page "/Log/View/"
 @using NewUserManagement.Client.Services
 @using static NewUserManagement.Client.Services.LoggingClientService
 @using NewUserManagement.Client.Components
@@ -8,8 +8,8 @@
 @using Microsoft.JSInterop
 
 <div class="modal @(_modalClass)" id="informationalModal" tabindex="-1" aria-labelledby="informationalModalLabel" role="dialog" style="display:@_modalDisplay">
-	<div class="modal-dialog " role="document">
-		<div class="modal-content bg-dark ">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
 			<div class="modal-header">
 				<h5 class="modal-title">View User Details</h5>
 				<button @onclick="CloseViewModal" type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -17,13 +17,12 @@
 
 			<div class="modal-body">
 				<div class="d-flex justify-content-end p-2">
-				<strong>Id:</strong><span> @UserDetails.Id</span>
+					<strong>Id:</strong><span> @UserDetails.Id</span>
 				</div>
-				<UserForm UserDetails="@UserDetails" ShowInputFields = "false" />
+				<UserForm UserDetails="@UserDetails" ShowInputFields="false" />
 			</div>
 			<div class="modal-footer">
-@* 				<button @onclick="() => EditUser(UserId)" class="btn dropdown-item">Edit</button>
- *@				<button @onclick="PreviousUser" type="button" class="btn btn-primary shadow">Previous</button>
+								<button @onclick="PreviousUser" type="button" class="btn btn-primary shadow">Previous</button>
 				<button @onclick="NextUser" type="button" class="btn btn-primary shadow">Next</button>
 				<button @onclick="CloseViewModal" type="button" class="btn btn-primary shadow" data-bs-dismiss="modal">Close</button>
 			</div>
@@ -48,7 +47,7 @@
 	private User UserDetails { get; set; } = new User(); // Initialize with a default user object
 	protected override async Task OnInitializedAsync()
 	{
-			// Fetch user details based on the UserId parameter
+		// Fetch user details based on the UserId parameter
 		UserDetails = await DatabaseCache.GetUserDetails(UserId) ?? new User();
 		await LogUserView(UserId);
 
@@ -173,3 +172,4 @@
 
 
 }
+ *@

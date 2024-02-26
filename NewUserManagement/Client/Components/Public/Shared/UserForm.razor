@@ -7,7 +7,7 @@
 
 	@if (ShowInputFields == false)
 	{
-		<div class="container">
+	<div class="container bg-dark">
 
 				<div class ="mb-2 p-2">
 					<strong class="form-label">Forename:</strong>
@@ -29,7 +29,7 @@
 	}
 	else
 	{
-			<div class="container">
+			<div class="container bg-dark">
 
 				<EditForm Model="@UserDetails" OnValidSubmit="@HandleSubmit">
 					<DataAnnotationsValidator />

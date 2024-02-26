@@ -25,7 +25,7 @@ else if (_showingAddModalWindow)
 	<Add AddModalClickBtnClose="CloseModal" UserId="_selectedUserId" OnModalClosed="SuccessAddMsgOnClose" OnAddModalClosed="HandleModalClosed" />
 }
 
-<main class="container min-vh-90 py-nd-5">
+<main class="container min-vh-90 py-nd-5 bg-dark">
     <h2 class="p-5">User List</h2>
 	@if (showSuccessMessage == true)
 	{
@@ -56,7 +56,7 @@ else if (_showingAddModalWindow)
 	}
     <div class="container min-vh-90 py-nd-5 table-responsive">
 
-		<table class="table table-bordered table-hover">
+		<table class="table table-bordered table-hover table-dark">
             <thead>
                 <tr>
 					<th><input type="checkbox" @bind="IsSelectAllChecked" /></th>
@@ -89,7 +89,7 @@ else if (_showingAddModalWindow)
 														<td @onclick="@(e => ViewUser(user.Id))">@user.DateOfBirth.ToShortDateString()</td>
                             <td>
                                 <div class="dropdown">
-                                    <button type="button" class="btn btn-default dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" id="btnToggleActions">
+                                    <button type="button" class="btn btn-light dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" id="btnToggleActions">
                                         Actions
                                     </button>
                                     <ul class="dropdown-menu" aria-labelledby="btnToggleActions">
