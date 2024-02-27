@@ -1,32 +1,244 @@
-﻿@* @page "/logs"
-@using YourApplication.Services // Update with your service namespace
+﻿@page "/logs"
+@using NewUserManagement.Client.Services
+@using static NewUserManagement.Client.Services.LoggingClientService
 
-<h3>Log Entries</h3>
+<NavBar />
+<main class="container min-vh-90 py-nd-5">
+	<h2 class="p-5">Log Entries</h2>
+	<div class="container min-vh-90 py-nd-5">
+		<div class="container-fluid">
+			<div class="row">
+				<div class="col">
+					<!-- Filter dropdown -->
+					<div class="input-group mb-3">
+						<span class="input-group-text">
+							<i class="fas fa-filter"></i>
+						</span>
+						<select class="form-select" id="filterDropdown" @onchange="OnFilterSelectionChange">
+							<option value="">Select Filter</option>
+							<option value="UserId">User ID</option>
+							<option value="ActionTaken">Action</option>
+							<!-- Add more filter options as needed -->
+						</select>
+						@if (selectedFilter == "UserId")
+						{
+							<input type="text" class="form-control" @bind="userIdFilter" placeholder="Enter UserID" />
+						}
+						else if(selectedFilter == "ActionTaken")
+						{
+							<select class="form-select" id="actionFilterDropdown" @onchange="ActionFilterSelectionChange">
+								<option value="">Select Filter</option>
+								<option value="Viewed">User Viewed</option>
+								<option value="Edited">User Edited</option>
+								<option value="UserAdded">User Added</option>
+								<option value="SingleUserDeletion">Single User Deletion</option>
+								<option value="MultipleUserDeletion">Multiple User Deletion</option>
+								</select>
+						}
+						<button class="btn btn-primary" @onclick="ApplyFilter">Apply Filter</button>
+						<button class="btn btn-secondary" @onclick="ClearFilter">Clear Filter</button>
 
-@if (LogEntries == null)
-{
-	<p>Loading...</p>
-}
-else if (LogEntries.Count == 0)
-{
-	<p>No log entries found.</p>
-}
-else
-{
-	<ul>
-		@foreach (var logEntry in LogEntries)
-		{
-			<li>@logEntry.Timestamp - @logEntry.Message</li>
-		}
-	</ul>
-}
+					</div>
+				</div>
+			</div>
+		</div>
+		<table class="table table-bordered table-hover table-dark">
+				<thead>
+					<tr>
+						<th>Date & Times</th>
+						<th>Id</th>
+						<th>UserId</th>
+						<th>Action</th>
+						<th></th>
+					</tr>
+				</thead>
+
+			<tbody class ="container min-vh-90 py-nd-5 align-content-center">
+				@if (isLoading)
+				{
+						<Loading />
+				}
+				else if (LogEntries == null || LogEntries.Count == 0)
+				{
+				<p>No log entries found.</p>
+				}
+				else if (FilteredLogEntries != null)
+				{
+					foreach (var logEntry in FilteredLogEntries)
+					{
+
+							<tr class="pointer" @onclick="@(e => NavigateToDetails(logEntry.Id))">
+								<td>@logEntry.Timestamp</td>
+								<td>@logEntry.Id</td>
+								<td>@logEntry.UserId</td>
+								<td>@logEntry.Action</td>
+								<td><button class="btn btn-light">More Info</button></td>
+							</tr>
+							
+						}
+				}
+				</tbody>
+
+			</table>
+
+		
+</div>
+</main>
+<FooterBar />
 
 @code {
-	List<LogEntry> LogEntries { get; set; }
+	@inject ILogger<Logs> Logger // Inject ILogger service
+	@inject LoggingClientService.ILogService _logService
+	@inject HttpClient httpClient
+	@inject LoggingService _loggingService
+	@inject NavigationManager NavigationManager
+
+	// List to store unique user IDs
+	List<int> UniqueUserIds { get; set; } = new List<int>(); private bool isLoading = true; // Flag to indicate loading state
+
+	List<LogEntry> LogEntries { get; set; } = new List<LogEntry>();
+
+	List<LogEntry> FilteredLogEntries { get; set; } = new List<LogEntry>();
+
+	int SelectedUserId { get; set; } // Bind to the selected user ID
 
 	protected override async Task OnInitializedAsync()
 	{
-		// Fetch log entries from the service
-		LogEntries = await LogService.GetLogEntriesAsync();
+		try
+		{
+			await _loggingService.FetchAndCacheLogEntries();
+			LogEntries = _loggingService.GetCachedLogEntries();
+			UniqueUserIds = LogEntries.Select(log => log.UserId).Distinct().ToList();
+
+			// Initialize FilteredLogEntries with all log entries
+			FilteredLogEntries = LogEntries.ToList();
+
+			isLoading = false; // Data loading complete
+			Console.WriteLine($"LogEntries count: {LogEntries.Count}");
+			StateHasChanged(); // Force re-render
+		}
+		catch (Exception ex)
+		{
+			Logger.LogError(ex, "Error fetching log entries");
+			// Handle error (e.g., display error message)
+		}
 	}
-} *@
+
+
+
+	private void NavigateToDetails(int logEntryId)
+	{
+		NavigationManager.NavigateTo($"/details/{logEntryId}");
+	}
+
+	// Method to handle filtering by user ID
+	private void FilterByUserId()
+	{
+		if (!string.IsNullOrEmpty(userIdFilter) && int.TryParse(userIdFilter, out int selectedUserId))
+		{
+			FilteredLogEntries = LogEntries.Where(log => log.UserId == selectedUserId).ToList();
+		}
+		else
+		{
+			FilteredLogEntries = LogEntries.ToList();
+		}
+		StateHasChanged();
+	}
+
+
+
+
+	// Method to handle filtering
+	private void FilterRecords()
+	{
+		// Apply filter based on SelectedUserId
+		if (SelectedUserId != 0) // Assuming 0 is the default value for "All"
+		{
+			FilteredLogEntries = LogEntries.Where(log => log.UserId == SelectedUserId).ToList();
+		}
+		else
+		{
+			// Show all records if no filter is selected
+			FilteredLogEntries = LogEntries.ToList();
+		}
+	}
+
+	// Method to handle onchange event of the dropdown
+	private void HandleSelectedUserId(ChangeEventArgs e)
+	{
+		SelectedUserId = Convert.ToInt32(e.Value);
+	}
+	// Selected filter option
+	string? selectedFilter;
+
+	// User ID filter
+	string? userIdFilter;
+
+	// Method to handle filter selection change
+	private void OnFilterSelectionChange(ChangeEventArgs e)
+	{
+		selectedFilter = e?.Value?.ToString();
+
+		// Reset selectedAction when the filter changes
+		if (selectedFilter != "ActionTaken")
+		{
+			selectedAction = null;
+		}
+
+		StateHasChanged();
+	}
+
+	private void ActionFilterSelectionChange(ChangeEventArgs e)
+	{
+		selectedAction = e?.Value?.ToString();
+		StateHasChanged();
+	}
+
+
+	// ClearFilter method to reset filter criteria and reload all log entries
+	private void ClearFilter()
+	{
+		selectedFilter = null;
+		userIdFilter = null;
+		selectedAction = null;
+		FilteredLogEntries = LogEntries.ToList();
+	}
+	private string? selectedAction;
+
+	// ApplyFilter method to call appropriate filtering method based on selected filter
+	private void ApplyFilter()
+	{
+		if (!string.IsNullOrEmpty(selectedFilter))
+		{
+			if (selectedFilter == "UserId")
+			{
+				FilterByUserId();
+			}
+			else if (selectedFilter == "ActionTaken" && !string.IsNullOrEmpty(selectedAction))
+			{
+				FilterByAction(selectedAction);
+			}
+			// Add more filter conditions as needed
+		}
+	}
+
+	private void FilterByAction(string action)
+	{
+		// Filter log entries based on the selected action
+		FilteredLogEntries = LogEntries.Where(log => log.Action == action).ToList();
+		StateHasChanged(); // Trigger UI refresh
+	}
+	@inject IJSRuntime JSRuntime
+
+	private async Task UpdateUrlWithoutNavigation(string route, int? userId)
+	{
+		// Construct the URL based on the route and userId
+		string url = userId.HasValue ? $"/list/{route}/{userId}" : $"/list/{route}";
+
+		// Invoke the JavaScript function to update the URL
+		await JSRuntime.InvokeVoidAsync("updateUrlWithoutNavigation", route, userId);
+	}
+
+
+}
+

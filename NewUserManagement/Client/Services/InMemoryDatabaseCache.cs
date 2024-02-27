@@ -1,6 +1,5 @@
 ﻿using System.Net.Http.Json;
 using NewUserManagement.Client.Static;
-using NewUserManagement.Shared.DTOs;
 using NewUserManagement.Shared.Models;
 
 
@@ -15,7 +14,6 @@ namespace NewUserManagement.Client.Services
         {
             _httpClient = httpClient;
             OnUsersDataChanged += delegate { }; // Initializing with an empty delegate
-            _httpClient.BaseAddress = new Uri("https://localhost:5167"); // Set your API base URL here
         }
 
         private List<User>? _users = null;

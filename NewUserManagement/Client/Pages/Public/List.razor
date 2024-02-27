@@ -25,7 +25,7 @@ else if (_showingAddModalWindow)
 	<Add AddModalClickBtnClose="CloseModal" UserId="_selectedUserId" OnModalClosed="SuccessAddMsgOnClose" OnAddModalClosed="HandleModalClosed" />
 }
 
-<main class="container min-vh-90 py-nd-5">
+<main class="container min-vh-90 py-nd-5 bg-dark">
     <h2 class="p-5">User List</h2>
 	@if (showSuccessMessage == true)
 	{
@@ -56,7 +56,7 @@ else if (_showingAddModalWindow)
 	}
     <div class="container min-vh-90 py-nd-5 table-responsive">
 
-        <table class="table table-striped">
+		<table class="table table-bordered table-hover table-dark">
             <thead>
                 <tr>
 					<th><input type="checkbox" @bind="IsSelectAllChecked" /></th>
@@ -69,29 +69,27 @@ else if (_showingAddModalWindow)
                     <th style="width: 1px;"></th>
                 </tr>
             </thead>
-            @if (isLoading)
-            {
-                <Loading />
-            }
-            else
-						{
-                <tbody>
+
+			<tbody class="container min-vh-90 py-nd-5 align-content-center">
+										@if (isLoading)
+										{
+											<Loading />
+										}
+										else
+										{
                     @foreach (var user in DatabaseCache.Users)
                     {
-                        <tr>
-							<td><input type="checkbox" checked="@IsSelectAllChecked" @onchange="(e) => ToggleSelection(user?.Id ?? 0, e)" /></td>
-
-
-
-														<td>@user.Id</td>
-                            <td>@user.Forename</td>
-                            <td>@user.Surname</td>
-                            <td>@user.Email</td>
-                            <td>@(user.IsActive ? "Yes" : "No")</td>
-                            <td>@user.DateOfBirth.ToShortDateString()</td>
+												<tr class="pointer" >
+														<td><input type="checkbox" checked="@IsSelectAllChecked" @onchange="(e) => ToggleSelection(user?.Id ?? 0, e)" /></td>
+														<td @onclick="@(e => ViewUser(user.Id))">@user.Id</td>
+														<td @onclick="@(e => ViewUser(user.Id))">@user.Forename</td>
+														<td @onclick="@(e => ViewUser(user.Id))">@user.Surname</td>
+														<td @onclick="@(e => ViewUser(user.Id))">@user.Email</td>
+														<td @onclick="@(e => ViewUser(user.Id))">@(user.IsActive ? "Yes" : "No")</td>
+														<td @onclick="@(e => ViewUser(user.Id))">@user.DateOfBirth.ToShortDateString()</td>
                             <td>
                                 <div class="dropdown">
-                                    <button type="button" class="btn btn-default dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" id="btnToggleActions">
+                                    <button type="button" class="btn btn-light dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" id="btnToggleActions">
                                         Actions
                                     </button>
                                     <ul class="dropdown-menu" aria-labelledby="btnToggleActions">
@@ -109,8 +107,9 @@ else if (_showingAddModalWindow)
                             </td>
                         </tr>
                     }
+								}
                 </tbody>
-            }
+            
         </table>
 		<div class="container py-nd-5">
 			<div class="btn-group" role="group">

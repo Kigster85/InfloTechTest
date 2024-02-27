@@ -1,9 +1,9 @@
-using UserManagement.Models;
-using UserManagement.Services.Domain.Interfaces;
+using UserManagement.Data.Entities;
+using UserManagement.Services.Interfaces;
+using UserManagement.Web.Controllers;
 using UserManagement.Web.Models.Users;
-using UserManagement.WebMS.Controllers;
 
-namespace UserManagement.Data.Tests;
+namespace UserManagement.Web.Tests;
 
 public class UserControllerTests
 {

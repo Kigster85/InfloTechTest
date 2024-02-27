@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Microsoft.VisualBasic;
-using UserManagement.Models;
+using UserManagement.Data.Entities;
 
 namespace UserManagement.Data;
 
