@@ -1,26 +1,52 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using NewUserManagement.Shared.Models;
 
 
 namespace NewUserManagement.Server.Data;
 
-public class AppDBContext : DbContext
+public class AppDBContext : IdentityDbContext<AppUser>
 {
     public AppDBContext(DbContextOptions<AppDBContext> options) : base(options)
     {
         Database.EnsureCreated();
     }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    public new DbSet<AppUserConfig> Users { get; set; }
+    public DbSet<LogDBEntry> LogEntries { get; set; }
+    public DbSet<AppUser> AppUser { get; set; }
+
+    public IQueryable<TEntity> GetAll<TEntity>() where TEntity : class
     {
-        if (!optionsBuilder.IsConfigured)
-        {
-            optionsBuilder.UseSqlite("Filename=UserDatabase.db");
-        }
+        return Set<TEntity>();
     }
 
+    public void Create<TEntity>(TEntity entity) where TEntity : class
+    {
+        Add(entity);
+        SaveChanges();
+    }
+
+    public void Updater<TEntity>(TEntity entity) where TEntity : class
+    {
+        Updater(entity);
+        SaveChanges();
+    }
+
+    public void Delete<TEntity>(TEntity entity) where TEntity : class
+    {
+        Remove(entity);
+        SaveChanges();
+    }
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        base.OnModelCreating(modelBuilder);
+        // Apply configuration for LogEntry entity
+        modelBuilder.ApplyConfiguration(new LogEntryConfiguration());
+        modelBuilder.ApplyConfiguration(new AppUserConfig());
+        modelBuilder.Entity<AppUserConfig>().HasNoKey();
+        modelBuilder.ApplyConfiguration(new AppIdentityRoleConfig());
+        // Seed the users table with dummy data
         modelBuilder.Entity<User>().HasData(new[]
         {
                 new User { Id = 1, Forename = "Peter", Surname = "Loew", Email = "ploew@example.com", IsActive = true },
@@ -36,40 +62,7 @@ public class AppDBContext : DbContext
                 new User { Id = 11, Forename = "Robin", Surname = "Feld", Email = "rfeld@example.com", IsActive = true }
             });
 
-        base.OnModelCreating(modelBuilder);
 
-        // Apply configuration for LogEntry entity
-        modelBuilder.ApplyConfiguration(new LogEntryConfiguration());
-
-        // Add additional entity configurations if necessary
     }
 
-    public DbSet<User> Users { get; set; }
-    public DbSet<LogDBEntry> LogEntries { get; set; }
-
-    public IQueryable<TEntity> GetAll<TEntity>() where TEntity : class
-    {
-        return Set<TEntity>();
-    }
-
-    public void Create<TEntity>(TEntity entity) where TEntity : class
-    {
-        Add(entity);
-        SaveChanges();
-    }
-
-    public new void Update<TEntity>(TEntity entity) where TEntity : class
-    {
-        Update(entity);
-        SaveChanges();
-    }
-
-    public void Delete<TEntity>(TEntity entity) where TEntity : class
-    {
-        Remove(entity);
-        SaveChanges();
-    }
-
-    
 }
-

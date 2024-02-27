@@ -1,6 +1,5 @@
 ﻿using System.Net.Http.Json;
 using NewUserManagement.Client.Static;
-using NewUserManagement.Shared.DTOs;
 using NewUserManagement.Shared.Models;
 
 

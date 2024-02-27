@@ -29,7 +29,12 @@ builder.Services.AddCors(options =>
 });
 builder.Services.AddDbContext<AppDBContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
-
+builder.Services.AddDefaultIdentity<AppUser>(options =>
+{
+    options.SignIn.RequireConfirmedAccount = false;
+    // Other options as needed
+})
+    .AddEntityFrameworkStores<AppDBContext>();
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 builder.Services.AddRouting(options => options.LowercaseUrls = true);
@@ -53,6 +58,8 @@ app.UseBlazorFrameworkFiles();
 app.UseStaticFiles();
 
 app.UseRouting();
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseCors("AllowLocalhost");
 
 app.MapRazorPages();

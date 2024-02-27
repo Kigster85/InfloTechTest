@@ -1,9 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace NewUserManagement.Shared.DTOs
+namespace NewUserManagement.Shared.Models
 {
     public class UserDTO
     {
+        public int Id { get; set; }
+
         [Required(ErrorMessage = "Forename is required")]
         [Display(Name = "Forename")]
         public string Forename { get; set; } = default!;
@@ -16,6 +18,7 @@ namespace NewUserManagement.Shared.DTOs
         [EmailAddress(ErrorMessage = "Invalid email address")]
         [Display(Name = "Email address")]
         public string Email { get; set; } = default!;
+        public bool IsActive { get; set; }
 
         // New DOB property
         [Required(ErrorMessage = "Date Of Birth is required")]

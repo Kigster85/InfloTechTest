@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using NewUserManagement.Shared.Models;
+namespace NewUserManagement.Server.Data;
 
 public class LogEntryConfiguration : IEntityTypeConfiguration<LogDBEntry>
 {

@@ -1,7 +1,7 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NewUserManagement.Server.Data;
-using NewUserManagement.Shared.DTOs;
 using NewUserManagement.Shared.Models;
 
 namespace NewUserManagement.Server.Controllers
@@ -11,47 +11,60 @@ namespace NewUserManagement.Server.Controllers
     public class UserController : ControllerBase
     {
         private readonly AppDBContext _dbContext;
+        private readonly UserManager<AppUser> _userManager;
 
-        public UserController(AppDBContext appDBContext)
+        public UserController(AppDBContext appDBContext, UserManager<AppUser> userManager)
         {
             _dbContext = appDBContext;
+            _userManager = userManager;
         }
 
-        // GET: api/User
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<User>>> GetAllUsers(int page, int pageSize)
+        [HttpGet("{userId}")]
+        public async Task<ActionResult<UserDTO>> GetUserById([FromRoute] string userId)
         {
-            var users = await _dbContext.Users
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .Select(u => new User
-                {
-                    Id = u.Id,
-                    Forename = u.Forename,
-                    Surname = u.Surname,
-                    Email = u.Email,
-                    IsActive = u.IsActive,
-                    DateOfBirth = u.DateOfBirth
-                })
-                .ToListAsync();
+            if (!int.TryParse(userId, out int id))
+            {
+                // userId is not a valid integer string
+                return BadRequest("Invalid user ID format.");
+            }
 
-            return Ok(users);
+            var user = await _userManager.FindByIdAsync(id.ToString());
+
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            var userDTO = new UserDTO
+            {
+                Id = Convert.ToInt32(user.Id), // Convert string to int
+                Forename = user.Forename,
+                Surname = user.Surname,
+                Email = user.Email ?? "Unknown", // If user.Email is null, assign "Unknown"
+                IsActive = user.IsActive,
+                DateOfBirth = user.DateOfBirth
+            };
+
+            return Ok(userDTO);
         }
+
+
+
 
         // GET: api/User/active
         [HttpGet("active")]
-        public async Task<ActionResult<IEnumerable<User>>> GetActiveUsers(int page, int pageSize)
+        public async Task<ActionResult<IEnumerable<UserDTO>>> GetActiveUsers(int page, int pageSize)
         {
-            var activeUsers = await _dbContext.Users
+            var activeUsers = await _userManager.Users
                 .Where(u => u.IsActive)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .Select(u => new User
                 {
-                    Id = u.Id,
+                    Id = int.Parse(u.Id),
                     Forename = u.Forename,
                     Surname = u.Surname,
-                    Email = u.Email,
+                    Email = u.Email ?? "",
                     IsActive = u.IsActive,
                     DateOfBirth = u.DateOfBirth
                 })
@@ -62,18 +75,18 @@ namespace NewUserManagement.Server.Controllers
 
         // GET: api/User/inactive
         [HttpGet("inactive")]
-        public async Task<ActionResult<IEnumerable<User>>> GetInactiveUsers(int page, int pageSize)
+        public async Task<ActionResult<IEnumerable<UserDTO>>> GetInactiveUsers(int page, int pageSize)
         {
-            var inactiveUsers = await _dbContext.Users
+            var inactiveUsers = await _userManager.Users
                 .Where(u => !u.IsActive)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .Select(u => new User
                 {
-                    Id = u.Id,
+                    Id = int.Parse(u.Id),
                     Forename = u.Forename,
                     Surname = u.Surname,
-                    Email = u.Email,
+                    Email = u.Email ?? "",
                     IsActive = u.IsActive,
                     DateOfBirth = u.DateOfBirth
                 })
@@ -82,39 +95,17 @@ namespace NewUserManagement.Server.Controllers
             return Ok(inactiveUsers);
         }
 
-        // GET: api/User/{Id}
-        [HttpGet("{userId}")]
-        public async Task<ActionResult<User>> GetUserById([FromRoute] int userId)
-        {
-            var user = await _dbContext.Users.FindAsync(userId);
-
-            if (user == null)
-            {
-                return NotFound();
-            }
-
-            var userDTO = new User
-            {
-                Id = user.Id,
-                Forename = user.Forename,
-                Surname = user.Surname,
-                Email = user.Email,
-                IsActive = user.IsActive,
-                DateOfBirth = user.DateOfBirth
-            };
-
-            return Ok(user);
-        }
+        
         // PUT: api/User/{userId}
         [HttpPut("{userId}")]
-        public async Task<IActionResult> UpdateUser(int userId, [FromBody] User userDTO)
+        public async Task<IActionResult> UpdateUser(string userId, [FromBody] UserDTO userDTO)
         {
-            if (userId != userDTO.Id)
+            if (userId != userDTO.Id.ToString()) // Convert Id to string for comparison
             {
                 return BadRequest();
             }
 
-            var user = await _dbContext.Users.FindAsync(userId);
+            var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
             {
                 return NotFound();
@@ -128,38 +119,46 @@ namespace NewUserManagement.Server.Controllers
             user.DateOfBirth = userDTO.DateOfBirth;
 
             // Save changes to the database
-            await _dbContext.SaveChangesAsync();
+            await _userManager.UpdateAsync(user); // Use UserManager to update the user
 
             return NoContent();
         }
+
         [HttpPost]
         public async Task<ActionResult<UserDTO>> AddUser([FromBody] UserDTO userDTO)
         {
             // Map UserDTO to User entity
-            var user = new User
+            var user = new AppUser // Change User to AppUser
             {
                 Forename = userDTO.Forename,
                 Surname = userDTO.Surname,
+                UserName = userDTO.Email, // Set email as username
                 Email = userDTO.Email,
                 IsActive = true, // Set IsActive to a default value
                 DateOfBirth = userDTO.DateOfBirth
             };
 
-            // Add user to the database
-            _dbContext.Users.Add(user);
-            await _dbContext.SaveChangesAsync();
+            // Create the user using UserManager
+            var result = await _userManager.CreateAsync(user);
 
-            // Instead of CreatedAtAction, return the created user object directly
-            return Ok(userDTO);
+            if (!result.Succeeded)
+            {
+                // If user creation fails, return error messages
+                return BadRequest(result.Errors);
+            }
+
+            // Instead of returning the userDTO, return the created user object directly
+            return Ok(user); // Return the created user
         }
 
+
         [HttpDelete("{userId}")]
-        public async Task<IActionResult> DeleteUser(int userId)
+        public async Task<IActionResult> DeleteUser(string userId) // Change int to string
         {
             try
             {
-                // Get the user to delete from the database
-                var userToDelete = await _dbContext.Users.FindAsync(userId);
+                // Get the user to delete using UserManager
+                var userToDelete = await _userManager.FindByIdAsync(userId);
 
                 // Check if the user exists
                 if (userToDelete == null)
@@ -168,9 +167,15 @@ namespace NewUserManagement.Server.Controllers
                     return NotFound();
                 }
 
-                // Remove the user from the database
-                _dbContext.Users.Remove(userToDelete);
-                await _dbContext.SaveChangesAsync();
+                // Remove the user using UserManager
+                var result = await _userManager.DeleteAsync(userToDelete);
+
+                // Check if the deletion was successful
+                if (!result.Succeeded)
+                {
+                    // If deletion fails, return error messages
+                    return BadRequest(result.Errors);
+                }
 
                 // Optionally, you can handle a successful deletion (e.g., return a success response)
                 return Ok();
@@ -182,9 +187,9 @@ namespace NewUserManagement.Server.Controllers
             }
         }
 
-        // POST: api/User/delete-multiple
+
         [HttpPost("delete-multiple")]
-        public async Task<ActionResult> DeleteMultipleUsers(List<int> selectedUserIds)
+        public async Task<ActionResult> DeleteMultipleUsers(List<string> selectedUserIds) // Change int to string
         {
             try
             {
@@ -193,31 +198,45 @@ namespace NewUserManagement.Server.Controllers
                     return BadRequest("No user IDs provided for deletion.");
                 }
 
-                var usersToDelete = await _dbContext.Users.Where(u => selectedUserIds.Contains(u.Id)).ToListAsync();
-                if (usersToDelete == null || usersToDelete.Count == 0)
+                foreach (var userId in selectedUserIds)
                 {
-                    return NotFound("No users found with the provided IDs.");
+                    // Get the user to delete using UserManager
+                    var userToDelete = await _userManager.FindByIdAsync(userId);
+
+                    // Check if the user exists
+                    if (userToDelete == null)
+                    {
+                        // User not found, return a not found response or continue with next user
+                        continue;
+                    }
+
+                    // Remove the user using UserManager
+                    var result = await _userManager.DeleteAsync(userToDelete);
+
+                    // If deletion fails, return error messages
+                    if (!result.Succeeded)
+                    {
+                        return BadRequest(result.Errors);
+                    }
                 }
 
-                _dbContext.Users.RemoveRange(usersToDelete);
-                await _dbContext.SaveChangesAsync();
-
+                // Optionally, you can handle a successful deletion (e.g., return a success response)
                 return Ok();
             }
             catch (Exception ex)
             {
+                // Handle any exceptions that occur during the deletion process
                 return StatusCode(500, $"An error occurred: {ex.Message}");
             }
         }
 
         // Helper method to generate a unique ID (you can implement your own logic here)
-        private int GenerateUniqueId()
+        private string GenerateUniqueId()
         {
-            // Implement your logic to generate a unique ID
-            // Example: You can query the database for the maximum ID and add 1 to it
-            var maxId = _dbContext.Users.Max(u => u.Id);
-            return maxId + 1;
+            // Generate a new unique identifier (GUID)
+            return Guid.NewGuid().ToString();
         }
+
     }
 
 }
