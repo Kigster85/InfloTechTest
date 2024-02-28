@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NewUserManagement.Server.Data;
 using NewUserManagement.Shared.Models;
@@ -15,7 +16,7 @@ namespace NewUserManagement.Server.Controllers
         {
             _dbContext = dbContext;
         }
-
+        [AllowAnonymous]
         [HttpPost]
         public async Task<IActionResult> LogAction(LogDBEntry logEntry)
         {

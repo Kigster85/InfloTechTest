@@ -48,12 +48,12 @@
 	@inject LoggingClientService.ILogService _logService
 	public bool showSuccessMessage = false;
 	public bool showErrorMessage = false;
-	[Parameter] public int UserId { get; set; }
+	[Parameter] public string? UserId { get; set; }
 	private List<User> users = new List<User>();
 	private string? _modalDisplay = null;
 	private string? _modalClass = null;
 	private bool _showBackdrop = false;
-	private int _selectedUserId { get; set; }
+	private string? _selectedUserId { get; set; }
 	private User UserDetails { get; set; } = new User(); // Initialize with a default user object
 	[Parameter] public EventCallback OnModalClosed { get; set; }
 	[Parameter] public EventCallback OnEditModalClosed { get; set; }
@@ -65,7 +65,7 @@
 		UserDetails = await DatabaseCache.GetUserDetails(UserId) ?? new User();
 	}
 
-	public async Task LogUserEdit(int userId, string action, string details)
+	public async Task LogUserEdit(string userId, string action, string details)
 	{
 		try
 		{
@@ -143,7 +143,7 @@
 		await EditModalClickBtnClose.InvokeAsync();
 		await Task.Delay(0);
 	}
-	private async Task updateUrlWithoutNavigation(string route, int? UserId)
+	private async Task updateUrlWithoutNavigation(string route, string? UserId)
 	{
 		string url = $"/list/{route}/{UserId}";
 		await JSRuntime.InvokeVoidAsync("updateUrlWithoutNavigation", route, UserId);
@@ -158,25 +158,34 @@
 			Console.WriteLine("Submitting form...");
 
 			// Call the UserController to update the user details
-			Console.WriteLine($"Sending PUT request to /api/User/{UserId}");
-			HttpResponseMessage response = await HttpClient.PutAsJsonAsync($"/api/User/{UserId}", UserDetails);
+			Console.WriteLine($"Sending PUT request to /api/user/{UserId}");
+			HttpResponseMessage response = await HttpClient.PutAsJsonAsync($"/api/user/{UserId}", UserDetails);
 
 			if (response.IsSuccessStatusCode)
 			{
 				Console.WriteLine("Request succeeded.");
-
+				await CloseEditModal();
 				// Log the user edit
-				await LogUserEdit(UserId, "Edited", "User information updated successfully.");
-				await DatabaseCache.IncrementUserEditCount(UserId);
-				// Show success message
-				// Update the cache with the latest data from the server
-				Console.WriteLine("Refreshing cache...");
-				await DatabaseCache.UpdateUserOnServerAndRefreshCache(HttpClient, UserDetails);
+				if (UserId != null)
+				{
+					await LogUserEdit(UserId, "UserEdited", $"User {UserDetails.Forename} {UserDetails.Surname} details edited.");
+				}
+				else
+				{
+					await DatabaseCache.IncrementUserEditCount(UserId);
+					// Show success message
+					await OnEditModalClosed.InvokeAsync();
 
-				// Close the modal after a delay
-				await CloseEditModalSubmit();
-				await EditModalClickBtnClose.InvokeAsync();
-				await OnEditModalClosed.InvokeAsync();
+					await EditModalClickBtnClose.InvokeAsync();
+					// Update the cache with the latest data from the server
+					Console.WriteLine("Refreshing cache...");
+					await DatabaseCache.UpdateUserOnServerAndRefreshCache(HttpClient, UserDetails);
+					// Close the modal after a delay
+
+					
+					await CloseEditModalSubmit();
+
+				}
 			}
 			else
 			{

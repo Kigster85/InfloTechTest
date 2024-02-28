@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NewUserManagement.Server.Data;
@@ -13,11 +14,31 @@ namespace NewUserManagement.Server.Controllers
         private readonly AppDBContext _dbContext;
         private readonly UserManager<AppUser> _userManager;
 
-        public UserController(AppDBContext appDBContext, UserManager<AppUser> userManager)
+        public UserController(UserManager<AppUser> userManager, AppDBContext dbContext)
         {
-            _dbContext = appDBContext;
             _userManager = userManager;
+            _dbContext = dbContext;
         }
+        // GET: api/User
+        [AllowAnonymous]
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<UserDTO>>> GetUsers()
+        {
+            var users = await _dbContext.Users
+                .Select(u => new UserDTO
+                {
+                    Id = u.Id,
+                    Forename = u.Forename,
+                    Surname = u.Surname,
+                    Email = u.Email ?? "",
+                    IsActive = u.IsActive, // Adjust as needed based on your IsActive property in AppUser
+                    DateOfBirth = u.DateOfBirth
+                })
+                .ToListAsync();
+
+            return Ok(users);
+        }
+        [AllowAnonymous]
 
         [HttpGet("{userId}")]
         public async Task<ActionResult<UserDTO>> GetUserById([FromRoute] string userId)
@@ -37,7 +58,7 @@ namespace NewUserManagement.Server.Controllers
 
             var userDTO = new UserDTO
             {
-                Id = Convert.ToInt32(user.Id), // Convert string to int
+                Id = user.Id, // Convert string to int
                 Forename = user.Forename,
                 Surname = user.Surname,
                 Email = user.Email ?? "Unknown", // If user.Email is null, assign "Unknown"
@@ -47,9 +68,7 @@ namespace NewUserManagement.Server.Controllers
 
             return Ok(userDTO);
         }
-
-
-
+        [AllowAnonymous]
 
         // GET: api/User/active
         [HttpGet("active")]
@@ -61,7 +80,7 @@ namespace NewUserManagement.Server.Controllers
                 .Take(pageSize)
                 .Select(u => new User
                 {
-                    Id = int.Parse(u.Id),
+                    Id = u.Id,
                     Forename = u.Forename,
                     Surname = u.Surname,
                     Email = u.Email ?? "",
@@ -72,6 +91,7 @@ namespace NewUserManagement.Server.Controllers
 
             return Ok(activeUsers);
         }
+        [AllowAnonymous]
 
         // GET: api/User/inactive
         [HttpGet("inactive")]
@@ -83,7 +103,7 @@ namespace NewUserManagement.Server.Controllers
                 .Take(pageSize)
                 .Select(u => new User
                 {
-                    Id = int.Parse(u.Id),
+                    Id = u.Id,
                     Forename = u.Forename,
                     Surname = u.Surname,
                     Email = u.Email ?? "",
@@ -100,7 +120,7 @@ namespace NewUserManagement.Server.Controllers
         [HttpPut("{userId}")]
         public async Task<IActionResult> UpdateUser(string userId, [FromBody] UserDTO userDTO)
         {
-            if (userId != userDTO.Id.ToString()) // Convert Id to string for comparison
+            if (userId != userDTO.Id) // Convert Id to string for comparison
             {
                 return BadRequest();
             }

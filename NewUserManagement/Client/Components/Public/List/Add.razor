@@ -49,7 +49,7 @@
 
 	public bool showSuccessMessage = false;
 	public bool showErrorMessage = false;
-	[Parameter] public int UserId { get; set; }
+	[Parameter] public string? UserId { get; set; }
 	[Parameter] public EventCallback OnModalClosed { get; set; }
 	[Parameter] public EventCallback AddModalClickBtnClose { get; set; }
 	[Parameter] public EventCallback OnAddModalClosed { get; set; }
@@ -69,7 +69,7 @@
 		// Initialize UserDetails with default values or leave it as an empty object
 		UserDetails = new User();
 	}
-	public async Task LogUserCreation(int userId, string action, string details)
+	public async Task LogUserCreation(string userId, string action, string details)
 	{
 		try
 		{
@@ -146,10 +146,10 @@
 		{
 			var user = new User
 				{
-					Forename = UserDetails?.Forename ?? "", // Check if UserDetails is null, if not, access Forename property; otherwise, use an empty string
-					Surname = UserDetails?.Surname ?? "",   // Check if UserDetails is null, if not, access Surname property; otherwise, use an empty string
-					Email = UserDetails?.Email ?? "",       // Check if UserDetails is null, if not, access Email property; otherwise, use an empty string
-					DateOfBirth = UserDetails?.DateOfBirth ?? DateTime.MinValue // Check if UserDetails is null, if not, access DateOfBirth property; otherwise, use a default DateTime value
+					Forename = UserDetails?.Forename ?? "",
+					Surname = UserDetails?.Surname ?? "",
+					Email = UserDetails?.Email ?? "",
+					DateOfBirth = UserDetails?.DateOfBirth ?? DateTime.MinValue
 				};
 
 
@@ -159,18 +159,18 @@
 				Console.WriteLine("User added successfully!");
 				await AddModalClickBtnClose.InvokeAsync();
 				await OnAddModalClosed.InvokeAsync();
+
 				// Retrieve the UserId from the refreshed cache
-				// Fetch the last user from the database
 				var lastUser = DatabaseCache.Users.LastOrDefault();
 
 				// Check if a user was found
 				if (lastUser != null)
 				{
 					// Obtain the UserId of the last user
-					int userId = lastUser.Id;
+					string userId = lastUser?.Id ?? ""; // Provide a default value if lastUser is null
 
 					// Now you can use the userId for logging or other operations
-					await LogUserCreation(userId, "UserAdded", $"User {lastUser.Forename} {lastUser.Surname} successfully added to the database.");
+					await LogUserCreation(userId, "UserAdded", $"User {lastUser?.Forename} {lastUser?.Surname} successfully added to the database.");
 				}
 				else
 				{
@@ -185,6 +185,7 @@
 			}
 		}
 	}
+
 
 	private bool IsValidUser()
 	{

@@ -7,13 +7,38 @@ namespace NewUserManagement.Client.Services
     {
         public class LogEntry
         {
-            public int Id { get; set; }
+            public int LogId { get; set; }
             public DateTime Timestamp { get; set; }
-            public int UserId { get; set; }
+            public string? UserId { get; set; }
             public string? Action { get; set; }
             public string? Details { get; set; }
             public int ViewCount { get; set; }
             public int EditCount { get; set; }
+            public bool IsDeletedUserEntry { get; set; }
+            public string? DeletedUserId { get; set; }
+            public DateTime? DeletionTime { get; set; } // Nullable DateTime
+
+            // Constructor for regular log entries
+            public LogEntry(int logId, string userId, string action, DateTime timestamp)
+            {
+                LogId = logId;
+                UserId = userId;
+                Action = action;
+                Timestamp = timestamp;
+            }
+
+            // Constructor for deleted user entries
+            public LogEntry(int logId, string deletedUserId, DateTime deletionTime)
+            {
+                LogId = logId;
+                DeletedUserId = deletedUserId;
+                DeletionTime = deletionTime;
+                IsDeletedUserEntry = true;
+            }
+            public LogEntry()
+            {
+                // Parameterless constructor
+            }
         }
 
         public interface ILogService

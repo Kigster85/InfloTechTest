@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using NewUserManagement.Server.Data;
 using Serilog;
@@ -41,6 +42,22 @@ builder.Services.AddRouting(options => options.LowercaseUrls = true);
 builder.Services.AddControllers();
 
 var app = builder.Build();
+// Seed the database if it hasn't been seeded before
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    var userManager = services.GetRequiredService<UserManager<AppUser>>();
+    try
+    {
+        // Seed users if they don't exist
+        AppDBContextSeed.SeedUsers(userManager);
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred while seeding the database.");
+    }
+}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -56,12 +73,12 @@ else
 app.UseHttpsRedirection();
 app.UseBlazorFrameworkFiles();
 app.UseStaticFiles();
-
-app.UseRouting();
-app.UseAuthentication();
-app.UseAuthorization();
 app.UseCors("AllowLocalhost");
 
+app.UseRouting();
+
+app.UseAuthentication();
+app.UseAuthorization();
 app.MapRazorPages();
 
 app.MapControllers();

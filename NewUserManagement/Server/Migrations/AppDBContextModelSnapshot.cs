@@ -162,26 +162,21 @@ namespace NewUserManagement.Server.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("DateOfBirth")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("date")
-                        .HasDefaultValueSql("GETD");
+                        .HasColumnType("TEXT");
 
                     b.Property<string>("Email")
-                        .IsRequired()
                         .HasMaxLength(256)
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("EmailConfirmed")
-                        .HasMaxLength(256)
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Forename")
                         .IsRequired()
-                        .HasMaxLength(50)
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
+                        .HasColumnType("INTEGER");
 
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("INTEGER");
@@ -211,7 +206,6 @@ namespace NewUserManagement.Server.Migrations
 
                     b.Property<string>("Surname")
                         .IsRequired()
-                        .HasMaxLength(50)
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("TwoFactorEnabled")
@@ -230,21 +224,22 @@ namespace NewUserManagement.Server.Migrations
                         .IsUnique()
                         .HasDatabaseName("UserNameIndex");
 
-                    b.ToTable("AppUsers", (string)null);
-                });
-
-            modelBuilder.Entity("NewUserManagement.Server.Data.AppUserConfig", b =>
-                {
-                    b.ToTable("Users");
+                    b.ToTable("AspNetUsers", (string)null);
                 });
 
             modelBuilder.Entity("NewUserManagement.Shared.Models.LogDBEntry", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<int>("LogId")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
                     b.Property<string>("Action")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("DeletedUserId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("DeletionTime")
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Details")
@@ -253,148 +248,21 @@ namespace NewUserManagement.Server.Migrations
                     b.Property<int>("EditCount")
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool>("IsDeletedUserEntry")
+                        .HasColumnType("INTEGER");
+
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("TEXT");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("INTEGER");
+                    b.Property<string>("UserId")
+                        .HasColumnType("TEXT");
 
                     b.Property<int>("ViewCount")
                         .HasColumnType("INTEGER");
 
-                    b.HasKey("Id");
+                    b.HasKey("LogId");
 
                     b.ToTable("LogEntries", (string)null);
-                });
-
-            modelBuilder.Entity("NewUserManagement.Shared.Models.User", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("DateOfBirth")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Forename")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<string>("Surname")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("User");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            DateOfBirth = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Email = "ploew@example.com",
-                            Forename = "Peter",
-                            IsActive = true,
-                            Surname = "Loew"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            DateOfBirth = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Email = "bfgates@example.com",
-                            Forename = "Benjamin Franklin",
-                            IsActive = true,
-                            Surname = "Gates"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            DateOfBirth = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Email = "ctroy@example.com",
-                            Forename = "Castor",
-                            IsActive = false,
-                            Surname = "Troy"
-                        },
-                        new
-                        {
-                            Id = 4,
-                            DateOfBirth = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Email = "mraines@example.com",
-                            Forename = "Memphis",
-                            IsActive = true,
-                            Surname = "Raines"
-                        },
-                        new
-                        {
-                            Id = 5,
-                            DateOfBirth = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Email = "sgodspeed@example.com",
-                            Forename = "Stanley",
-                            IsActive = true,
-                            Surname = "Goodspeed"
-                        },
-                        new
-                        {
-                            Id = 6,
-                            DateOfBirth = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Email = "himcdunnough@example.com",
-                            Forename = "H.I.",
-                            IsActive = true,
-                            Surname = "McDunnough"
-                        },
-                        new
-                        {
-                            Id = 7,
-                            DateOfBirth = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Email = "cpoe@example.com",
-                            Forename = "Cameron",
-                            IsActive = false,
-                            Surname = "Poe"
-                        },
-                        new
-                        {
-                            Id = 8,
-                            DateOfBirth = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Email = "emalus@example.com",
-                            Forename = "Edward",
-                            IsActive = false,
-                            Surname = "Malus"
-                        },
-                        new
-                        {
-                            Id = 9,
-                            DateOfBirth = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Email = "dmacready@example.com",
-                            Forename = "Damon",
-                            IsActive = false,
-                            Surname = "Macready"
-                        },
-                        new
-                        {
-                            Id = 10,
-                            DateOfBirth = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Email = "jblaze@example.com",
-                            Forename = "Johnny",
-                            IsActive = true,
-                            Surname = "Blaze"
-                        },
-                        new
-                        {
-                            Id = 11,
-                            DateOfBirth = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
-                            Email = "rfeld@example.com",
-                            Forename = "Robin",
-                            IsActive = true,
-                            Surname = "Feld"
-                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>

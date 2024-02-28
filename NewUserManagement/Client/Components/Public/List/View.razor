@@ -40,10 +40,10 @@
 	@inject IJSRuntime JSRuntime
 	@inject ILogger<View> Logger // Inject ILogger service
 	@inject LoggingClientService.ILogService _logService
-	[Parameter] public int UserId { get; set; }
+	[Parameter] public string? UserId { get; set; }
 
 	private List<User> users = new List<User>();
-	private int _selectedUserId { get; set; }
+	private string? _selectedUserId { get; set; }
 
 	private User UserDetails { get; set; } = new User(); // Initialize with a default user object
 	protected override async Task OnInitializedAsync()
@@ -51,42 +51,54 @@
 			// Fetch user details based on the UserId parameter
 		UserDetails = await DatabaseCache.GetUserDetails(UserId) ?? new User();
 		await LogUserView(UserId);
+		Console.WriteLine($"Viewing user with ID: {UserId}");
 
 	}
-	private async Task LogUserView(int userId)
+	private async Task LogUserView(string? userId)
 	{
-		// Log the view event
-		Logger.LogInformation("User viewed: UserID = {UserID}", userId);
-
-		try
+		if (userId != null)
 		{
-			// Increment the view count for the user
-			await DatabaseCache.IncrementUserViewCount(userId);
+			// Log the view event
+			Logger.LogInformation($"User viewed: UserID = {userId}", userId);
 
-			// Optionally, you can log the view count for the user
-			int viewCount = DatabaseCache.GetUserViewCount(userId);
-			Logger.LogInformation("View count for user {UserID}: {ViewCount}", userId, viewCount);
+			try
+			{
+				// Increment the view count for the user
+				await DatabaseCache.IncrementUserViewCount(userId);
 
-			// Create a log entry for the user view event
-			var logEntry = new LogEntry
-				{
-					Timestamp = DateTime.UtcNow,
-					UserId = userId,
-					Action = "Viewed",
-					Details = $"User with ID {userId} viewed",
-					ViewCount = viewCount,
-					EditCount = 0 // Assuming edit count is not applicable for view events
-				};
+				// Get the view count for the user
+				int viewCount = DatabaseCache.GetUserViewCount(userId);
 
-			// Add the log entry to the log service
-			await _logService.AddLogEntryAsync(logEntry);
+				// Log the view count for the user
+				Logger.LogInformation($"View count for user {userId}: {viewCount}");
+
+				// Create a log entry for the user view event
+				var logEntry = new LogEntry
+					{
+						Timestamp = DateTime.UtcNow,
+						UserId = userId,
+						Action = "Viewed",
+						Details = $"User with ID {userId} viewed",
+						ViewCount = viewCount,
+						EditCount = 0 // Assuming edit count is not applicable for view events
+					};
+
+				// Add the log entry to the log service
+				await _logService.AddLogEntryAsync(logEntry);
+			}
+			catch (Exception ex)
+			{
+				// Handle or log any exceptions that occur during view count increment or logging
+				Logger.LogError(ex, "Error occurred while logging user view event: {ErrorMessage}", ex.Message);
+			}
 		}
-		catch (Exception ex)
+		else
 		{
-			// Handle or log any exceptions that occur during view count increment or logging
-			Logger.LogError(ex, "Error occurred while logging user view event: {ErrorMessage}", ex.Message);
+			// Handle the case where userId is null
+			Logger.LogWarning("Attempted to log user view with null userId.");
 		}
 	}
+
 
 
 	private async Task NextUser()
@@ -101,9 +113,20 @@
 				index = 0; // Wrap around to the first user if reached the end
 			}
 			UserDetails = DatabaseCache.Users[index];
-			await UpdateUrlWithoutNavigation("view", UserDetails.Id);
-			// Log the view action for the current user
-			await LogUserView(UserDetails.Id);
+			// Check if UserDetails and its Id property are not null before proceeding
+			if (UserDetails != null && UserDetails.Id != null)
+			{
+				// Log the view action for the current user
+				await LogUserView(UserDetails.Id.ToString());
+
+				// Update the URL without navigation
+				await UpdateUrlWithoutNavigation("view", UserDetails.Id.ToString());
+			}
+			else
+			{
+				// Handle the case where UserDetails or UserDetails.Id is null
+				Console.WriteLine("UserDetails or UserDetails.Id is null.");
+			}
 		}
 	}
 
@@ -119,11 +142,25 @@
 				index = DatabaseCache.Users.Count - 1; // Wrap around to the last user if reached the beginning
 			}
 			UserDetails = DatabaseCache.Users[index];
-			await UpdateUrlWithoutNavigation("view", UserDetails.Id);
-			await LogUserView(UserDetails.Id);
 
+			// Check if UserDetails and its Id property are not null before proceeding
+			if (UserDetails != null && UserDetails.Id != null)
+			{
+				// Log the view action for the current user
+				await LogUserView(UserDetails.Id.ToString());
+
+				// Update the URL without navigation
+				await UpdateUrlWithoutNavigation("view", UserDetails.Id.ToString());
+			}
+			else
+			{
+				// Handle the case where UserDetails or UserDetails.Id is null
+				Console.WriteLine("UserDetails or UserDetails.Id is null.");
+			}
 		}
 	}
+
+
 
 
 
@@ -163,7 +200,7 @@
 		await ViewModalClickBtnClose.InvokeAsync();
 		NavigationManager.NavigateTo("/list");
 	}
-	private async Task UpdateUrlWithoutNavigation(string route, int? UserId)
+	private async Task UpdateUrlWithoutNavigation(string route, string UserId)
 	{
 		string url = $"/list/{route}/{UserId}";
 		await JSRuntime.InvokeVoidAsync("updateUrlWithoutNavigation", route, UserId);

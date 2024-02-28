@@ -31,8 +31,7 @@
 								<option value="Viewed">User Viewed</option>
 								<option value="Edited">User Edited</option>
 								<option value="UserAdded">User Added</option>
-								<option value="SingleUserDeletion">Single User Deletion</option>
-								<option value="MultipleUserDeletion">Multiple User Deletion</option>
+								<option value="UserDeletion">User Deletion</option>
 								</select>
 						}
 						<button class="btn btn-primary" @onclick="ApplyFilter">Apply Filter</button>
@@ -46,7 +45,7 @@
 				<thead>
 					<tr>
 						<th>Date & Times</th>
-						<th>Id</th>
+						<th>Log Id</th>
 						<th>UserId</th>
 						<th>Action</th>
 						<th></th>
@@ -67,9 +66,9 @@
 					foreach (var logEntry in FilteredLogEntries)
 					{
 
-							<tr class="pointer" @onclick="@(e => NavigateToDetails(logEntry.Id))">
+							<tr class="pointer" @onclick="@(e => NavigateToDetails(logEntry.LogId))">
 								<td>@logEntry.Timestamp</td>
-								<td>@logEntry.Id</td>
+								<td>@logEntry.LogId</td>
 								<td>@logEntry.UserId</td>
 								<td>@logEntry.Action</td>
 								<td><button class="btn btn-light">More Info</button></td>
@@ -94,13 +93,13 @@
 	@inject NavigationManager NavigationManager
 
 	// List to store unique user IDs
-	List<int> UniqueUserIds { get; set; } = new List<int>(); private bool isLoading = true; // Flag to indicate loading state
+	List<string?> UniqueUserIds { get; set; } = new List<string?>(); private bool isLoading = true; // Flag to indicate loading state
 
 	List<LogEntry> LogEntries { get; set; } = new List<LogEntry>();
 
 	List<LogEntry> FilteredLogEntries { get; set; } = new List<LogEntry>();
 
-	int SelectedUserId { get; set; } // Bind to the selected user ID
+	string? SelectedUserId { get; set; } // Bind to the selected user ID
 
 	protected override async Task OnInitializedAsync()
 	{
@@ -108,7 +107,12 @@
 		{
 			await _loggingService.FetchAndCacheLogEntries();
 			LogEntries = _loggingService.GetCachedLogEntries();
-			UniqueUserIds = LogEntries.Select(log => log.UserId).Distinct().ToList();
+
+			// Extract unique user IDs from log entries
+			UniqueUserIds = LogEntries
+					.Select(log => log.UserId)
+					.Distinct()
+					.ToList();
 
 			// Initialize FilteredLogEntries with all log entries
 			FilteredLogEntries = LogEntries.ToList();
@@ -126,6 +130,7 @@
 
 
 
+
 	private void NavigateToDetails(int logEntryId)
 	{
 		NavigationManager.NavigateTo($"/details/{logEntryId}");
@@ -134,9 +139,11 @@
 	// Method to handle filtering by user ID
 	private void FilterByUserId()
 	{
-		if (!string.IsNullOrEmpty(userIdFilter) && int.TryParse(userIdFilter, out int selectedUserId))
+		if (!string.IsNullOrEmpty(userIdFilter))
 		{
-			FilteredLogEntries = LogEntries.Where(log => log.UserId == selectedUserId).ToList();
+			FilteredLogEntries = LogEntries
+					.Where(log => log.UserId == userIdFilter)
+					.ToList();
 		}
 		else
 		{
@@ -152,7 +159,7 @@
 	private void FilterRecords()
 	{
 		// Apply filter based on SelectedUserId
-		if (SelectedUserId != 0) // Assuming 0 is the default value for "All"
+		if (!string.IsNullOrEmpty(SelectedUserId))
 		{
 			FilteredLogEntries = LogEntries.Where(log => log.UserId == SelectedUserId).ToList();
 		}
@@ -163,16 +170,17 @@
 		}
 	}
 
+
+
 	// Method to handle onchange event of the dropdown
 	private void HandleSelectedUserId(ChangeEventArgs e)
 	{
-		SelectedUserId = Convert.ToInt32(e.Value);
+		SelectedUserId = e.Value?.ToString();
 	}
-	// Selected filter option
-	string? selectedFilter;
 
-	// User ID filter
-	string? userIdFilter;
+	private string? selectedFilter;
+	private string? userIdFilter;
+
 
 	// Method to handle filter selection change
 	private void OnFilterSelectionChange(ChangeEventArgs e)

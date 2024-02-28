@@ -4,7 +4,7 @@ namespace NewUserManagement.Shared.Models
 {
     public class UserDTO
     {
-        public int Id { get; set; }
+        public string? Id { get; set; }
 
         [Required(ErrorMessage = "Forename is required")]
         [Display(Name = "Forename")]
