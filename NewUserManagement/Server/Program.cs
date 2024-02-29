@@ -35,7 +35,8 @@ builder.Services.AddDefaultIdentity<AppUser>(options =>
     options.SignIn.RequireConfirmedAccount = false;
     // Other options as needed
 })
-    .AddEntityFrameworkStores<AppDBContext>();
+    .AddEntityFrameworkStores<AppDBContext>()
+    .AddDefaultTokenProviders();
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 builder.Services.AddRouting(options => options.LowercaseUrls = true);

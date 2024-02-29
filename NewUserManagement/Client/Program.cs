@@ -8,7 +8,7 @@ builder.RootComponents.Add<App>("#app");
 builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddScoped<LoggingService>();
 builder.Services.AddScoped<LoggingCache>();
-
+builder.Services.AddScoped<UserService>();
 // Register the LoggingClientService and its implementation
 builder.Services.AddScoped<LoggingClientService.ILogService, LoggingClientService.LogService>();
 // Register HttpClient with a base address

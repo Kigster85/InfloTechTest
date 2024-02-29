@@ -16,12 +16,11 @@ public class User
     [Required(ErrorMessage = "Email address is required")]
     [EmailAddress(ErrorMessage = "Invalid email address")]
     [Display(Name = "Email address")]
-    public string Email { get; set; } = default!;
+    public string? Email { get; set; } = default!;
     public bool IsActive { get; set; }
 
     // New DOB property
     [Required(ErrorMessage = "Date Of Birth is required")]
-    public DateTime DateOfBirth { get; set; } 
-
-
+    public DateTime DateOfBirth { get; set; }
+    public string? UserName { get; set; }
 }

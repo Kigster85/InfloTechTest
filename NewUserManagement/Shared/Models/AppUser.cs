@@ -18,5 +18,6 @@ namespace NewUserManagement.Server.Data
         // New DOB property
         [Required(ErrorMessage = "Date Of Birth is required")]
         public DateTime DateOfBirth { get; set; }
+
     }
 }

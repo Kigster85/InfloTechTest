@@ -1,17 +1,24 @@
 ﻿using System.Net.Http.Json;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using NewUserManagement.Client.Static;
+using NewUserManagement.Server.Data;
 using NewUserManagement.Shared.Models;
 
 namespace NewUserManagement.Client.Services
 {
-    internal sealed class InMemoryDatabaseCache
+    public sealed class InMemoryDatabaseCache
     {
         private readonly HttpClient _httpClient;
+        private readonly UserService _userService;
+        private readonly UserManager<AppUser> _userManager;
 
-        public InMemoryDatabaseCache(HttpClient httpClient)
+        public InMemoryDatabaseCache(HttpClient httpClient, UserService userService, UserManager<AppUser> userManager)
         {
             _httpClient = httpClient;
             OnUsersDataChanged += delegate { }; // Initializing with an empty delegate
+            _userService = userService;
+            _userManager = userManager;
         }
 
         private List<User>? _users = null;
@@ -33,52 +40,45 @@ namespace NewUserManagement.Client.Services
         internal int TotalPages { get; private set; }
         internal int CurrentPage { get; private set; }
 
+        // Assuming User is your custom user model and AppUser is the ASP.NET Core Identity user model
         internal async Task GetUsersFromDatabaseAndCache(int? page)
         {
-            if (_gettingUsersFromDatabaseAndCaching == false)
+            if (_gettingUsersFromDatabaseAndCaching)
+                return;
+
+            try
             {
-                try
+                _gettingUsersFromDatabaseAndCaching = true;
+
+                // Assuming you're using UserManager<AppUser> userManager
+                var users = await _userManager.Users
+                    .Skip((page ?? 1 - 1) * PageSize) // Skip records based on pagination
+                    .Take(PageSize) // Take the desired page size
+                    .ToListAsync();
+
+                // Map AppUser objects to User objects
+                var mappedUsers = users.Select(u => new User
                 {
-                    _gettingUsersFromDatabaseAndCaching = true;
-                    var url = $"{API_EndPoints.s_user}";
-                    var queryParams = new List<string>();
+                    Id = u.Id,
+                    UserName = u.UserName,
+                    // Map other properties as needed
+                }).ToList();
 
-                    // Append page size query parameter only if page is specified and greater than or equal to 1
-                    if (page != null && page >= 1)
-                    {
-                        queryParams.Add($"pageSize={PageSize}");
-
-                        // Append page number query parameter
-                        queryParams.Add($"page={page}");
-                    }
-
-                    // Append all query parameters to the URL if any
-                    if (queryParams.Count > 0)
-                    {
-                        url += "?" + string.Join("&", queryParams);
-                    }
-
-                    var response = await _httpClient.GetAsync(url);
-                    response.EnsureSuccessStatusCode();
-                    var responseData = await response.Content.ReadFromJsonAsync<List<User>>();
-                    if (responseData != null)
-                    {
-                        Users = responseData;
-                        CurrentPage = page ?? 1; // Set CurrentPage to page if not null, otherwise use 1
-                        Console.WriteLine("Data retrieved from the database and cached successfully.");
-                    }
-                }
-                catch (HttpRequestException ex)
-                {
-                    Console.WriteLine($"Failed to fetch users from the server: {ex.Message}");
-                    // Handle the error (e.g., display a message to the user)
-                }
-                finally
-                {
-                    _gettingUsersFromDatabaseAndCaching = false;
-                }
+                Users = mappedUsers;
+                CurrentPage = page ?? 1;
+                Console.WriteLine("Data retrieved from the database and cached successfully.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to fetch users from the Identity database: {ex.Message}");
+                // Handle the error (e.g., display a message to the user)
+            }
+            finally
+            {
+                _gettingUsersFromDatabaseAndCaching = false;
             }
         }
+
 
         internal async Task<List<User>> GetActiveUsers(int page)
         {
@@ -142,24 +142,23 @@ namespace NewUserManagement.Client.Services
 
         private bool _gettingUsersFromDatabaseAndCaching = false;
         private static readonly object lockObject = new object();
-        public async Task RefreshCache(HttpClient httpClient)
+        public async Task RefreshCache(UserManager<AppUser> userManager)
         {
             try
             {
-                // Fetch the latest user data from the server
-                var users = await httpClient.GetFromJsonAsync<List<UserDTO>>("api/User");
+                // Fetch all users using UserManager
+                var users = await userManager.Users.ToListAsync();
 
                 // Update the cache with the latest data
                 lock (lockObject)
                 {
-                    Users = users?.Select(u => new User
+                    Users = users.Select(u => new User
                     {
                         Id = u.Id,
                         Forename = u.Forename,
                         Surname = u.Surname,
-                        Email = u.Email,
-                        DateOfBirth = u.DateOfBirth
-                    }).ToList() ?? new List<User>();
+                        Email = u?.Email, // Use null-conditional operator to handle possible null reference                        DateOfBirth = u.DateOfBirth
+                    }).ToList();
                 }
             }
             catch (Exception ex)
