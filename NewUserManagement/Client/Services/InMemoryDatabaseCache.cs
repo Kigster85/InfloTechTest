@@ -1,7 +1,5 @@
-﻿using System.Net.Http.Json;
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using NewUserManagement.Client.Static;
 using NewUserManagement.Server.Data;
 using NewUserManagement.Shared.Models;
 
@@ -21,12 +19,12 @@ namespace NewUserManagement.Client.Services
             _userManager = userManager;
         }
 
-        private List<User>? _users = null;
-        internal List<User> Users
+        private List<AppUser>? _users = null;
+        internal List<AppUser> Users
         {
             get
             {
-                return _users ?? new List<User>();
+                return _users ?? new List<AppUser>();
             }
             set
             {
@@ -50,21 +48,12 @@ namespace NewUserManagement.Client.Services
             {
                 _gettingUsersFromDatabaseAndCaching = true;
 
-                // Assuming you're using UserManager<AppUser> userManager
                 var users = await _userManager.Users
                     .Skip((page ?? 1 - 1) * PageSize) // Skip records based on pagination
                     .Take(PageSize) // Take the desired page size
                     .ToListAsync();
 
-                // Map AppUser objects to User objects
-                var mappedUsers = users.Select(u => new User
-                {
-                    Id = u.Id,
-                    UserName = u.UserName,
-                    // Map other properties as needed
-                }).ToList();
-
-                Users = mappedUsers;
+                Users = users;
                 CurrentPage = page ?? 1;
                 Console.WriteLine("Data retrieved from the database and cached successfully.");
             }
@@ -79,8 +68,16 @@ namespace NewUserManagement.Client.Services
             }
         }
 
+        internal async Task<AppUser?> GetUserDetails(string? userId)
+        {
+            if (userId == null)
+                return null;
 
-        internal async Task<List<User>> GetActiveUsers(int page)
+            // Retrieve the user from the Identity database using UserManager
+            return await _userManager.FindByIdAsync(userId);
+        }
+
+        internal async Task<List<AppUser>> GetActiveUsers(int page)
         {
             await GetUsersFromDatabaseAndCache(page);
 
@@ -88,13 +85,14 @@ namespace NewUserManagement.Client.Services
             return Users.Where(u => u.IsActive).Skip(startIndex).Take(PageSize).ToList();
         }
 
-        internal async Task<List<User>> GetInactiveUsers(int page)
+        internal async Task<List<AppUser>> GetInactiveUsers(int page)
         {
             await GetUsersFromDatabaseAndCache(page);
 
             var startIndex = (page - 1) * PageSize;
             return Users.Where(u => !u.IsActive).Skip(startIndex).Take(PageSize).ToList();
         }
+
 
         public List<string> SelectedUserIds { get; private set; } = new List<string>();
 
@@ -119,12 +117,29 @@ namespace NewUserManagement.Client.Services
         {
             try
             {
-                // Send a DELETE request to the API endpoint to delete the selected users
-                var response = await _httpClient.DeleteAsync($"api/User/delete-multiple?ids={string.Join(",", SelectedUserIds)}");
-                response.EnsureSuccessStatusCode();
-
-                // Remove the deleted users from the local list
-                Users.RemoveAll(u => u.Id != null && SelectedUserIds.Contains(u.Id));
+                foreach (var userId in SelectedUserIds)
+                {
+                    var user = await _userManager.FindByIdAsync(userId);
+                    if (user != null)
+                    {
+                        var result = await _userManager.DeleteAsync(user);
+                        if (result.Succeeded)
+                        {
+                            // Remove the deleted user from the local list
+                            Users.RemoveAll(u => u.Id == userId);
+                        }
+                        else
+                        {
+                            // Handle the case where deletion fails
+                            Console.WriteLine($"Failed to delete user with ID {userId}. Error: {result.Errors.FirstOrDefault()?.Description}");
+                        }
+                    }
+                    else
+                    {
+                        // Handle the case where user is not found
+                        Console.WriteLine($"User with ID {userId} not found.");
+                    }
+                }
 
                 // Clear the list of selected user IDs
                 ClearSelectedUsers();
@@ -136,85 +151,72 @@ namespace NewUserManagement.Client.Services
             }
         }
 
+
         // Sorting properties
         internal string SortBy { get; private set; } = "Id"; // Default sorting by user ID
         internal bool AscendingOrder { get; private set; } = true; // Default ascending order
 
         private bool _gettingUsersFromDatabaseAndCaching = false;
         private static readonly object lockObject = new object();
-        public async Task RefreshCache(UserManager<AppUser> userManager)
+        internal async Task RefreshCache()
         {
             try
             {
-                // Fetch all users using UserManager
-                var users = await userManager.Users.ToListAsync();
+                // Fetch the latest user data from the Identity database
+                var appUsers = await _userManager.Users.ToListAsync();
 
                 // Update the cache with the latest data
-                lock (lockObject)
-                {
-                    Users = users.Select(u => new User
-                    {
-                        Id = u.Id,
-                        Forename = u.Forename,
-                        Surname = u.Surname,
-                        Email = u?.Email, // Use null-conditional operator to handle possible null reference                        DateOfBirth = u.DateOfBirth
-                    }).ToList();
-                }
+                Users = appUsers.ToList();
+
+                Console.WriteLine("Data retrieved from the database and cached successfully.");
             }
             catch (Exception ex)
             {
-                // Handle exceptions (e.g., network errors, server unreachable)
                 Console.WriteLine($"Failed to refresh cache: {ex.Message}");
-                // Log or display an error message as needed
+                // Handle or log the error as needed
             }
         }
-        public async Task<bool> UpdateUserOnServerAndRefreshCache(HttpClient httpClient, User user)
+
+        public async Task<bool> UpdateUserOnServerAndRefreshCache(AppUser user)
         {
             try
             {
-                // Send an HTTP request to the server API to update the user data
-                HttpResponseMessage response = await httpClient.PutAsJsonAsync($"api/User/{user.Id}", user);
-
-                if (response.IsSuccessStatusCode)
+                if (user.Id == null)
                 {
-                    // If the update was successful, refresh the cache
-                    await RefreshCache(httpClient);
-                    return true;
-                }
-                else
-                {
-                    // If the update failed, handle the error (e.g., log it, display a message)
+                    Console.WriteLine("User ID is null.");
                     return false;
                 }
+
+                var appUser = await _userManager.FindByIdAsync(user.Id);
+                if (appUser == null)
+                {
+                    Console.WriteLine($"User with ID {user.Id} not found.");
+                    return false;
+                }
+
+                // Update the properties of the retrieved AppUser with the new values
+                appUser.Forename = user.Forename;
+                appUser.Surname = user.Surname;
+                appUser.Email = user.Email;
+
+                // Update the user in the Identity database
+                var result = await _userManager.UpdateAsync(appUser);
+                if (!result.Succeeded)
+                {
+                    Console.WriteLine("Failed to update user. Please try again.");
+                    return false;
+                }
+
+                // If the update was successful, refresh the cache
+                await RefreshCache();
+
+                return true;
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Failed to update user and refresh cache: {ex.Message}");
                 return false;
             }
-        }
-        internal async Task<User?> GetUserDetails(string? userId)
-        {
-            // Assuming you have a list of users in your cache, you can retrieve the user details by iterating through the list
-            return await Task.FromResult(Users.FirstOrDefault(u => u.Id == userId));
-        }
-
-        internal async Task<List<User>> GetActiveUsers(int page, int pageSize)
-        {
-            if (_users == null)
-                await GetUsersFromDatabaseAndCache(page);
-
-            var startIndex = (page - 1) * pageSize;
-            return _users?.Where(u => u.IsActive).Skip(startIndex).Take(pageSize).ToList() ?? new List<User>();
-        }
-
-        internal async Task<List<User>> GetInactiveUsers(int page, int pageSize)
-        {
-            if (_users == null)
-                await GetUsersFromDatabaseAndCache(page);
-
-            var startIndex = (page - 1) * pageSize;
-            return _users?.Where(u => !u.IsActive).Skip(startIndex).Take(pageSize).ToList() ?? new List<User>();
         }
 
         // Method to change sorting criteria
