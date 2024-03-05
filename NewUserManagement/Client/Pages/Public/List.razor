@@ -8,21 +8,22 @@
 @using NewUserManagement.Client.Services
 @using System.Text
 @using System.Text.Json
+@using Microsoft.AspNetCore.Components
 @using static NewUserManagement.Client.Services.LoggingClientService
 
 
 <NavBar />
 @if (_showingViewModalWindow)
 {
-	<View ViewModalClickBtnClose="CloseModal" UserId="@_selectedUserId" />
+	<View ViewModalClickBtnClose="CloseModal" userId="@_selectedUserId" />
 }
 else if (_showingEditModalWindow)
 {
-	<Edit EditModalClickBtnClose="CloseModal" UserId="@_selectedUserId" OnModalClosed="SuccessEditMsgOnClose" OnEditModalClosed="HandleModalClosed" />
+	<Edit EditModalClickBtnClose="CloseModal" userId="@_selectedUserId" OnModalClosed="SuccessEditMsgOnClose" OnEditModalClosed="HandleModalClosed" />
 }
 else if (_showingAddModalWindow)
 {
-	<Add AddModalClickBtnClose="CloseModal" UserId="@_selectedUserId" OnModalClosed="SuccessAddMsgOnClose" OnAddModalClosed="HandleModalClosed" />
+	<Add AddModalClickBtnClose="CloseModal" userId="@_selectedUserId" OnModalClosed="SuccessAddMsgOnClose" OnAddModalClosed="HandleModalClosed" />
 }
 
 <main class="container min-vh-90 py-nd-5 bg-dark">
@@ -74,6 +75,12 @@ else if (_showingAddModalWindow)
 										{
 											<Loading />
 										}
+@* 										else (!AuthenticationState.User.Identity.IsAuthenticated)
+										{
+											<div class="alert alert-warning" role="alert">
+												You are not logged in. Please log in to access this feature.
+											</div>
+										} *@
 										else
 										{
                     @foreach (var user in DatabaseCache.Users)
@@ -83,7 +90,7 @@ else if (_showingAddModalWindow)
 														<td @onclick="@(e => ViewUser(user.Id!))">@user.Id</td>
 														<td @onclick="@(e => ViewUser(user.Id!))">@user.Forename</td>
 														<td @onclick="@(e => ViewUser(user.Id!))">@user.Surname</td>
-														<td @onclick="@(e => ViewUser(user.Id!))">@user.Email</td>
+														<td @onclick="@(e => ViewUser(user.Id!))">@user.UserName</td>
 														<td @onclick="@(e => ViewUser(user.Id!))">@((user.IsActive == true) ? "Yes" : "No")</td>
 														<td @onclick="@(e => ViewUser(user.Id!))">@user.DateOfBirth.ToShortDateString()</td>
 
@@ -140,14 +147,14 @@ else if (_showingAddModalWindow)
 		@inject ILogger<List> Logger // Inject ILogger service
 		@inject LoggingClientService.ILogService _logService
 		@inject LoggingService _loggingService
-		@inject UserService UserService
-		private UserService? _userService { get; set; }
-		private bool showingActiveUsers = false;
-		private List<User> users = new List<User>();
+	// 	@inject AuthenticationStateProvider AuthenticationStateProvider
+	// private AuthenticationState AuthenticationState { get; set; }
+		private List<AppUser> users = new List<AppUser>();
     private bool isLoading = true; // Flag to indicate loading state
     protected override async Task OnInitializedAsync()
     {
-				await DatabaseCache.GetUsersFromDatabaseAndCache(null);
+		// AuthenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+				await DatabaseCache.GetUsersFromDatabaseAndCache();
 				isLoading = false;
     }
 	private bool IsDeleteButtonVisible { get; set; } = false;
@@ -157,14 +164,15 @@ else if (_showingAddModalWindow)
 		isLoading = true; // Set loading flag to true
 		try
 		{
-			if (_userService != null)
-			{
-				await _userService.GetAllUsers();
-			}
+			// Get users from the in-memory database cache
+			DatabaseCache.Users = await DatabaseCache.GetAllUsers();
+
+			// Alternatively, if the GetAllUsers method returns a list of users directly, you can assign it like this:
+			// users = await DatabaseCache.GetAllUsers();
 		}
-		catch (Exception)
+		catch (Exception ex)
 		{
-			Console.WriteLine("User Loading from database cache failed. Please try again or contact a system administrator if the problem persists.");
+			Console.WriteLine($"User Loading from database cache failed: {ex.Message}");
 		}
 		finally
 		{
@@ -172,18 +180,16 @@ else if (_showingAddModalWindow)
 		}
 	}
 
-	private async Task FetchActiveUsers()
+
+	private void FetchActiveUsers()
 	{
 		try
 		{
-			if (_userService != null)
-			{
-				// Call the UserService method to fetch active users
-				var activeUsers = await _userService.GetActiveUsers();
+			// Filter active users from the cached list
+			var activeUsers = DatabaseCache.Users.Where(u => u.IsActive).ToList();
 
-				// Update the list of users displayed in the UI with activeUsers
-				DatabaseCache.Users = activeUsers;
-			}
+			// Update the list of users displayed in the UI with activeUsers
+			DatabaseCache.Users = activeUsers;
 		}
 		catch (Exception ex)
 		{
@@ -192,18 +198,16 @@ else if (_showingAddModalWindow)
 		}
 	}
 
-	private async Task FetchInactiveUsers()
+
+	private void FetchInactiveUsers()
 	{
 		try
 		{
-			if (_userService != null)
-			{
-				// Call the UserService method to fetch inactive users
-				var inactiveUsers = await _userService.GetInactiveUsers();
+			// Filter inactive users from the cached list
+			var inactiveUsers = DatabaseCache.Users.Where(u => !u.IsActive).ToList();
 
-				// Update the list of users displayed in the UI with inactiveUsers
-				DatabaseCache.Users = inactiveUsers;
-			}
+			// Update the list of users displayed in the UI with inactiveUsers
+			DatabaseCache.Users = inactiveUsers;
 		}
 		catch (Exception ex)
 		{
@@ -213,31 +217,34 @@ else if (_showingAddModalWindow)
 	}
 
 
+
 	private async Task DeleteUser(string? userId)
 	{
 		try
 		{
 			if (!string.IsNullOrEmpty(userId))
 			{
-				if (_userService != null)
-				{
-					bool success = await _userService.DeleteUser(userId);
+				// Find the user in the cache
+				var userToDelete = DatabaseCache.Users.FirstOrDefault(u => u.Id == userId);
 
-					if (success)
-					{
-						Console.WriteLine($"User with ID {userId} deleted successfully.");
-						await FetchAllUsers();
-						await SuccessDeleteMsgOnClose();
-					}
-					else
-					{
-						Console.WriteLine($"Failed to delete user with ID {userId}.");
-					}
+				if (userToDelete != null)
+				{
+					// Remove the user from the cache
+					DatabaseCache.Users.Remove(userToDelete);
+
+					// Optionally, you can perform other actions here like sending a request to the server to delete the user permanently
+
+					Console.WriteLine($"User with ID {userId} deleted successfully.");
+					await SuccessDeleteMsgOnClose();
 				}
 				else
 				{
-					Console.WriteLine("User ID is null or empty.");
+					Console.WriteLine($"User with ID {userId} not found in the cache.");
 				}
+			}
+			else
+			{
+				Console.WriteLine("User ID is null or empty.");
 			}
 		}
 		catch (Exception ex)
@@ -245,6 +252,7 @@ else if (_showingAddModalWindow)
 			Console.WriteLine($"An error occurred while deleting user with ID {userId}: {ex.Message}");
 		}
 	}
+
 
 
 	private async Task DeleteSelected()
@@ -262,32 +270,31 @@ else if (_showingAddModalWindow)
 			// Iterate through selected user IDs and delete each user
 			foreach (var userId in selectedUserIds)
 			{
-				if (_userService != null)
+				// Find the user in the cache
+				var userToDelete = DatabaseCache.Users.FirstOrDefault(u => u.Id == userId);
+
+				if (userToDelete != null)
 				{
-					bool success = await _userService.DeleteUser(userId);
-					if (success)
-					{
-						Console.WriteLine($"User with ID {userId} deleted successfully.");
-					}
-					else
-					{
-						Console.WriteLine($"Failed to delete user with ID {userId}.");
-					}
+					// Remove the user from the cache
+					DatabaseCache.Users.Remove(userToDelete);
+
+					Console.WriteLine($"User with ID {userId} deleted successfully.");
 				}
-
-				// After deleting all selected users, refresh the user list
-				await FetchAllUsers();
-
-				// Clear the selected user IDs list and hide the delete button
-				SelectedUserIds.Clear();
-				IsSelectAllChecked = false;
-
-				// Notify Blazor to re-render the component and update the UI
-				StateHasChanged();
-
-				// Display success message or perform any other necessary actions
-				await SuccessDeleteMsgOnClose();
+				else
+				{
+					Console.WriteLine($"Failed to delete user with ID {userId}. User not found in the cache.");
+				}
 			}
+
+			// Clear the selected user IDs list and hide the delete button
+			SelectedUserIds.Clear();
+			IsSelectAllChecked = false;
+
+			// Notify Blazor to re-render the component and update the UI
+			StateHasChanged();
+
+			// Display success message or perform any other necessary actions
+			await SuccessDeleteMsgOnClose();
 		}
 		catch (Exception ex)
 		{
@@ -298,6 +305,7 @@ else if (_showingAddModalWindow)
 			Logger.LogError(ex, "Error occurred while deleting selected users: {ErrorMessage}", ex.Message);
 		}
 	}
+
 
 
 

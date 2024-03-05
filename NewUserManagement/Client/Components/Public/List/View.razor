@@ -6,6 +6,9 @@
 @using NewUserManagement.Client.Components.Public
 @using NewUserManagement.Client.Components.Public.List
 @using Microsoft.JSInterop
+@using Microsoft.AspNetCore.Identity;
+
+
 
 <div class="modal @(_modalClass)" id="informationalModal" tabindex="-1" aria-labelledby="informationalModalLabel" role="dialog" style="display:@_modalDisplay">
 	<div class="modal-dialog " role="document">
@@ -40,20 +43,52 @@
 	@inject IJSRuntime JSRuntime
 	@inject ILogger<View> Logger // Inject ILogger service
 	@inject LoggingClientService.ILogService _logService
-	[Parameter] public string? UserId { get; set; }
 
-	private List<User> users = new List<User>();
+	[Parameter] public string? userId { get; set; }
+
+	private List<AppUser> users = new List<AppUser>();
 	private string? _selectedUserId { get; set; }
 
-	private User UserDetails { get; set; } = new User(); // Initialize with a default user object
-	protected override async Task OnInitializedAsync()
+	private AppUser UserDetails { get; set; } = new AppUser(); // Initialize with a default user object
+	protected async override Task OnInitializedAsync()
 	{
-			// Fetch user details based on the UserId parameter
-		UserDetails = await DatabaseCache.GetUserDetails(UserId) ?? new User();
-		await LogUserView(UserId);
-		Console.WriteLine($"Viewing user with ID: {UserId}");
-
+		try
+		{
+			// Check if the userId parameter is not null
+			if (!string.IsNullOrEmpty(userId))
+			{
+				// Find the user in the cache by userId
+				if (DatabaseCache.Users != null)
+				{
+					var user = DatabaseCache.Users.FirstOrDefault(u => u.Id == userId);
+					if (user != null)
+					{
+						UserDetails = user;
+						Console.WriteLine($"Viewing user with ID: {userId}");
+					}
+					else
+					{
+						Logger.LogWarning($"User with ID {userId} not found in the cache.");
+					}
+				}
+			}
+			else
+			{
+				Logger.LogWarning("Attempted to log user view with null userId.");
+			}
+		}
+		catch (Exception ex)
+		{
+			// Handle the error, such as logging or displaying an error message
+			Console.WriteLine($"An error occurred while initializing: {ex.Message}");
+		}
+		await Task.CompletedTask; // Ensure the method is asynchronous
 	}
+
+
+
+
+
 	private async Task LogUserView(string? userId)
 	{
 		if (userId != null)
@@ -160,10 +195,6 @@
 		}
 	}
 
-
-
-
-
 	[Parameter] public EventCallback ViewModalClickBtnClose { get; set; }
 	[Parameter] public EventCallback OpenEditUser { get; set; }
 
@@ -200,10 +231,10 @@
 		await ViewModalClickBtnClose.InvokeAsync();
 		NavigationManager.NavigateTo("/list");
 	}
-	private async Task UpdateUrlWithoutNavigation(string route, string UserId)
+	private async Task UpdateUrlWithoutNavigation(string route, string userId)
 	{
-		string url = $"/list/{route}/{UserId}";
-		await JSRuntime.InvokeVoidAsync("updateUrlWithoutNavigation", route, UserId);
+		string url = $"/list/{route}/{userId}";
+		await JSRuntime.InvokeVoidAsync("updateUrlWithoutNavigation", route, userId);
 
 	}
 

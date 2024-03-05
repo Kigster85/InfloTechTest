@@ -1,22 +1,17 @@
-﻿using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using NewUserManagement.Server.Data;
+﻿using System.Net.Http.Json;
+using System.Text;
+using System.Text.Json;
 using NewUserManagement.Shared.Models;
 
 namespace NewUserManagement.Client.Services
 {
-    public sealed class InMemoryDatabaseCache
+    public class InMemoryDatabaseCache
     {
         private readonly HttpClient _httpClient;
-        private readonly UserService _userService;
-        private readonly UserManager<AppUser> _userManager;
 
-        public InMemoryDatabaseCache(HttpClient httpClient, UserService userService, UserManager<AppUser> userManager)
+        public InMemoryDatabaseCache(HttpClient httpClient)
         {
             _httpClient = httpClient;
-            OnUsersDataChanged += delegate { }; // Initializing with an empty delegate
-            _userService = userService;
-            _userManager = userManager;
         }
 
         private List<AppUser>? _users = null;
@@ -32,14 +27,27 @@ namespace NewUserManagement.Client.Services
                 NotifyUsersDataChanged();
             }
         }
+        public List<string> SelectedUserIds { get; private set; } = new List<string>();
 
         // Pagination properties
         internal int PageSize { get; set; } = 25; // Number of users to fetch per page
         internal int TotalPages { get; private set; }
         internal int CurrentPage { get; private set; }
+        // Sorting properties
+        internal string SortBy { get; private set; } = "Id"; // Default sorting by user ID
+        internal bool AscendingOrder { get; private set; } = true; // Default ascending order
+        internal event Action? OnUsersDataChanged;
+
+        private bool _gettingUsersFromDatabaseAndCaching = false;
+        private static readonly object lockObject = new object();
+
+        private void NotifyUsersDataChanged() => OnUsersDataChanged?.Invoke();
+
+        // Dictionary to store view counts for users
+        private Dictionary<string, int> _userViewCounts = new Dictionary<string, int>();
 
         // Assuming User is your custom user model and AppUser is the ASP.NET Core Identity user model
-        internal async Task GetUsersFromDatabaseAndCache(int? page)
+        internal async Task GetUsersFromDatabaseAndCache()
         {
             if (_gettingUsersFromDatabaseAndCaching)
                 return;
@@ -48,24 +56,36 @@ namespace NewUserManagement.Client.Services
             {
                 _gettingUsersFromDatabaseAndCaching = true;
 
-                var users = await _userManager.Users
-                    .Skip((page ?? 1 - 1) * PageSize) // Skip records based on pagination
-                    .Take(PageSize) // Take the desired page size
-                    .ToListAsync();
+                // Make a call to your API to fetch all users
+                var response = await _httpClient.GetAsync("api/user");
 
-                Users = users;
-                CurrentPage = page ?? 1;
-                Console.WriteLine("Data retrieved from the database and cached successfully.");
+                if (response.IsSuccessStatusCode)
+                {
+                    var users = await response.Content.ReadFromJsonAsync<List<AppUser>>();
+
+                    Users = users!;
+                    Console.WriteLine("Data retrieved from the API and cached successfully.");
+                }
+                else
+                {
+                    // Handle unsuccessful response (e.g., log error, display error message)
+                    Console.WriteLine($"Failed to fetch users from the API: {response.ReasonPhrase}");
+                }
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Failed to fetch users from the Identity database: {ex.Message}");
-                // Handle the error (e.g., display a message to the user)
+                Console.WriteLine($"Failed to fetch users from the API: {ex.Message}");
+                // Handle the error (e.g., log error, display error message)
             }
             finally
             {
                 _gettingUsersFromDatabaseAndCaching = false;
             }
+        }
+        public async Task<List<AppUser>> GetAllUsers()
+        {
+            await GetUsersFromDatabaseAndCache();
+            return Users;
         }
 
         internal async Task<AppUser?> GetUserDetails(string? userId)
@@ -73,28 +93,79 @@ namespace NewUserManagement.Client.Services
             if (userId == null)
                 return null;
 
-            // Retrieve the user from the Identity database using UserManager
-            return await _userManager.FindByIdAsync(userId);
+            try
+            {
+                // Make a call to your API to fetch user details by ID
+                var response = await _httpClient.GetAsync($"api/user/{userId}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var user = await response.Content.ReadFromJsonAsync<AppUser>();
+                    return user;
+                }
+                else
+                {
+                    // Handle unsuccessful response (e.g., log error, display error message)
+                    Console.WriteLine($"Failed to fetch user details from the API: {response.ReasonPhrase}");
+                    return null;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to fetch user details from the API: {ex.Message}");
+                // Handle the error (e.g., log error, display error message)
+                return null;
+            }
         }
+
 
         internal async Task<List<AppUser>> GetActiveUsers(int page)
         {
-            await GetUsersFromDatabaseAndCache(page);
+            try
+            {
+                var response = await _httpClient.GetAsync($"api/user/active?page={page}");
 
-            var startIndex = (page - 1) * PageSize;
-            return Users.Where(u => u.IsActive).Skip(startIndex).Take(PageSize).ToList();
+                if (response.IsSuccessStatusCode)
+                {
+                    var activeUsers = await response.Content.ReadFromJsonAsync<List<AppUser>>();
+                    return activeUsers!;
+                }
+                else
+                {
+                    Console.WriteLine($"Failed to fetch active users from the API: {response.ReasonPhrase}");
+                    return new List<AppUser>();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to fetch active users from the API: {ex.Message}");
+                return new List<AppUser>();
+            }
         }
 
         internal async Task<List<AppUser>> GetInactiveUsers(int page)
         {
-            await GetUsersFromDatabaseAndCache(page);
+            try
+            {
+                var response = await _httpClient.GetAsync($"api/user/inactive?page={page}");
 
-            var startIndex = (page - 1) * PageSize;
-            return Users.Where(u => !u.IsActive).Skip(startIndex).Take(PageSize).ToList();
+                if (response.IsSuccessStatusCode)
+                {
+                    var inactiveUsers = await response.Content.ReadFromJsonAsync<List<AppUser>>();
+                    return inactiveUsers!;
+                }
+                else
+                {
+                    Console.WriteLine($"Failed to fetch inactive users from the API: {response.ReasonPhrase}");
+                    return new List<AppUser>();
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to fetch inactive users from the API: {ex.Message}");
+                return new List<AppUser>();
+            }
         }
-
-
-        public List<string> SelectedUserIds { get; private set; } = new List<string>();
 
         public void ToggleUserSelection(string userId)
         {
@@ -119,25 +190,17 @@ namespace NewUserManagement.Client.Services
             {
                 foreach (var userId in SelectedUserIds)
                 {
-                    var user = await _userManager.FindByIdAsync(userId);
-                    if (user != null)
+                    var response = await _httpClient.DeleteAsync($"api/user/{userId}");
+
+                    if (response.IsSuccessStatusCode)
                     {
-                        var result = await _userManager.DeleteAsync(user);
-                        if (result.Succeeded)
-                        {
-                            // Remove the deleted user from the local list
-                            Users.RemoveAll(u => u.Id == userId);
-                        }
-                        else
-                        {
-                            // Handle the case where deletion fails
-                            Console.WriteLine($"Failed to delete user with ID {userId}. Error: {result.Errors.FirstOrDefault()?.Description}");
-                        }
+                        // Remove the deleted user from the local list
+                        Users.RemoveAll(u => u.Id == userId);
                     }
                     else
                     {
-                        // Handle the case where user is not found
-                        Console.WriteLine($"User with ID {userId} not found.");
+                        // Handle the case where deletion fails
+                        Console.WriteLine($"Failed to delete user with ID {userId}. Reason: {response.ReasonPhrase}");
                     }
                 }
 
@@ -152,23 +215,29 @@ namespace NewUserManagement.Client.Services
         }
 
 
-        // Sorting properties
-        internal string SortBy { get; private set; } = "Id"; // Default sorting by user ID
-        internal bool AscendingOrder { get; private set; } = true; // Default ascending order
-
-        private bool _gettingUsersFromDatabaseAndCaching = false;
-        private static readonly object lockObject = new object();
         internal async Task RefreshCache()
         {
             try
             {
-                // Fetch the latest user data from the Identity database
-                var appUsers = await _userManager.Users.ToListAsync();
+                // Fetch the latest user data from the API
+                var response = await _httpClient.GetAsync("api/user");
 
-                // Update the cache with the latest data
-                Users = appUsers.ToList();
+                if (response.IsSuccessStatusCode)
+                {
+                    // Deserialize the response content to a list of AppUser
+                    var usersJson = await response.Content.ReadAsStringAsync();
+                    var appUsers = JsonSerializer.Deserialize<List<AppUser>>(usersJson);
 
-                Console.WriteLine("Data retrieved from the database and cached successfully.");
+                    // Update the cache with the latest data
+                    Users = appUsers!;
+
+                    Console.WriteLine("Data retrieved from the API and cached successfully.");
+                }
+                else
+                {
+                    // Handle the case where the API request fails
+                    Console.WriteLine($"Failed to refresh cache: {response.ReasonPhrase}");
+                }
             }
             catch (Exception ex)
             {
@@ -176,6 +245,7 @@ namespace NewUserManagement.Client.Services
                 // Handle or log the error as needed
             }
         }
+
 
         public async Task<bool> UpdateUserOnServerAndRefreshCache(AppUser user)
         {
@@ -187,30 +257,27 @@ namespace NewUserManagement.Client.Services
                     return false;
                 }
 
-                var appUser = await _userManager.FindByIdAsync(user.Id);
-                if (appUser == null)
+                // Serialize the updated user object to JSON
+                var json = JsonSerializer.Serialize(user);
+
+                // Create a StringContent object with the JSON data
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+
+                // Send a PUT request to update the user on the server
+                var response = await _httpClient.PutAsync($"api/user/{user.Id}", content);
+
+                if (response.IsSuccessStatusCode)
                 {
-                    Console.WriteLine($"User with ID {user.Id} not found.");
+                    // If the update was successful, refresh the cache
+                    await RefreshCache();
+                    return true;
+                }
+                else
+                {
+                    // Handle the case where the API request fails
+                    Console.WriteLine($"Failed to update user: {response.ReasonPhrase}");
                     return false;
                 }
-
-                // Update the properties of the retrieved AppUser with the new values
-                appUser.Forename = user.Forename;
-                appUser.Surname = user.Surname;
-                appUser.Email = user.Email;
-
-                // Update the user in the Identity database
-                var result = await _userManager.UpdateAsync(appUser);
-                if (!result.Succeeded)
-                {
-                    Console.WriteLine("Failed to update user. Please try again.");
-                    return false;
-                }
-
-                // If the update was successful, refresh the cache
-                await RefreshCache();
-
-                return true;
             }
             catch (Exception ex)
             {
@@ -219,23 +286,48 @@ namespace NewUserManagement.Client.Services
             }
         }
 
+
         // Method to change sorting criteria
         internal async Task ChangeSorting(string sortBy, bool ascendingOrder)
         {
-            SortBy = sortBy;
-            AscendingOrder = ascendingOrder;
-            // After changing sorting criteria, refetch users from the database
-            await GetUsersFromDatabaseAndCache(CurrentPage);
+            try
+            {
+                SortBy = sortBy;
+                AscendingOrder = ascendingOrder;
+
+                // Construct the URL for sorting users based on the sorting criteria
+                var url = $"api/user?sortBy={sortBy}&ascendingOrder={ascendingOrder}&page={CurrentPage}";
+
+                // Send a GET request to the API to retrieve sorted users
+                var response = await _httpClient.GetAsync(url);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    // Deserialize the response content to get the sorted users
+                    var sortedUsers = await response.Content.ReadFromJsonAsync<List<AppUser>>();
+
+                    if (sortedUsers != null)
+                    {
+                        // Update the Users list with the sorted users
+                        Users = sortedUsers;
+                    }
+                    else
+                    {
+                        Console.WriteLine("Failed to deserialize sorted users from the API response.");
+                    }
+                }
+                else
+                {
+                    // Handle the case where the API request fails
+                    Console.WriteLine($"Failed to retrieve sorted users: {response.ReasonPhrase}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"An error occurred while changing sorting criteria: {ex.Message}");
+            }
         }
 
-        // await ChangeSorting("Sorting Type Here", true); <--- use this when creating future methods to handle sorting.
-
-        internal event Action? OnUsersDataChanged;
-
-        private void NotifyUsersDataChanged() => OnUsersDataChanged?.Invoke();
-
-        // Dictionary to store view counts for users
-        private Dictionary<string, int> _userViewCounts = new Dictionary<string, int>();
 
         // Increment the view count for the specified user ID
         public async Task IncrementUserViewCount(string? userId)
@@ -258,9 +350,6 @@ namespace NewUserManagement.Client.Services
 
             await Task.CompletedTask; // Await a completed task
         }
-
-
-
 
         // Get the view count for the specified user ID
         public int GetUserViewCount(string userId)
@@ -292,7 +381,6 @@ namespace NewUserManagement.Client.Services
 
             await Task.CompletedTask; // Await a completed task
         }
-
 
         // Get the edit count for the specified user ID
         public int GetUserEditCount(string userId)

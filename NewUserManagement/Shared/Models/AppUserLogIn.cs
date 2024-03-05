@@ -1,10 +1,8 @@
-﻿
-using System.ComponentModel.DataAnnotations;
-using Microsoft.AspNetCore.Identity;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace NewUserManagement.Shared.Models
 {
-    public class AppUser : IdentityUser
+    public class AppUserLogIn
     {
         [Required]
         [EmailAddress]
@@ -16,14 +14,7 @@ namespace NewUserManagement.Shared.Models
         [StringLength(80, ErrorMessage = "Your password must be between {2} and {1} characters.", MinimumLength = 6)]
         [Display(Name = "Password")]
         public string Password { get; set; }
-        public string Forename { get; set; }
-
-        public string Surname { get; set; }
-
-        public bool IsActive { get; set; }
-
-        // New DOB property
-        public DateTime DateOfBirth { get; set; }
+        
 
     }
 }

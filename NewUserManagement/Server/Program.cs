@@ -1,8 +1,18 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using System.Text;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using NewUserManagement.Server.Data;
 using Serilog;
 using Serilog.Events;
+using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using NewUserManagement.Client.Services;
+using NewUserManagement.Shared.Utilities;
+using NewUserManagement.Shared.Models;
+
+
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,29 +39,57 @@ builder.Services.AddCors(options =>
         });
 });
 builder.Services.AddDbContext<AppDBContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
-builder.Services.AddDefaultIdentity<AppUser>(options =>
 {
-    options.SignIn.RequireConfirmedAccount = false;
-    // Other options as needed
-})
-    .AddEntityFrameworkStores<AppDBContext>()
-    .AddDefaultTokenProviders();
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"));
+});
+
+builder.Services.AddDefaultIdentity<AppUser>()
+        .AddRoles<IdentityRole>()
+        .AddEntityFrameworkStores<AppDBContext>();
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        var secretKeyGenerator = new SecretKeyGenerator(); // Create an instance of SecretKeyGenerator
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+            ValidAudience = builder.Configuration["Jwt:Issuer"],
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKeyGenerator.GenerateSecretKey()))
+        };
+    });
+builder.Services.AddScoped<IUserClaimsPrincipalFactory<AppUser>, UserClaimsPrincipalFactory<AppUser, IdentityRole>>();
+// Register services for logging
+builder.Services.AddScoped<LoggingService>();
+builder.Services.AddScoped<LoggingCache>();
+builder.Services.AddScoped<LoggingClientService.ILogService, LoggingClientService.LogService>();
+builder.Services.AddScoped(sp =>
+{
+    var httpClient = new HttpClient();
+    httpClient.BaseAddress = new Uri("https://localhost:5167"); // Replace with your API base URL
+    return httpClient;
+});
+
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 builder.Services.AddRouting(options => options.LowercaseUrls = true);
 builder.Services.AddControllers();
+builder.Services.AddServerSideBlazor();
+builder.Services.AddSingleton<SecretKeyGenerator>();
 
 var app = builder.Build();
-// Seed the database if it hasn't been seeded before
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
-    var userManager = services.GetRequiredService<UserManager<AppUser>>();
     try
     {
-        // Seed users if they don't exist
-        AppDBContextSeed.SeedUsers(userManager);
+        var dbContext = services.GetRequiredService<AppDBContext>();
+        var userManager = services.GetRequiredService<UserManager<AppUser>>();
+        await dbContext.SeedUsers(userManager);
     }
     catch (Exception ex)
     {
@@ -59,7 +97,6 @@ using (var scope = app.Services.CreateScope())
         logger.LogError(ex, "An error occurred while seeding the database.");
     }
 }
-
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {

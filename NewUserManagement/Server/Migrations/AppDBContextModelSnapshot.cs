@@ -40,7 +40,15 @@ namespace NewUserManagement.Server.Migrations
                         .IsUnique()
                         .HasDatabaseName("RoleNameIndex");
 
-                    b.ToTable("IdentityRoles", (string)null);
+                    b.ToTable("AspNetRoles", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = "9907f033-a147-4bbb-88de-df9b91860c75",
+                            Name = "Admin",
+                            NormalizedName = "ADMIN"
+                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -126,6 +134,13 @@ namespace NewUserManagement.Server.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("AspNetUserRoles", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            UserId = "2a384430-b11a-4593-99be-e4e0ec5142c3",
+                            RoleId = "9907f033-a147-4bbb-88de-df9b91860c75"
+                        });
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
@@ -149,7 +164,7 @@ namespace NewUserManagement.Server.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("NewUserManagement.Server.Data.AppUser", b =>
+            modelBuilder.Entity("NewUserManagement.Shared.Models.AppUser", b =>
                 {
                     b.Property<string>("Id")
                         .HasColumnType("TEXT");
@@ -166,6 +181,10 @@ namespace NewUserManagement.Server.Migrations
 
                     b.Property<string>("Email")
                         .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("EmailAddress")
+                        .IsRequired()
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("EmailConfirmed")
@@ -190,6 +209,11 @@ namespace NewUserManagement.Server.Migrations
 
                     b.Property<string>("NormalizedUserName")
                         .HasMaxLength(256)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Password")
+                        .IsRequired()
+                        .HasMaxLength(80)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("PasswordHash")
@@ -225,6 +249,30 @@ namespace NewUserManagement.Server.Migrations
                         .HasDatabaseName("UserNameIndex");
 
                     b.ToTable("AspNetUsers", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = "2a384430-b11a-4593-99be-e4e0ec5142c3",
+                            AccessFailedCount = 0,
+                            ConcurrencyStamp = "e755e1a9-d972-45a6-a49c-fc0a045294c8",
+                            DateOfBirth = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
+                            Email = "admin@example.com",
+                            EmailAddress = "admin@example.com",
+                            EmailConfirmed = false,
+                            Forename = "Admin",
+                            IsActive = true,
+                            LockoutEnabled = false,
+                            NormalizedEmail = "ADMIN@EXAMPLE.COM",
+                            NormalizedUserName = "ADMIN@EXAMPLE.COM",
+                            Password = "",
+                            PasswordHash = "AQAAAAIAAYagAAAAEO3DJTVFkdbTOWSwW202LRr7c3HlUs5GskT0v/cZbpq0Iqpi3c2dqQdOaEj2E83t6Q==",
+                            PhoneNumberConfirmed = false,
+                            SecurityStamp = "66034948-ee11-4dc0-8179-83000ba1cb21",
+                            Surname = "User",
+                            TwoFactorEnabled = false,
+                            UserName = "admin@example.com"
+                        });
                 });
 
             modelBuilder.Entity("NewUserManagement.Shared.Models.LogDBEntry", b =>
@@ -276,7 +324,7 @@ namespace NewUserManagement.Server.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserClaim<string>", b =>
                 {
-                    b.HasOne("NewUserManagement.Server.Data.AppUser", null)
+                    b.HasOne("NewUserManagement.Shared.Models.AppUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -285,7 +333,7 @@ namespace NewUserManagement.Server.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserLogin<string>", b =>
                 {
-                    b.HasOne("NewUserManagement.Server.Data.AppUser", null)
+                    b.HasOne("NewUserManagement.Shared.Models.AppUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -300,7 +348,7 @@ namespace NewUserManagement.Server.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("NewUserManagement.Server.Data.AppUser", null)
+                    b.HasOne("NewUserManagement.Shared.Models.AppUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
@@ -309,7 +357,7 @@ namespace NewUserManagement.Server.Migrations
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityUserToken<string>", b =>
                 {
-                    b.HasOne("NewUserManagement.Server.Data.AppUser", null)
+                    b.HasOne("NewUserManagement.Shared.Models.AppUser", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)

@@ -1,4 +1,5 @@
 ﻿@page "/"
+@using Blazored.LocalStorage
 @using NewUserManagement.Client.Components.Public.Shared
 
 <NavBar />
@@ -87,3 +88,26 @@
 
 </main>
 <FooterBar />
+
+
+
+
+@code {
+	@inject ILocalStorageService LocalStorageService
+	protected override async Task OnInitializedAsync()
+	{
+		// Check if the token is present in local storage
+		var token = await LocalStorageService.GetItemAsync<string>("bearerToken");
+
+		if (!string.IsNullOrWhiteSpace(token))
+		{
+			// Token exists, log it to the console
+			Console.WriteLine($"Token on homepage: {token}");
+		}
+		else
+		{
+			// Token does not exist
+			Console.WriteLine("No token found on homepage.");
+		}
+	}
+}

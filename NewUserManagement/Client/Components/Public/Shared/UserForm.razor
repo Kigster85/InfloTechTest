@@ -19,7 +19,7 @@
 				</div>
 				<div class="mb-2 p-2">
 					<strong class="form-label">Email:</strong>
-					<span class="p-2">@UserDetails.Email</span>
+					<span class="p-2">@UserDetails.UserName</span>
 				</div>
 				<div class="mb-2 p-2">
 					<strong class="form-label">Date of Birth:</strong>
@@ -65,8 +65,8 @@
 
 @code {
 	[Parameter]	public bool ShowInputFields { get; set; } = true; // Default to true to show input fields
-	[Parameter] public User UserDetails { get; set; } = new User();
-	[Parameter] public EventCallback<User> OnSubmit { get; set; }
+	[Parameter] public AppUser UserDetails { get; set; } = new AppUser();
+	[Parameter] public EventCallback<AppUser> OnSubmit { get; set; }
 	[Parameter] public EventCallback OnSuccess { get; set; }
 	[Parameter] public EventCallback OnFailure { get; set; }
 

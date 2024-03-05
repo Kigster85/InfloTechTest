@@ -1,4 +1,5 @@
 ﻿using System.Net.Http.Json;
+using System.Text;
 using System.Text.Json;
 
 namespace NewUserManagement.Client.Services
@@ -45,6 +46,7 @@ namespace NewUserManagement.Client.Services
         {
             Task<List<LogEntry>> GetLogEntriesAsync();
             Task AddLogEntryAsync(LogEntry logEntry);
+            Task LogAsync(LogEntry logEntry);
         }
 
         public class LogService : ILogService
@@ -112,6 +114,40 @@ namespace NewUserManagement.Client.Services
                     throw; // Re-throw the exception to propagate it to the caller
                 }
             }
+            public async Task LogAsync(LogEntry logEntry)
+            {
+                try
+                {
+                    // Serialize the log entry object to JSON
+                    string logEntryJson = JsonSerializer.Serialize(logEntry);
+
+                    // Prepare the HTTP content with the serialized log entry
+                    var content = new StringContent(logEntryJson, Encoding.UTF8, "application/json");
+
+                    // Send a POST request to the server to log the entry
+                    var response = await _httpClient.PostAsync("api/logentries", content);
+
+                    // Check if the request was successful
+                    if (response.IsSuccessStatusCode)
+                    {
+                        // Log a message indicating successful logging
+                        _logger.LogInformation("Log entry added successfully: {@LogEntry}", logEntry);
+                    }
+                    else
+                    {
+                        // Log a warning if the logging request failed
+                        _logger.LogWarning("Failed to add log entry. Status code: {StatusCode}", response.StatusCode);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    // Log any exceptions that occur during logging
+                    _logger.LogError(ex, "Error occurred while adding log entry: {ErrorMessage}", ex.Message);
+                    throw; // Re-throw the exception to propagate it to the caller
+                }
+            }
+
+
 
         }
     }
