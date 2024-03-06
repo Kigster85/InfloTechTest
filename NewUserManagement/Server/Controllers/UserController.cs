@@ -24,6 +24,7 @@ namespace NewUserManagement.Server.Controllers
                 .Select(u => new AppUser
                 {
                     UserName = u.Email,
+                    Email = u.Email,
                     Forename = u.Forename,
                     Surname = u.Surname,
                     IsActive = u.IsActive,
@@ -34,7 +35,7 @@ namespace NewUserManagement.Server.Controllers
             return Ok(users);
         }
 
-        // GET: api/User/{userId}
+        // GET: api/user/{userId}
         [HttpGet("{userId}")]
         public async Task<ActionResult<AppUserDTO>> GetUserById(string userId)
         {
@@ -47,7 +48,7 @@ namespace NewUserManagement.Server.Controllers
 
             var userDTO = new AppUserDTO
             {
-                UserName = user.Email,
+                Email = user.Email,
                 Forename = user.Forename,
                 Surname = user.Surname,
                 IsActive = user.IsActive,
@@ -67,7 +68,7 @@ namespace NewUserManagement.Server.Controllers
                 .Take(pageSize)
                 .Select(u => new AppUserDTO
                 {
-                    UserName = u.Email,
+                    Email = u.Email,
                     Forename = u.Forename,
                     Surname = u.Surname,
                     IsActive = u.IsActive,
@@ -88,7 +89,7 @@ namespace NewUserManagement.Server.Controllers
                 .Take(pageSize)
                 .Select(u => new AppUserDTO
                 {
-                    UserName = u.Email,
+                    Email = u.Email,
                     Forename = u.Forename,
                     Surname = u.Surname,
                     IsActive = u.IsActive,
@@ -99,7 +100,7 @@ namespace NewUserManagement.Server.Controllers
             return Ok(inactiveUsers);
         }
 
-        // PUT: api/User/{userId}
+        // PUT: api/user/{userId}
         [HttpPut("{userId}")]
         public async Task<IActionResult> UpdateUser(string userId, [FromBody] AppUserDTO userDTO)
         {
@@ -111,6 +112,7 @@ namespace NewUserManagement.Server.Controllers
 
             user.Forename = userDTO.Forename;
             user.Surname = userDTO.Surname;
+            user.Email = userDTO.Email;
             user.IsActive = userDTO.IsActive;
             user.DateOfBirth = userDTO.DateOfBirth;
 
@@ -124,11 +126,10 @@ namespace NewUserManagement.Server.Controllers
             return NoContent();
         }
 
-        // POST: api/User
         [HttpPost]
-        public async Task<IActionResult> AddUser([FromBody] AppUserDTO userDTO, string email, string password)
+        public async Task<IActionResult> AddUser([FromBody] AddUserDTO userDTO)
         {
-            if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
+            if (string.IsNullOrWhiteSpace(userDTO.Email) || string.IsNullOrWhiteSpace(userDTO.Password))
             {
                 return BadRequest("Email address and password are required.");
             }
@@ -137,13 +138,17 @@ namespace NewUserManagement.Server.Controllers
             {
                 Forename = userDTO.Forename,
                 Surname = userDTO.Surname,
-                UserName = email,
-                Email = email,
+                Email = userDTO.Email,
                 IsActive = true,
                 DateOfBirth = userDTO.DateOfBirth
             };
 
-            var result = await _userManager.CreateAsync(user, password);
+            // Hash the password using UserManager's password hasher
+            var hashedPassword = _userManager.PasswordHasher.HashPassword(user, userDTO.Password);
+            user.PasswordHash = hashedPassword;
+
+            // Create the user with the hashed password
+            var result = await _userManager.CreateAsync(user);
 
             if (!result.Succeeded)
             {

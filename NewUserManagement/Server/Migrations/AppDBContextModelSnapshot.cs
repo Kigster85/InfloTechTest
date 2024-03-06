@@ -45,7 +45,7 @@ namespace NewUserManagement.Server.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "ef231070-2e2f-4656-9465-403153dcc55c",
+                            Id = "a1df7380-21c0-4883-9f13-2779a3bb41fe",
                             Name = "Admin",
                             NormalizedName = "ADMIN"
                         });
@@ -138,8 +138,8 @@ namespace NewUserManagement.Server.Migrations
                     b.HasData(
                         new
                         {
-                            UserId = "b2352a1e-7ea8-4521-a776-315e06d8c3fa",
-                            RoleId = "ef231070-2e2f-4656-9465-403153dcc55c"
+                            UserId = "08ff3603-95e6-426f-8a46-801a4e3834fc",
+                            RoleId = "a1df7380-21c0-4883-9f13-2779a3bb41fe"
                         });
                 });
 
@@ -213,7 +213,6 @@ namespace NewUserManagement.Server.Migrations
 
                     b.Property<string>("Password")
                         .IsRequired()
-                        .HasMaxLength(80)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("PasswordHash")
@@ -253,9 +252,9 @@ namespace NewUserManagement.Server.Migrations
                     b.HasData(
                         new
                         {
-                            Id = "b2352a1e-7ea8-4521-a776-315e06d8c3fa",
+                            Id = "08ff3603-95e6-426f-8a46-801a4e3834fc",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "01c1f48e-dee7-4ca8-9539-60214ffd60a9",
+                            ConcurrencyStamp = "1746fa08-3d35-4ab2-af79-442306b68726",
                             DateOfBirth = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "admin@example.com",
                             EmailAddress = "admin@example.com",
@@ -266,18 +265,18 @@ namespace NewUserManagement.Server.Migrations
                             NormalizedEmail = "ADMIN@EXAMPLE.COM",
                             NormalizedUserName = "ADMIN@EXAMPLE.COM",
                             Password = "",
-                            PasswordHash = "AQAAAAIAAYagAAAAEDVC9KmYCrJgZBuEWidDphkSusjsH+Aqbe2r9kisH3WJ82E10jeTLE9AQj0AXOiCBQ==",
+                            PasswordHash = "AQAAAAIAAYagAAAAELMdtF0y1aS9L0QM95HCodhJIsYH3ziLkmh33r9nfYFa56qAKw4WZ1Do53CIfRVpgA==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "d65593e7-e0fe-490b-975a-6ce7fc321406",
+                            SecurityStamp = "8657d506-4a86-4b70-9170-39b646dfc88c",
                             Surname = "User",
                             TwoFactorEnabled = false,
                             UserName = "admin@example.com"
                         },
                         new
                         {
-                            Id = "60df61bc-eb74-4567-98b9-e4bd10ebdd92",
+                            Id = "c70a253c-1aa6-4c19-a3ff-807a7087a5e7",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "92494087-40ce-47cf-9ba0-8fad0bbdf296",
+                            ConcurrencyStamp = "45bedafc-901c-442b-9feb-498f9a01428d",
                             DateOfBirth = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "ploew@example.com",
                             EmailAddress = "ploew@example.com",
@@ -285,19 +284,19 @@ namespace NewUserManagement.Server.Migrations
                             Forename = "Peter",
                             IsActive = true,
                             LockoutEnabled = false,
-                            Password = "AQAAAAIAAYagAAAAEDVC9KmYCrJgZBuEWidDphkSusjsH+Aqbe2r9kisH3WJ82E10jeTLE9AQj0AXOiCBQ==",
-                            PasswordHash = "AQAAAAIAAYagAAAAECxe6dPYQs9v69TD/+A/gw5cdauUvZ8pzqMp1Io4wKNI/BlmXT67BMsPVoAiHvYWxQ==",
+                            Password = "AQAAAAIAAYagAAAAELMdtF0y1aS9L0QM95HCodhJIsYH3ziLkmh33r9nfYFa56qAKw4WZ1Do53CIfRVpgA==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEHmzLGzU9yXURlaIrYqQK6amw+UfjLrAywPntOzDfRUqhP+OM6LgXZfuRDfnB+lSpw==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "e31bb621-1e93-45ba-9c22-81cabf3d179f",
+                            SecurityStamp = "1f0cafd3-9f34-4c83-8081-316326f82e51",
                             Surname = "Loew",
                             TwoFactorEnabled = false,
                             UserName = "ploew@example.com"
                         },
                         new
                         {
-                            Id = "901f0fb8-a07e-4e20-8bc1-6c5151e9ec05",
+                            Id = "6eb12850-737b-4a09-a0ad-7e32bfd772b7",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "9e635b10-2410-4e07-a7a3-e13b612b48f3",
+                            ConcurrencyStamp = "62b58bf1-02d3-401b-9986-55dbb99a152b",
                             DateOfBirth = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "bfgates@example.com",
                             EmailAddress = "bfgates@example.com",
@@ -305,19 +304,19 @@ namespace NewUserManagement.Server.Migrations
                             Forename = "Benjamin Franklin",
                             IsActive = true,
                             LockoutEnabled = false,
-                            Password = "AQAAAAIAAYagAAAAEDVC9KmYCrJgZBuEWidDphkSusjsH+Aqbe2r9kisH3WJ82E10jeTLE9AQj0AXOiCBQ==",
-                            PasswordHash = "AQAAAAIAAYagAAAAEIcRTKFJE4TJu2ai85WBHwNQwl4XwGEhGRATJdYzTYkqSJ4bbXOkbZtXNGJ6V9Ttsw==",
+                            Password = "AQAAAAIAAYagAAAAELMdtF0y1aS9L0QM95HCodhJIsYH3ziLkmh33r9nfYFa56qAKw4WZ1Do53CIfRVpgA==",
+                            PasswordHash = "AQAAAAIAAYagAAAAECWdriAw4Jl/yiEqxbq0jygITskwjxsA16YCM5OSgZ+wRS5+XKVSAyrOGnrILbiSXg==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "72dad0e2-fdfd-427c-b0e4-3e2ed13ea91f",
+                            SecurityStamp = "34941b7a-1137-4e45-833a-24925a877f06",
                             Surname = "Gates",
                             TwoFactorEnabled = false,
                             UserName = "bfgates@example.com"
                         },
                         new
                         {
-                            Id = "c5515491-0cb3-45b7-aa35-9ea9459be365",
+                            Id = "c37e9c41-90e0-44d5-8864-5b49a422bd18",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "1a46fdb9-eff9-4e86-8ecd-e3b4d2b61aff",
+                            ConcurrencyStamp = "03d1b0d2-4107-4f69-bf26-33d93d969bfa",
                             DateOfBirth = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "ctroy@example.com",
                             EmailAddress = "ctroy@example.com",
@@ -325,19 +324,19 @@ namespace NewUserManagement.Server.Migrations
                             Forename = "Castor",
                             IsActive = false,
                             LockoutEnabled = false,
-                            Password = "AQAAAAIAAYagAAAAEDVC9KmYCrJgZBuEWidDphkSusjsH+Aqbe2r9kisH3WJ82E10jeTLE9AQj0AXOiCBQ==",
-                            PasswordHash = "AQAAAAIAAYagAAAAEHV5G6i3TIvliPLcBNxfRL198blT2Q1cp4jlnx92tfpYOuAARuD1RHaV1XNZZk2LCw==",
+                            Password = "AQAAAAIAAYagAAAAELMdtF0y1aS9L0QM95HCodhJIsYH3ziLkmh33r9nfYFa56qAKw4WZ1Do53CIfRVpgA==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEG+fDCj7ikT5KrujJoUVGTE94r+FvZNBo2jar4+7hycLQjZ0JAvqbXEzuMRCJ1Becg==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "8acc08e2-29b0-4d16-a083-09557b97569e",
+                            SecurityStamp = "ec0e6c8b-4c12-44d7-87a6-3dbbef111d11",
                             Surname = "Troy",
                             TwoFactorEnabled = false,
                             UserName = "ctroy@example.com"
                         },
                         new
                         {
-                            Id = "df5596d7-26ad-48e2-a8b0-5e12bf94ea0f",
+                            Id = "d04896e4-d808-4fc3-9b81-9d4d9b656510",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "ceb749b3-077a-4556-a726-3d33bc5e1e83",
+                            ConcurrencyStamp = "cadf661c-3533-48a1-9608-bdc26c51e3ce",
                             DateOfBirth = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "mraines@example.com",
                             EmailAddress = "mraines@example.com",
@@ -345,19 +344,19 @@ namespace NewUserManagement.Server.Migrations
                             Forename = "Memphis",
                             IsActive = true,
                             LockoutEnabled = false,
-                            Password = "AQAAAAIAAYagAAAAEDVC9KmYCrJgZBuEWidDphkSusjsH+Aqbe2r9kisH3WJ82E10jeTLE9AQj0AXOiCBQ==",
-                            PasswordHash = "AQAAAAIAAYagAAAAEJF0J/qYFjpRvCcVHtDyqjo3QL1RjNJCvmY2oAk8kMZJJnatT0u7+JtZW6mOoO97tQ==",
+                            Password = "AQAAAAIAAYagAAAAELMdtF0y1aS9L0QM95HCodhJIsYH3ziLkmh33r9nfYFa56qAKw4WZ1Do53CIfRVpgA==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEAzdfdfivn3AjTk0C3oF+WVah+ejZrJD/zsm7BNHyxHgWg90lgYCCN63tnz71RMang==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "b656d931-39e0-4e3e-8d88-15740b993ba5",
+                            SecurityStamp = "1e518df9-835b-469b-8b27-20fcf95f21b6",
                             Surname = "Raines",
                             TwoFactorEnabled = false,
                             UserName = "mraines@example.com"
                         },
                         new
                         {
-                            Id = "ea6d152f-72ea-49dd-abf4-cf2fc30411f6",
+                            Id = "a72a38e3-072f-4434-af6e-94e16b60db56",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "6f4a2a1d-bca4-4a50-8f0d-8cdaf18734d2",
+                            ConcurrencyStamp = "e840608f-a318-44b0-98ad-460132c115cb",
                             DateOfBirth = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "sgodspeed@example.com",
                             EmailAddress = "sgodspeed@example.com",
@@ -365,19 +364,19 @@ namespace NewUserManagement.Server.Migrations
                             Forename = "Stanley",
                             IsActive = true,
                             LockoutEnabled = false,
-                            Password = "AQAAAAIAAYagAAAAEDVC9KmYCrJgZBuEWidDphkSusjsH+Aqbe2r9kisH3WJ82E10jeTLE9AQj0AXOiCBQ==",
-                            PasswordHash = "AQAAAAIAAYagAAAAEDoRAdNHh74sCi9JJ1MiQa+8YibEnSq654cQYzdHXCVN/PXGJc32rNDKWVY6q3avWw==",
+                            Password = "AQAAAAIAAYagAAAAELMdtF0y1aS9L0QM95HCodhJIsYH3ziLkmh33r9nfYFa56qAKw4WZ1Do53CIfRVpgA==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEAzVfhb1LTGKmHMhz5GAd+wYq5v7T+S1pO95rmA/GQt56K5IqucQnEE4uoSWsZ3HfQ==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "d23e1753-0042-4aea-b69f-d53c2c128a36",
+                            SecurityStamp = "8b22df38-1544-4d54-8064-00bf8cbf9644",
                             Surname = "Goodspeed",
                             TwoFactorEnabled = false,
                             UserName = "sgodspeed@example.com"
                         },
                         new
                         {
-                            Id = "d24e24c0-985b-4663-b768-688450997091",
+                            Id = "32823223-f1c8-4587-b0da-2791830f6a53",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "f80b6de2-8154-41a5-af2c-ae5c531fd2e0",
+                            ConcurrencyStamp = "1d8eca55-e5ce-4bff-9ac4-0a29446f54bb",
                             DateOfBirth = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "himcdunnough@example.com",
                             EmailAddress = "himcdunnough@example.com",
@@ -385,19 +384,19 @@ namespace NewUserManagement.Server.Migrations
                             Forename = "H.I.",
                             IsActive = true,
                             LockoutEnabled = false,
-                            Password = "AQAAAAIAAYagAAAAEDVC9KmYCrJgZBuEWidDphkSusjsH+Aqbe2r9kisH3WJ82E10jeTLE9AQj0AXOiCBQ==",
-                            PasswordHash = "AQAAAAIAAYagAAAAEOCADHBl+rEF2hv1wBFOL/d5SpGsPbR+tyPGwUDKelsNA/7X/EalEYdSTMvJxFaroQ==",
+                            Password = "AQAAAAIAAYagAAAAELMdtF0y1aS9L0QM95HCodhJIsYH3ziLkmh33r9nfYFa56qAKw4WZ1Do53CIfRVpgA==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEB1xZBxt8d94lpfssZyU3SanAiIzYkF0Le6E1YJTl6XHk1WkOP02RdrNZOtE6sKddg==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "49b253d5-0c9b-4e00-a529-5d4a895cab00",
+                            SecurityStamp = "a9e1cb25-4d66-47e3-9762-f811f76df432",
                             Surname = "McDunnough",
                             TwoFactorEnabled = false,
                             UserName = "himcdunnough@example.com"
                         },
                         new
                         {
-                            Id = "8f8f271d-c3ab-4ac6-838e-d00b5f7cc6f3",
+                            Id = "06b4d0b9-2fee-483f-af39-cc362deb60c0",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "5952abd5-dd58-4553-9eeb-fea771046055",
+                            ConcurrencyStamp = "60951d4d-675d-4f04-a845-2a51ed5ac200",
                             DateOfBirth = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "cpoe@example.com",
                             EmailAddress = "cpoe@example.com",
@@ -405,19 +404,19 @@ namespace NewUserManagement.Server.Migrations
                             Forename = "Cameron",
                             IsActive = false,
                             LockoutEnabled = false,
-                            Password = "AQAAAAIAAYagAAAAEDVC9KmYCrJgZBuEWidDphkSusjsH+Aqbe2r9kisH3WJ82E10jeTLE9AQj0AXOiCBQ==",
-                            PasswordHash = "AQAAAAIAAYagAAAAEJoj/3a2HojWKAx+Ka77vHVEbLSSKZTrgsBnTKwAD3wRBSKH3LKt3dK2ekn0R1IN8g==",
+                            Password = "AQAAAAIAAYagAAAAELMdtF0y1aS9L0QM95HCodhJIsYH3ziLkmh33r9nfYFa56qAKw4WZ1Do53CIfRVpgA==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEJZjf8OMfzzwP7LQwALdyCWQvCGiBNpvbRC/R7fXdq46N7My3p2gz9yLsRzuADBc9g==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "828fece5-8569-40c5-92d1-2b3744b0a49a",
+                            SecurityStamp = "ef204f35-d8b0-4734-8bc8-da29d0b2849f",
                             Surname = "Poe",
                             TwoFactorEnabled = false,
                             UserName = "cpoe@example.com"
                         },
                         new
                         {
-                            Id = "4aefaeaf-3392-4afe-bdc8-b88f642f61fb",
+                            Id = "3618777a-9b4e-41c0-b328-2e7f64ff06b7",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "ad702eec-9a8a-4a2c-a408-34c54a0fcf85",
+                            ConcurrencyStamp = "c103890c-ed17-490d-808a-f7b8e4a83a93",
                             DateOfBirth = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "emalus@example.com",
                             EmailAddress = "emalus@example.com",
@@ -425,19 +424,19 @@ namespace NewUserManagement.Server.Migrations
                             Forename = "Edward",
                             IsActive = false,
                             LockoutEnabled = false,
-                            Password = "AQAAAAIAAYagAAAAEDVC9KmYCrJgZBuEWidDphkSusjsH+Aqbe2r9kisH3WJ82E10jeTLE9AQj0AXOiCBQ==",
-                            PasswordHash = "AQAAAAIAAYagAAAAEHcDv45UsLqeZDvgmirhzwsjZ0qy3zeM+v6TNmI4tNmbz5R4EfN3VYZZMPL1DGAXNw==",
+                            Password = "AQAAAAIAAYagAAAAELMdtF0y1aS9L0QM95HCodhJIsYH3ziLkmh33r9nfYFa56qAKw4WZ1Do53CIfRVpgA==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEFjXU795ke6IFVdhNdfSNoYyJ0M10QuaGx0PcitMzBiywk/tKjnk5SNCf9OBYyMVbg==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "a6def7e7-7cf8-4f1f-9f61-2e001214bfaf",
+                            SecurityStamp = "5a9a11f9-be20-4e1d-91ec-6221a258e8f5",
                             Surname = "Malus",
                             TwoFactorEnabled = false,
                             UserName = "emalus@example.com"
                         },
                         new
                         {
-                            Id = "ea8e4f3b-d83a-455b-9422-9ec2979e1384",
+                            Id = "944d4798-d321-4e0a-8c84-724309553f44",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "62c91de4-c82d-4639-9df9-e58cbd4c5ea1",
+                            ConcurrencyStamp = "bb22a7a1-3628-4372-b29d-6ee647d22963",
                             DateOfBirth = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "dmacready@example.com",
                             EmailAddress = "dmacready@example.com",
@@ -445,19 +444,19 @@ namespace NewUserManagement.Server.Migrations
                             Forename = "Damon",
                             IsActive = false,
                             LockoutEnabled = false,
-                            Password = "AQAAAAIAAYagAAAAEDVC9KmYCrJgZBuEWidDphkSusjsH+Aqbe2r9kisH3WJ82E10jeTLE9AQj0AXOiCBQ==",
-                            PasswordHash = "AQAAAAIAAYagAAAAEFOBCDoc4xg8041pHMVRnHKitqLwpilaqTJKILtymx3hINR8YKWsGBrmgv+QyJQ2Zg==",
+                            Password = "AQAAAAIAAYagAAAAELMdtF0y1aS9L0QM95HCodhJIsYH3ziLkmh33r9nfYFa56qAKw4WZ1Do53CIfRVpgA==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEO1sLdMDBSd0ZjxWlnAX6yV0/DHtAFldF8Wt1CFcHQMNxSx6TpyEdxwnHa5CQX4dow==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "3c365d49-e98f-4ecb-9960-f924246b798d",
+                            SecurityStamp = "a8cbb0e8-3b91-4fcf-8d9a-b98b7208ca7b",
                             Surname = "Macready",
                             TwoFactorEnabled = false,
                             UserName = "dmacready@example.com"
                         },
                         new
                         {
-                            Id = "2e6f6df0-dbb5-4b0d-970d-32568547d765",
+                            Id = "bb3a2af4-51f9-49ba-94a9-ec51bff7cbb7",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "c1f08fea-4424-4a30-b39f-ef72678f2ca4",
+                            ConcurrencyStamp = "bafc55f9-3e9b-45d2-a60f-0afeef253cfc",
                             DateOfBirth = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "jblaze@example.com",
                             EmailAddress = "jblaze@example.com",
@@ -465,19 +464,19 @@ namespace NewUserManagement.Server.Migrations
                             Forename = "Johnny",
                             IsActive = true,
                             LockoutEnabled = false,
-                            Password = "AQAAAAIAAYagAAAAEDVC9KmYCrJgZBuEWidDphkSusjsH+Aqbe2r9kisH3WJ82E10jeTLE9AQj0AXOiCBQ==",
-                            PasswordHash = "AQAAAAIAAYagAAAAEGKoNvfCYxUNc967teFVW4NcDJbhBO4j6mDiExw70K1tg3AWswTTaIx8zGng5303zQ==",
+                            Password = "AQAAAAIAAYagAAAAELMdtF0y1aS9L0QM95HCodhJIsYH3ziLkmh33r9nfYFa56qAKw4WZ1Do53CIfRVpgA==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEI5fI4LXXLaNZHcylzNxj3+iDCKX5l69VSPmEea2FPLnvMbx0AjYQ/CSjdz0tskFCQ==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "bd866ab5-2fd9-4d40-8621-197e56ac59b7",
+                            SecurityStamp = "bbb1d3b7-6de2-4f2f-82b4-1e8f58f0c9ed",
                             Surname = "Blaze",
                             TwoFactorEnabled = false,
                             UserName = "jblaze@example.com"
                         },
                         new
                         {
-                            Id = "585280a3-5351-4cfb-a0c6-cdd135cb7038",
+                            Id = "138cb02e-a2ec-4470-bd94-f51bfc9d5012",
                             AccessFailedCount = 0,
-                            ConcurrencyStamp = "582e09c1-7d45-4c1c-a0d8-98fc894f0ff4",
+                            ConcurrencyStamp = "5acaf51c-ee1e-48d1-b7ab-b904d988e815",
                             DateOfBirth = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified),
                             Email = "rfeld@example.com",
                             EmailAddress = "rfeld@example.com",
@@ -485,10 +484,10 @@ namespace NewUserManagement.Server.Migrations
                             Forename = "Robin",
                             IsActive = true,
                             LockoutEnabled = false,
-                            Password = "AQAAAAIAAYagAAAAEDVC9KmYCrJgZBuEWidDphkSusjsH+Aqbe2r9kisH3WJ82E10jeTLE9AQj0AXOiCBQ==",
-                            PasswordHash = "AQAAAAIAAYagAAAAEC39qefHxJsRHo0feonEgjgqK7U7qe6x7YjN4tZvLbl98N4/DF9yEMAw3XHxOXp2tw==",
+                            Password = "AQAAAAIAAYagAAAAELMdtF0y1aS9L0QM95HCodhJIsYH3ziLkmh33r9nfYFa56qAKw4WZ1Do53CIfRVpgA==",
+                            PasswordHash = "AQAAAAIAAYagAAAAEP2BaIf21zhskwSzMdkHyQ+oSx8lVtwTG4jdgN+mNFN7jAhJaNG4AlP5sE6kSbaAZA==",
                             PhoneNumberConfirmed = false,
-                            SecurityStamp = "bacbd181-8b49-4a4d-8522-5c7f413cea76",
+                            SecurityStamp = "bedc2f36-9114-4b4d-bc28-67179afc9739",
                             Surname = "Feld",
                             TwoFactorEnabled = false,
                             UserName = "rfeld@example.com"

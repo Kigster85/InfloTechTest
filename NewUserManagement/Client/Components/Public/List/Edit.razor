@@ -49,21 +49,21 @@
 
 	public bool showSuccessMessage = false;
 	public bool showErrorMessage = false;
-	[Parameter] public string? userId { get; set; }
-	private List<AppUser> users = new List<AppUser>();
-	private string? _modalDisplay = null;
-	private string? _modalClass = null;
+	[Parameter] public string userId { get; set; }
+	private List<AppUserDTO> users = new List<AppUserDTO>();
+	private string _modalDisplay = null;
+	private string _modalClass = null;
 	private bool _showBackdrop = false;
-	private string? _selectedUserId { get; set; }
-	private AppUser UserDetails { get; set; } = new AppUser(); // Initialize with a default user object
+	private string _selectedUserId { get; set; }
+	private AppUserDTO UserDetails { get; set; } = new AppUserDTO(); // Initialize with a default user object
 	[Parameter] public EventCallback OnModalClosed { get; set; }
 	[Parameter] public EventCallback OnEditModalClosed { get; set; }
 	[Parameter] public EventCallback EditModalClickBtnClose { get; set; }
 
 	protected override async Task OnInitializedAsync()
 	{
-		// Fetch user details based on the UserId parameter
-		UserDetails = await DatabaseCache.GetUserDetails(userId) ?? new AppUser();
+
+		UserDetails = await DatabaseCache.GetUserDetails(userId) ?? new AppUserDTO();
 	}
 
 	public async Task LogUserEdit(string userId, string action, string details)
@@ -96,25 +96,28 @@
 	}
 	
 	protected override void OnInitialized() => ShowEditModal();
+	private bool IsAddUser { get; set; }
 
 	private async void ShowEditModal()
 	{
 		_modalDisplay = "block;";
 		_modalClass = "show";
 		_showBackdrop = true;
+		IsAddUser = true;
+
 		await updateUrlWithoutNavigation("edit", userId);
 	}
-	[Parameter] public bool _showingViewModalWindow { get; set; }
 	private async Task CloseEditModal()
 	{
 		_modalDisplay = "none;";
 		_modalClass = string.Empty;
 		_showBackdrop = false;
+		IsAddUser = false;
 		NavigationManager.NavigateTo("/list");
 		await EditModalClickBtnClose.InvokeAsync();
 		await Task.Delay(0);
 	}
-	private async Task updateUrlWithoutNavigation(string route, string? UserId)
+	private async Task updateUrlWithoutNavigation(string route, string UserId)
 	{
 		string url = $"/list/{route}/{UserId}";
 		await JSRuntime.InvokeVoidAsync("updateUrlWithoutNavigation", route, UserId);
@@ -128,34 +131,30 @@
 		{
 			Console.WriteLine("Submitting form...");
 
-			// Check if UserDetails is not null and has a valid ID
-			if (UserDetails != null && !string.IsNullOrEmpty(UserDetails.Id))
+			// Call the UserController to update the user details
+			Console.WriteLine($"Sending PUT request to /api/user/{userId}");
+			HttpResponseMessage response = await HttpClient.PutAsJsonAsync($"/api/user/{userId}", UserDetails);
+
+			if (response.IsSuccessStatusCode == true)
 			{
-				// Update the user details in the cache directly
-				var userToUpdate = DatabaseCache.Users.FirstOrDefault(u => u.Id == UserDetails.Id);
-				if (userToUpdate != null)
-				{
-					// Update the properties of the userToUpdate with the new values from UserDetails
-					userToUpdate.Forename = UserDetails.Forename;
-					userToUpdate.Surname = UserDetails.Surname;
-					userToUpdate.Email = UserDetails.Email;
+				Console.WriteLine("Request succeeded.");
 
-					// Log the user edit
-					await LogUserEdit(UserDetails.Id, "UserEdited", $"User {UserDetails.Forename} {UserDetails.Surname} details edited.");
+				// Log the user edit
+				await LogUserEdit(userId, "Edited", "User information updated successfully.");
+				await DatabaseCache.IncrementUserEditCount(userId);
+				// Show success message
+				// Update the cache with the latest data from the server
+				Console.WriteLine("Refreshing cache...");
+				await DatabaseCache.UpdateUserOnServerAndRefreshCache(HttpClient, UserDetails);
 
-					// Close the edit modal
-					await CloseEditModalSubmit();
-				}
-				else
-				{
-					Console.WriteLine($"User with ID {UserDetails.Id} not found in the cache.");
-					// Show error message
-					showErrorMessage = true;
-				}
+				// Close the modal after a delay
+				await CloseEditModalSubmit();
+				await EditModalClickBtnClose.InvokeAsync();
+				await OnEditModalClosed.InvokeAsync();
 			}
 			else
 			{
-				Console.WriteLine("UserDetails is null or has an invalid ID.");
+				Console.WriteLine("Request failed.");
 				// Show error message
 				showErrorMessage = true;
 			}
@@ -173,7 +172,7 @@
 	private async Task CloseEditModalSubmit()
 	{
 		// Reset message states
-		showSuccessMessage = false;
+		showSuccessMessage = true;
 		showErrorMessage = false;
 		await Task.Delay(0);
 		// Close the modal

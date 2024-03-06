@@ -40,7 +40,7 @@
 						</a>
 			</li>
 		</ul>
-		<div class="d-flex justify-content-end w-70">
+		<div class="d-flex justify-content-end w-auto">
 		<ul class="nav">
 			<AuthorizeView Roles="Admin">
 				<Authorized Context="Auth">
@@ -72,7 +72,7 @@
 	@inject AppAuthStateProvider AuthenticationStateProvider
 	@inject ILocalStorageService LocalStorageService
 	private bool IsAuthenticated { get; set; }
-	private AppUser _user { get; set; }
+	private AppUserDTO _user { get; set; }
 	private string Username { get; set; }
 	private string token { get; set; }
 
@@ -95,7 +95,7 @@
 			IsAuthenticated = false;
 		}
 	}
-	private async Task<AppUser> GetUserDetailsFromCacheOrDatabase(string userId)
+	private async Task<AppUserDTO> GetUserDetailsFromCacheOrDatabase(string userId)
 	{
 		// Implement logic to retrieve user details from cache or database based on user ID
 		// For example, if you're using an in-memory database cache:

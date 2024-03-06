@@ -80,7 +80,7 @@ builder.Services.AddRouting(options => options.LowercaseUrls = true);
 builder.Services.AddControllers();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddSingleton<SecretKeyGenerator>();
-
+builder.Services.AddScoped<IPasswordHasher<AppUser>, PasswordHasher<AppUser>>();
 var app = builder.Build();
 using (var scope = app.Services.CreateScope())
 {

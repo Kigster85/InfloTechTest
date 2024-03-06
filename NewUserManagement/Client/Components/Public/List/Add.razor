@@ -1,4 +1,5 @@
 ﻿@page "/list/add"
+@using Microsoft.AspNetCore.Identity
 @using NewUserManagement.Client.Services
 @using NewUserManagement.Client.Pages.Public
 @using NewUserManagement.Client.Components
@@ -18,7 +19,7 @@
 						<button @onclick="CloseAddModal" type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 					</div>
 					<div class="modal-body">
-						<UserForm UserDetails="@UserDetails" OnSubmit="@AddUserSubmit" OnSuccess="@ShowSuccessMsg" OnFailure="@ShowFailureMsg" />
+				<UserForm UserDetails="@UserDetails" OnSubmit="@AddUserSubmit" OnSuccess="@ShowSuccessMsg" OnFailure="@ShowFailureMsg" IsAddUser="true" />
 
 						@if (showErrorMessage)
 						{
@@ -47,6 +48,7 @@
   @inject HttpClient HttpClient
   @inject ILogger<Add> Logger
   @inject LoggingClientService.ILogService _logService
+	@inject IPasswordHasher<AppUser> _passwordHasher
 
 	public bool showSuccessMessage = false;
 	public bool showErrorMessage = false;
@@ -60,14 +62,14 @@
 	private bool _showBackdrop { get; set; }
 	private bool? isLoading = true; // Flag to indicate loading state
 
-	private AppUser? UserDetails { get; set; } // Initialize with a default user object
+	private AppUserDTO UserDetails { get; set; } // Initialize with a default user object
 	protected override async Task OnInitializedAsync()
 	{
 		// You can add an asynchronous operation that doesn't await anything to satisfy the requirement.
 		await Task.CompletedTask;
 		isLoading = false;
 		// Initialize UserDetails with default values or leave it as an empty object
-		UserDetails = new AppUser();
+		UserDetails = new AppUserDTO();
 	}
 	public async Task LogUserCreation(string userId, string action, string details)
 	{
@@ -95,6 +97,7 @@
 			throw; // Re-throw the exception to propagate it to the caller
 		}
 	}
+	private bool IsAddUser { get; set; }
 
 	protected override void OnInitialized() => ShowAddModal();
 
@@ -103,6 +106,8 @@
 		_modalDisplay = "block;";
 		_modalClass = "show";
 		_showBackdrop = true;
+		IsAddUser = false;
+
 		await updateUrlWithoutNavigation("add");
 	}
 	private async Task CloseAddModal()
@@ -110,10 +115,11 @@
 		_modalDisplay = "none;";
 		_modalClass = string.Empty;
 		_showBackdrop = false;
+		IsAddUser = true;
+
 		await Task.Delay(0);
 		await AddModalClickBtnClose.InvokeAsync();
-		_showingAddModalWindow = false;
-		await updateUrlWithoutNavigation("");
+		NavigationManager.NavigateTo("/list");
 
 	}
 	private async Task updateUrlWithoutNavigation(string route)
@@ -138,40 +144,54 @@
 			isLoading = false; // Set loading flag to false when loading completes or fails
 		}
 	}
-
 	private async Task AddUserSubmit()
 	{
-		try
+		if (IsValidUser())
 		{
-			// Check if UserDetails is not null
-			if (UserDetails != null)
+			var user = new AddUserDTO
+				{
+					Forename = UserDetails?.Forename ?? "",
+					Surname = UserDetails?.Surname ?? "",
+					Email = UserDetails?.Email ?? "",
+					DateOfBirth = UserDetails?.DateOfBirth ?? DateTime.MinValue,
+					Password = UserDetails.Password
+				};
+
+
+
+			var response = await HttpClient.PostAsJsonAsync("/api/user", user);
+			if (response.IsSuccessStatusCode)
 			{
-				// Add the user directly to the cache
-				DatabaseCache.Users.Add(UserDetails);
-
-				// Log the user creation
-				await LogUserCreation(UserDetails.Id, "UserAdded", $"User {UserDetails.Forename} {UserDetails.Surname} successfully added to the database with the 'Member' role.");
-
-				// Close the modal and invoke event handlers
+				Console.WriteLine("User added successfully!");
 				await AddModalClickBtnClose.InvokeAsync();
 				await OnAddModalClosed.InvokeAsync();
-				await ShowSuccessMsg(); // Call ShowSuccessMsg() method if needed
-																// Other success handling logic
+				// Retrieve the UserId from the refreshed cache
+				// Fetch the last user from the database
+				var lastUser = DatabaseCache.Users.LastOrDefault();
+
+				// Check if a user was found
+				if (lastUser != null)
+				{
+					// Obtain the UserId of the last user
+					string userId = lastUser.Id;
+
+					// Now you can use the userId for logging or other operations
+					await LogUserCreation(userId, "UserAdded", $"User {lastUser.Forename} {lastUser.Surname} successfully added to the database.");
+				}
+				else
+				{
+					Console.WriteLine("Failed to retrieve added user from cache.");
+					await ShowFailureMsg();
+				}
 			}
 			else
 			{
-				Console.WriteLine("UserDetails is null.");
-				await ShowFailureMsg(); // Call ShowFailureMsg() method if needed
-																// Other failure handling logic
+				Console.WriteLine("Failed to add user. Please try again.");
+				await ShowFailureMsg();
 			}
 		}
-		catch (Exception ex)
-		{
-			Console.WriteLine($"An error occurred: {ex.Message}");
-			await ShowFailureMsg(); // Call ShowFailureMsg() method if needed
-															// Other failure handling logic
-		}
 	}
+
 
 
 

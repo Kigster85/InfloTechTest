@@ -4,6 +4,8 @@ using NewUserManagement.Client;
 using NewUserManagement.Client.Services;
 using Microsoft.AspNetCore.Components.Authorization;
 using NewUserManagement.Client.Providers;
+using Microsoft.AspNetCore.Identity;
+using NewUserManagement.Shared.Models;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
@@ -29,6 +31,7 @@ builder.Services.AddScoped<LoggingCache>();
 builder.Services.AddScoped<LoggingClientService.ILogService, LoggingClientService.LogService>();
 // Register AuthenticationStateProvider and AppAuthStateProvider
 builder.Services.AddScoped<AppAuthStateProvider>();
+builder.Services.AddScoped<IPasswordHasher<AppUser>, PasswordHasher<AppUser>>();
 
 builder.Services.AddScoped<AuthenticationStateProvider>(provider =>
     provider.GetRequiredService<AppAuthStateProvider>());

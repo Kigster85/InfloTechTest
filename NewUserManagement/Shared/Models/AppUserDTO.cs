@@ -1,24 +1,29 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿
+using System.ComponentModel.DataAnnotations;
 
 namespace NewUserManagement.Shared.Models
 {
     public class AppUserDTO
     {
-        [Required]
-        [EmailAddress]
-        [Display(Name = "Email address")]
-        public string EmailAddress { get; set; }
+        public string Id { get; set; }
 
-        [Required]
-        [DataType(DataType.Password)]
-        [StringLength(80, ErrorMessage = "Your password must be between {2} and {1} characters.", MinimumLength = 6)]
-        [Display(Name = "Password")]
-        public string UserName { get; set; }
+        [Required(ErrorMessage = "Password is required")]
+        [CustomPasswordValidation(8, 20, requireDigit: true, requireLowercase: true, requireUppercase: true)]
+        public string Password { get; set; }
+
+        [Required(ErrorMessage = "Forename is required")]
         public string Forename { get; set; }
+
+        [Required(ErrorMessage = "Surname is required")]
         public string Surname { get; set; }
+
+        [Required(ErrorMessage = "Email address is required")]
+        [EmailAddress(ErrorMessage = "Invalid email address")]
+        public string Email { get; set; }
+
         public bool IsActive { get; set; }
 
-        // New DOB property
+        [DataType(DataType.Date)]
         public DateTime DateOfBirth { get; set; }
     }
 }

@@ -49,7 +49,7 @@
 	private List<AppUser> users = new List<AppUser>();
 	private string? _selectedUserId { get; set; }
 
-	private AppUser UserDetails { get; set; } = new AppUser(); // Initialize with a default user object
+	private AppUserDTO UserDetails { get; set; } = new AppUserDTO(); // Initialize with a default user object
 	protected async override Task OnInitializedAsync()
 	{
 		try

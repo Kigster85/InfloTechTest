@@ -1,6 +1,4 @@
 ﻿using System.Net.Http.Json;
-using System.Text;
-using System.Text.Json;
 using NewUserManagement.Shared.Models;
 
 namespace NewUserManagement.Client.Services
@@ -14,12 +12,12 @@ namespace NewUserManagement.Client.Services
             _httpClient = httpClient;
         }
 
-        private List<AppUser>? _users = null;
-        internal List<AppUser> Users
+        private List<AppUserDTO>? _users = null;
+        internal List<AppUserDTO> Users
         {
             get
             {
-                return _users ?? new List<AppUser>();
+                return _users ?? new List<AppUserDTO>();
             }
             set
             {
@@ -61,10 +59,11 @@ namespace NewUserManagement.Client.Services
 
                 if (response.IsSuccessStatusCode)
                 {
-                    var users = await response.Content.ReadFromJsonAsync<List<AppUser>>();
+                    var users = await response.Content.ReadFromJsonAsync<List<AppUserDTO>>();
 
                     Users = users!;
                     Console.WriteLine("Data retrieved from the API and cached successfully.");
+
                 }
                 else
                 {
@@ -82,44 +81,20 @@ namespace NewUserManagement.Client.Services
                 _gettingUsersFromDatabaseAndCaching = false;
             }
         }
-        public async Task<List<AppUser>> GetAllUsers()
+        public async Task<List<AppUserDTO>> GetAllUsers()
         {
             await GetUsersFromDatabaseAndCache();
             return Users;
         }
 
-        internal async Task<AppUser?> GetUserDetails(string? userId)
+        internal async Task<AppUserDTO> GetUserDetails(string userId)
         {
-            if (userId == null)
-                return null;
-
-            try
-            {
-                // Make a call to your API to fetch user details by ID
-                var response = await _httpClient.GetAsync($"api/user/{userId}");
-
-                if (response.IsSuccessStatusCode)
-                {
-                    var user = await response.Content.ReadFromJsonAsync<AppUser>();
-                    return user;
-                }
-                else
-                {
-                    // Handle unsuccessful response (e.g., log error, display error message)
-                    Console.WriteLine($"Failed to fetch user details from the API: {response.ReasonPhrase}");
-                    return null;
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Failed to fetch user details from the API: {ex.Message}");
-                // Handle the error (e.g., log error, display error message)
-                return null;
-            }
+            // Assuming you have a list of users in your cache, you can retrieve the user details by iterating through the list
+            return await Task.FromResult(Users.FirstOrDefault(u => u.Id == userId));
         }
 
 
-        internal async Task<List<AppUser>> GetActiveUsers(int page)
+        internal async Task<List<AppUserDTO>> GetActiveUsers(int page)
         {
             try
             {
@@ -127,23 +102,23 @@ namespace NewUserManagement.Client.Services
 
                 if (response.IsSuccessStatusCode)
                 {
-                    var activeUsers = await response.Content.ReadFromJsonAsync<List<AppUser>>();
+                    var activeUsers = await response.Content.ReadFromJsonAsync<List<AppUserDTO>>();
                     return activeUsers!;
                 }
                 else
                 {
                     Console.WriteLine($"Failed to fetch active users from the API: {response.ReasonPhrase}");
-                    return new List<AppUser>();
+                    return new List<AppUserDTO>();
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Failed to fetch active users from the API: {ex.Message}");
-                return new List<AppUser>();
+                return new List<AppUserDTO>();
             }
         }
 
-        internal async Task<List<AppUser>> GetInactiveUsers(int page)
+        internal async Task<List<AppUserDTO>> GetInactiveUsers(int page)
         {
             try
             {
@@ -151,19 +126,19 @@ namespace NewUserManagement.Client.Services
 
                 if (response.IsSuccessStatusCode)
                 {
-                    var inactiveUsers = await response.Content.ReadFromJsonAsync<List<AppUser>>();
+                    var inactiveUsers = await response.Content.ReadFromJsonAsync<List<AppUserDTO>>();
                     return inactiveUsers!;
                 }
                 else
                 {
                     Console.WriteLine($"Failed to fetch inactive users from the API: {response.ReasonPhrase}");
-                    return new List<AppUser>();
+                    return new List<AppUserDTO>();
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Failed to fetch inactive users from the API: {ex.Message}");
-                return new List<AppUser>();
+                return new List<AppUserDTO>();
             }
         }
 
@@ -215,67 +190,50 @@ namespace NewUserManagement.Client.Services
         }
 
 
-        internal async Task RefreshCache()
+        public async Task RefreshCache(HttpClient httpClient)
         {
             try
             {
-                // Fetch the latest user data from the API
-                var response = await _httpClient.GetAsync("api/user");
+                // Fetch the latest user data from the server
+                var users = await httpClient.GetFromJsonAsync<List<AppUserDTO>>("api/User");
 
-                if (response.IsSuccessStatusCode)
+                // Update the cache with the latest data
+                lock (lockObject)
                 {
-                    // Deserialize the response content to a list of AppUser
-                    var usersJson = await response.Content.ReadAsStringAsync();
-                    var appUsers = JsonSerializer.Deserialize<List<AppUser>>(usersJson);
-
-                    // Update the cache with the latest data
-                    Users = appUsers!;
-
-                    Console.WriteLine("Data retrieved from the API and cached successfully.");
-                }
-                else
-                {
-                    // Handle the case where the API request fails
-                    Console.WriteLine($"Failed to refresh cache: {response.ReasonPhrase}");
+                    Users = users?.Select(u => new AppUserDTO
+                    {
+                        Forename = u.Forename,
+                        Surname = u.Surname,
+                        Email = u.Email,
+                        DateOfBirth = u.DateOfBirth
+                    }).ToList() ?? new List<AppUserDTO>();
                 }
             }
             catch (Exception ex)
             {
+                // Handle exceptions (e.g., network errors, server unreachable)
                 Console.WriteLine($"Failed to refresh cache: {ex.Message}");
-                // Handle or log the error as needed
+                // Log or display an error message as needed
             }
         }
 
 
-        public async Task<bool> UpdateUserOnServerAndRefreshCache(AppUser user)
+        public async Task<bool> UpdateUserOnServerAndRefreshCache(HttpClient httpClient, AppUserDTO user)
         {
             try
             {
-                if (user.Id == null)
-                {
-                    Console.WriteLine("User ID is null.");
-                    return false;
-                }
-
-                // Serialize the updated user object to JSON
-                var json = JsonSerializer.Serialize(user);
-
-                // Create a StringContent object with the JSON data
-                var content = new StringContent(json, Encoding.UTF8, "application/json");
-
-                // Send a PUT request to update the user on the server
-                var response = await _httpClient.PutAsync($"api/user/{user.Id}", content);
+                // Send an HTTP request to the server API to update the user data
+                HttpResponseMessage response = await httpClient.PutAsJsonAsync($"api/user/{user.Id}", user);
 
                 if (response.IsSuccessStatusCode)
                 {
                     // If the update was successful, refresh the cache
-                    await RefreshCache();
+                    await RefreshCache(httpClient);
                     return true;
                 }
                 else
                 {
-                    // Handle the case where the API request fails
-                    Console.WriteLine($"Failed to update user: {response.ReasonPhrase}");
+                    // If the update failed, handle the error (e.g., log it, display a message)
                     return false;
                 }
             }
@@ -304,7 +262,7 @@ namespace NewUserManagement.Client.Services
                 if (response.IsSuccessStatusCode)
                 {
                     // Deserialize the response content to get the sorted users
-                    var sortedUsers = await response.Content.ReadFromJsonAsync<List<AppUser>>();
+                    var sortedUsers = await response.Content.ReadFromJsonAsync<List<AppUserDTO>>();
 
                     if (sortedUsers != null)
                     {
@@ -388,7 +346,7 @@ namespace NewUserManagement.Client.Services
             return _userEditCounts.ContainsKey(userId) ? _userEditCounts[userId] : 0;
         }
 
-        public async Task<AppUser?> GetUserDetailsAsync(string userId)
+        public async Task<AppUserDTO> GetUserDetailsAsync(string userId)
         {
             try
             {
@@ -397,7 +355,7 @@ namespace NewUserManagement.Client.Services
 
                 if (response.IsSuccessStatusCode)
                 {
-                    var user = await response.Content.ReadFromJsonAsync<AppUser>();
+                    var user = await response.Content.ReadFromJsonAsync<AppUserDTO>();
                     return user;
                 }
                 else

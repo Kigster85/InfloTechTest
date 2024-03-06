@@ -51,13 +51,11 @@
 						<th></th>
 					</tr>
 				</thead>
-
+			<AuthorizeView Roles="Admin, Member, Guest">
+			<Authorized Context="Auth">
 			<tbody class ="container min-vh-90 py-nd-5 align-content-center">
-				@if (isLoading)
-				{
-						<Loading />
-				}
-				else if (LogEntries == null || LogEntries.Count == 0)
+
+				@if (LogEntries == null || LogEntries.Count == 0)
 				{
 				<span>No log entries found.</span>
 				}
@@ -77,10 +75,25 @@
 						}
 				}
 				</tbody>
+				</Authorized>
 
+
+			</AuthorizeView>
 			</table>
+		@if (isLoading)
+		{
+			<Loading />
+		}
+		<AuthorizeView Roles="Admin, Member, Guest">
 
-		
+			<NotAuthorized>
+
+
+				<div class="alert alert-warning d-flex justify-content-center" role="alert">
+					You are not logged in. Please log in to access this feature.
+				</div>
+			</NotAuthorized>
+		</AuthorizeView>
 </div>
 </main>
 <FooterBar />
