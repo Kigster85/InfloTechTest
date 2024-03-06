@@ -89,7 +89,6 @@ using (var scope = app.Services.CreateScope())
     {
         var dbContext = services.GetRequiredService<AppDBContext>();
         var userManager = services.GetRequiredService<UserManager<AppUser>>();
-        await dbContext.SeedUsers(userManager);
     }
     catch (Exception ex)
     {

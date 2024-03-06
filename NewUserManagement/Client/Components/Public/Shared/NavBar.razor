@@ -5,12 +5,14 @@
 @using System.Security;
 @using System.IdentityModel.Tokens;
 @using Microsoft.AspNetCore.Components.Authorization
+@using NewUserManagement.Shared.Models
+@using System.Security.Claims
 
 
 
 
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark d-flex">
     <a href="/" class="navbar-brand md-f-size-1-5 text-light ps-2 m-0 mx-lg-5 fn-bold">
 		User Management
     </a>
@@ -38,13 +40,12 @@
 						</a>
 			</li>
 		</ul>
-
-
-		<ul class="navbar-nav d-flex justify-content-end">
+		<div class="d-flex justify-content-end w-70">
+		<ul class="nav">
 			<AuthorizeView Roles="Admin">
 				<Authorized Context="Auth">
-					<li class="nav-item">
-					<span class="nav-link">Welcome @Username</span>
+					<li class="p-2">
+							<span class="p-2">Welcome @(IsAuthenticated ? $"{_user?.Forename} {_user?.Surname}" : "User")</span>
 				</li>
 				<li class="nav-item">
 					<button class="btn btn-link nav-link" @onclick="SignOut">Log out</button>
@@ -59,17 +60,49 @@
 				</NotAuthorized>
 			</AuthorizeView>
 		</ul>
-    </div>
+		</div>
+	</div>
+
 </nav>
 
 @code
 {
+	@inject InMemoryDatabaseCache DatabaseCache
 	@inject HttpClient HttpClient 
 	@inject AppAuthStateProvider AuthenticationStateProvider
 	@inject ILocalStorageService LocalStorageService
 	private bool IsAuthenticated { get; set; }
-	private string? Username { get; set; }
-	private string? token { get; set; }
+	private AppUser _user { get; set; }
+	private string Username { get; set; }
+	private string token { get; set; }
+
+	protected override async Task OnInitializedAsync()
+	{
+		var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+		var user = authState.User;
+
+		if (user.Identity.IsAuthenticated)
+		{
+			IsAuthenticated = true;
+
+			var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+			_user = await GetUserDetailsFromCacheOrDatabase(userId);
+			Console.WriteLine(_user.Forename);
+
+		}
+		else
+		{
+			IsAuthenticated = false;
+		}
+	}
+	private async Task<AppUser> GetUserDetailsFromCacheOrDatabase(string userId)
+	{
+		// Implement logic to retrieve user details from cache or database based on user ID
+		// For example, if you're using an in-memory database cache:
+		var userDetails = await DatabaseCache.GetUserDetailsAsync(userId);
+
+		return userDetails;
+	}
 	private async Task SignInWithBrowserLocalStorageBearerToken()
 	{
 		if (await LocalStorageService.ContainKeyAsync("bearerToken"))

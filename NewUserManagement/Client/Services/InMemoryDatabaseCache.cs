@@ -387,7 +387,35 @@ namespace NewUserManagement.Client.Services
         {
             return _userEditCounts.ContainsKey(userId) ? _userEditCounts[userId] : 0;
         }
+
+        public async Task<AppUser?> GetUserDetailsAsync(string userId)
+        {
+            try
+            {
+                // Make a call to your API to fetch user details by ID
+                var response = await _httpClient.GetAsync($"api/user/{userId}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    var user = await response.Content.ReadFromJsonAsync<AppUser>();
+                    return user;
+                }
+                else
+                {
+                    // Handle unsuccessful response (e.g., log error, display error message)
+                    Console.WriteLine($"Failed to fetch user details from the API: {response.ReasonPhrase}");
+                    return null;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to fetch user details from the API: {ex.Message}");
+                // Handle the error (e.g., log error, display error message)
+                return null;
+            }
+        }
     }
+
 }
 
 

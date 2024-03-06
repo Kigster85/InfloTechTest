@@ -16,7 +16,7 @@ namespace NewUserManagement.Server.Controllers
             _userManager = userManager;
         }
 
-        // GET: api/User/user
+        // GET: api/user
         [HttpGet]
         public async Task<ActionResult<IEnumerable<AppUser>>> GetUsers()
         {

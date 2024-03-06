@@ -95,137 +95,144 @@ namespace NewUserManagement.Server.Data
             modelBuilder.Entity<IdentityUserRole<string>>().HasData(identityUserRoleToSeed);
 
             #endregion
-           
 
-            modelBuilder.ApplyConfiguration(new LogEntryConfiguration());
-        }
-        public async Task SeedUsers(UserManager<AppUser> userManager)
-        {
-            if (await userManager.FindByEmailAsync("ploew@example.com") == null)
-            {
-                var usersToSeed = new List<AppUser>
+            var usersToSeed = new List<AppUser>
             {
             new AppUser
             {
                 UserName = "ploew@example.com",
                 EmailAddress = "ploew@example.com",
+                Email = "ploew@example.com",
                 Forename = "Peter",
                 Surname = "Loew",
                 IsActive = true,
+                Password = string.Empty,
             },
 
             new AppUser
             {
                 UserName = "bfgates@example.com",
                 EmailAddress = "bfgates@example.com",
+                Email = "bfgates@example.com",
                 Forename = "Benjamin Franklin",
                 Surname = "Gates",
                 IsActive = true,
+                Password = string.Empty,
             },
 
             new AppUser
             {
                 UserName = "ctroy@example.com",
                 EmailAddress = "ctroy@example.com",
+                Email = "ctroy@example.com",
                 Forename = "Castor",
                 Surname = "Troy",
                 IsActive = false,
+                Password = string.Empty,
             },
 
             new AppUser
             {
                 UserName = "mraines@example.com",
                 EmailAddress = "mraines@example.com",
+                Email = "mraines@example.com",
                 Forename = "Memphis",
                 Surname = "Raines",
                 IsActive = true,
+                Password = string.Empty,
             },
 
             new AppUser
             {
                 UserName = "sgodspeed@example.com",
                 EmailAddress = "sgodspeed@example.com",
+                Email = "sgodspeed@example.com",
                 Forename = "Stanley",
                 Surname = "Goodspeed",
                 IsActive = true,
+                Password = string.Empty,
             },
 
             new AppUser
             {
                 UserName = "himcdunnough@example.com",
                 EmailAddress = "himcdunnough@example.com",
+                Email = "himcdunnough@example.com",
                 Forename = "H.I.",
                 Surname = "McDunnough",
                 IsActive = true,
+                Password = string.Empty,
             },
 
             new AppUser
             {
                 UserName = "cpoe@example.com",
                 EmailAddress = "cpoe@example.com",
+                Email = "cpoe@example.com",
                 Forename = "Cameron",
                 Surname = "Poe",
                 IsActive = false,
+                Password = string.Empty,
             },
 
             new AppUser
             {
                 UserName = "emalus@example.com",
                 EmailAddress = "emalus@example.com",
+                Email = "emalus@example.com",
                 Forename = "Edward",
                 Surname = "Malus",
                 IsActive = false,
+                Password = string.Empty,
             },
 
             new AppUser
             {
                 UserName = "dmacready@example.com",
                 EmailAddress = "dmacready@example.com",
+                Email = "dmacready@example.com",
                 Forename = "Damon",
                 Surname = "Macready",
                 IsActive = false,
+                Password = string.Empty,
             },
 
             new AppUser
             {
                 UserName = "jblaze@example.com",
                 EmailAddress = "jblaze@example.com",
+                Email = "jblaze@example.com",
                 Forename = "Johnny",
                 Surname = "Blaze",
                 IsActive = true,
+                Password = string.Empty,
             },
 
             new AppUser
             {
                 UserName = "rfeld@example.com",
                 EmailAddress = "rfeld@example.com",
+                Email = "rfeld@example.com",
                 Forename = "Robin",
                 Surname = "Feld",
                 IsActive = true,
+                Password = string.Empty,
             },
 
         };
-                foreach (var user in usersToSeed)
-                {
-                    await SeedUser(userManager, user, "Password123!"); // Pass the password here
-                }
-
-            }
-
-        }
-        private async Task SeedUser(UserManager<AppUser> userManager, AppUser user, string password)
-        {
-            // Hash the password
-            var passwordHasher = new PasswordHasher<AppUser>();
-            user.PasswordHash = passwordHasher.HashPassword(user, password);
-
-            // Create the user
-            var result = await userManager.CreateAsync(user);
-            if (!result.Succeeded)
+            foreach (var user in usersToSeed)
             {
-                // Handle errors if user creation failed
+                string userPassword = "Password123!"; // Set a default password for all users
+                string userHashedPassword = passwordHasher.HashPassword(user, userPassword); user.Password = hashedPassword;
+                user.PasswordHash = userHashedPassword;
+                modelBuilder.Entity<AppUser>().HasData(user);
             }
+            modelBuilder.ApplyConfiguration(new LogEntryConfiguration());
+
         }
     }
+        
+       
+    
 
 }
