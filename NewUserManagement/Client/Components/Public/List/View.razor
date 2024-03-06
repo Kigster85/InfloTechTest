@@ -6,6 +6,9 @@
 @using NewUserManagement.Client.Components.Public
 @using NewUserManagement.Client.Components.Public.List
 @using Microsoft.JSInterop
+@using Microsoft.AspNetCore.Identity;
+
+
 
 <div class="modal @(_modalClass)" id="informationalModal" tabindex="-1" aria-labelledby="informationalModalLabel" role="dialog" style="display:@_modalDisplay">
 	<div class="modal-dialog " role="document">
@@ -40,53 +43,97 @@
 	@inject IJSRuntime JSRuntime
 	@inject ILogger<View> Logger // Inject ILogger service
 	@inject LoggingClientService.ILogService _logService
-	[Parameter] public int UserId { get; set; }
 
-	private List<User> users = new List<User>();
-	private int _selectedUserId { get; set; }
+	[Parameter] public string? userId { get; set; }
 
-	private User UserDetails { get; set; } = new User(); // Initialize with a default user object
-	protected override async Task OnInitializedAsync()
+	private List<AppUser> users = new List<AppUser>();
+	private string? _selectedUserId { get; set; }
+
+	private AppUserDTO UserDetails { get; set; } = new AppUserDTO(); // Initialize with a default user object
+	protected async override Task OnInitializedAsync()
 	{
-			// Fetch user details based on the UserId parameter
-		UserDetails = await DatabaseCache.GetUserDetails(UserId) ?? new User();
-		await LogUserView(UserId);
-
-	}
-	private async Task LogUserView(int userId)
-	{
-		// Log the view event
-		Logger.LogInformation("User viewed: UserID = {UserID}", userId);
-
 		try
 		{
-			// Increment the view count for the user
-			await DatabaseCache.IncrementUserViewCount(userId);
-
-			// Optionally, you can log the view count for the user
-			int viewCount = DatabaseCache.GetUserViewCount(userId);
-			Logger.LogInformation("View count for user {UserID}: {ViewCount}", userId, viewCount);
-
-			// Create a log entry for the user view event
-			var logEntry = new LogEntry
+			// Check if the userId parameter is not null
+			if (!string.IsNullOrEmpty(userId))
+			{
+				// Find the user in the cache by userId
+				if (DatabaseCache.Users != null)
 				{
-					Timestamp = DateTime.UtcNow,
-					UserId = userId,
-					Action = "Viewed",
-					Details = $"User with ID {userId} viewed",
-					ViewCount = viewCount,
-					EditCount = 0 // Assuming edit count is not applicable for view events
-				};
-
-			// Add the log entry to the log service
-			await _logService.AddLogEntryAsync(logEntry);
+					var user = DatabaseCache.Users.FirstOrDefault(u => u.Id == userId);
+					if (user != null)
+					{
+						UserDetails = user;
+						Console.WriteLine($"Viewing user with ID: {userId}");
+					}
+					else
+					{
+						Logger.LogWarning($"User with ID {userId} not found in the cache.");
+					}
+				}
+			}
+			else
+			{
+				Logger.LogWarning("Attempted to log user view with null userId.");
+			}
 		}
 		catch (Exception ex)
 		{
-			// Handle or log any exceptions that occur during view count increment or logging
-			Logger.LogError(ex, "Error occurred while logging user view event: {ErrorMessage}", ex.Message);
+			// Handle the error, such as logging or displaying an error message
+			Console.WriteLine($"An error occurred while initializing: {ex.Message}");
+		}
+		await Task.CompletedTask; // Ensure the method is asynchronous
+	}
+
+
+
+
+
+	private async Task LogUserView(string? userId)
+	{
+		if (userId != null)
+		{
+			// Log the view event
+			Logger.LogInformation($"User viewed: UserID = {userId}", userId);
+
+			try
+			{
+				// Increment the view count for the user
+				await DatabaseCache.IncrementUserViewCount(userId);
+
+				// Get the view count for the user
+				int viewCount = DatabaseCache.GetUserViewCount(userId);
+
+				// Log the view count for the user
+				Logger.LogInformation($"View count for user {userId}: {viewCount}");
+
+				// Create a log entry for the user view event
+				var logEntry = new LogEntry
+					{
+						Timestamp = DateTime.UtcNow,
+						UserId = userId,
+						Action = "Viewed",
+						Details = $"User with ID {userId} viewed",
+						ViewCount = viewCount,
+						EditCount = 0 // Assuming edit count is not applicable for view events
+					};
+
+				// Add the log entry to the log service
+				await _logService.AddLogEntryAsync(logEntry);
+			}
+			catch (Exception ex)
+			{
+				// Handle or log any exceptions that occur during view count increment or logging
+				Logger.LogError(ex, "Error occurred while logging user view event: {ErrorMessage}", ex.Message);
+			}
+		}
+		else
+		{
+			// Handle the case where userId is null
+			Logger.LogWarning("Attempted to log user view with null userId.");
 		}
 	}
+
 
 
 	private async Task NextUser()
@@ -101,9 +148,20 @@
 				index = 0; // Wrap around to the first user if reached the end
 			}
 			UserDetails = DatabaseCache.Users[index];
-			await UpdateUrlWithoutNavigation("view", UserDetails.Id);
-			// Log the view action for the current user
-			await LogUserView(UserDetails.Id);
+			// Check if UserDetails and its Id property are not null before proceeding
+			if (UserDetails != null && UserDetails.Id != null)
+			{
+				// Log the view action for the current user
+				await LogUserView(UserDetails.Id.ToString());
+
+				// Update the URL without navigation
+				await UpdateUrlWithoutNavigation("view", UserDetails.Id.ToString());
+			}
+			else
+			{
+				// Handle the case where UserDetails or UserDetails.Id is null
+				Console.WriteLine("UserDetails or UserDetails.Id is null.");
+			}
 		}
 	}
 
@@ -119,13 +177,23 @@
 				index = DatabaseCache.Users.Count - 1; // Wrap around to the last user if reached the beginning
 			}
 			UserDetails = DatabaseCache.Users[index];
-			await UpdateUrlWithoutNavigation("view", UserDetails.Id);
-			await LogUserView(UserDetails.Id);
 
+			// Check if UserDetails and its Id property are not null before proceeding
+			if (UserDetails != null && UserDetails.Id != null)
+			{
+				// Log the view action for the current user
+				await LogUserView(UserDetails.Id.ToString());
+
+				// Update the URL without navigation
+				await UpdateUrlWithoutNavigation("view", UserDetails.Id.ToString());
+			}
+			else
+			{
+				// Handle the case where UserDetails or UserDetails.Id is null
+				Console.WriteLine("UserDetails or UserDetails.Id is null.");
+			}
 		}
 	}
-
-
 
 	[Parameter] public EventCallback ViewModalClickBtnClose { get; set; }
 	[Parameter] public EventCallback OpenEditUser { get; set; }
@@ -163,10 +231,10 @@
 		await ViewModalClickBtnClose.InvokeAsync();
 		NavigationManager.NavigateTo("/list");
 	}
-	private async Task UpdateUrlWithoutNavigation(string route, int? UserId)
+	private async Task UpdateUrlWithoutNavigation(string route, string userId)
 	{
-		string url = $"/list/{route}/{UserId}";
-		await JSRuntime.InvokeVoidAsync("updateUrlWithoutNavigation", route, UserId);
+		string url = $"/list/{route}/{userId}";
+		await JSRuntime.InvokeVoidAsync("updateUrlWithoutNavigation", route, userId);
 
 	}
 

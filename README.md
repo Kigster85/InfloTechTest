@@ -46,7 +46,7 @@ Structurally, the user management application is very simple, and there are many
 Some ideas are:
 * Re-implement the UI using a client side framework connecting to an API. Use of Blazor is preferred, but if you are more familiar with other frameworks, feel free to use them.
 * Update the data access layer to support asynchronous operations.
-* Implement authentication and login based on the users being stored.
+-* Implement authentication and login based on the users being stored.
 * Implement bundling of static assets.
 * Update the data access layer to use a real database, and implement database schema migrations.
 

@@ -2,10 +2,13 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 #nullable disable
 
+using System;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using NewUserManagement.Server.Data;
+using Microsoft.Extensions.Logging;
+using NewUserManagement.Shared.Models;
 
 namespace NewUserManagement.Server.Areas.Identity.Pages.Account.Manage
 {

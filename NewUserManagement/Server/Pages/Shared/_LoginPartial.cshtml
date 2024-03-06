@@ -1,8 +1,8 @@
 @using Microsoft.AspNetCore.Identity
-@using NewUserManagement.Server.Data
+@using NewUserManagement.Shared.Models
 
-@inject SignInManager<AppUserConfig> SignInManager
-@inject UserManager<AppUserConfig> UserManager
+@inject SignInManager<AppUser> SignInManager
+@inject UserManager<AppUser> UserManager
 
 <ul class="navbar-nav">
 @if (SignInManager.IsSignedIn(User))

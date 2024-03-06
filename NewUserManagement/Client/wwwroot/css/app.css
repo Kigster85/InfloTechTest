@@ -20,6 +20,7 @@ body {
 a{
   text-decoration: none !important;
 }
+
 .nav-link:hover {
     color: #212529 !important;
 }
@@ -33,6 +34,12 @@ a{
     border: white solid 0px !important;
     box-shadow: white 0px 0px 1px 0px !important;
     background-color:white !important;
+    color: #212529 !important;
+}
+.active {
+    border-radius: 0.75rem !important;
+    box-shadow: white 0px 0px 1px 0px !important;
+    background-color: white !important;
     color: #212529 !important;
 }
 .btn {
@@ -181,6 +188,7 @@ body {
     position: fixed;
     width: 100%;
     z-index: 1000;
+    color:black;
 }
 
     #blazor-error-ui .dismiss {

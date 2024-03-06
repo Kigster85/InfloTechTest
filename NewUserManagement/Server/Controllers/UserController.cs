@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using NewUserManagement.Server.Data;
 using NewUserManagement.Shared.Models;
 
 namespace NewUserManagement.Server.Controllers
@@ -10,37 +9,48 @@ namespace NewUserManagement.Server.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
-        private readonly AppDBContext _dbContext;
         private readonly UserManager<AppUser> _userManager;
 
-        public UserController(AppDBContext appDBContext, UserManager<AppUser> userManager)
+        public UserController(UserManager<AppUser> userManager)
         {
-            _dbContext = appDBContext;
             _userManager = userManager;
         }
 
-        [HttpGet("{userId}")]
-        public async Task<ActionResult<UserDTO>> GetUserById([FromRoute] string userId)
+        // GET: api/user
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<AppUser>>> GetUsers()
         {
-            if (!int.TryParse(userId, out int id))
-            {
-                // userId is not a valid integer string
-                return BadRequest("Invalid user ID format.");
-            }
+            var users = await _userManager.Users
+                .Select(u => new AppUser
+                {
+                    UserName = u.Email,
+                    Email = u.Email,
+                    Forename = u.Forename,
+                    Surname = u.Surname,
+                    IsActive = u.IsActive,
+                    DateOfBirth = u.DateOfBirth
+                })
+                .ToListAsync();
 
-            var user = await _userManager.FindByIdAsync(id.ToString());
+            return Ok(users);
+        }
+
+        // GET: api/user/{userId}
+        [HttpGet("{userId}")]
+        public async Task<ActionResult<AppUserDTO>> GetUserById(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
 
             if (user == null)
             {
                 return NotFound();
             }
 
-            var userDTO = new UserDTO
+            var userDTO = new AppUserDTO
             {
-                Id = Convert.ToInt32(user.Id), // Convert string to int
+                Email = user.Email,
                 Forename = user.Forename,
                 Surname = user.Surname,
-                Email = user.Email ?? "Unknown", // If user.Email is null, assign "Unknown"
                 IsActive = user.IsActive,
                 DateOfBirth = user.DateOfBirth
             };
@@ -48,23 +58,19 @@ namespace NewUserManagement.Server.Controllers
             return Ok(userDTO);
         }
 
-
-
-
         // GET: api/User/active
         [HttpGet("active")]
-        public async Task<ActionResult<IEnumerable<UserDTO>>> GetActiveUsers(int page, int pageSize)
+        public async Task<ActionResult<IEnumerable<AppUserDTO>>> GetActiveUsers(int page, int pageSize)
         {
             var activeUsers = await _userManager.Users
                 .Where(u => u.IsActive)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .Select(u => new User
+                .Select(u => new AppUserDTO
                 {
-                    Id = int.Parse(u.Id),
+                    Email = u.Email,
                     Forename = u.Forename,
                     Surname = u.Surname,
-                    Email = u.Email ?? "",
                     IsActive = u.IsActive,
                     DateOfBirth = u.DateOfBirth
                 })
@@ -75,18 +81,17 @@ namespace NewUserManagement.Server.Controllers
 
         // GET: api/User/inactive
         [HttpGet("inactive")]
-        public async Task<ActionResult<IEnumerable<UserDTO>>> GetInactiveUsers(int page, int pageSize)
+        public async Task<ActionResult<IEnumerable<AppUserDTO>>> GetInactiveUsers(int page, int pageSize)
         {
             var inactiveUsers = await _userManager.Users
                 .Where(u => !u.IsActive)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .Select(u => new User
+                .Select(u => new AppUserDTO
                 {
-                    Id = int.Parse(u.Id),
+                    Email = u.Email,
                     Forename = u.Forename,
                     Surname = u.Surname,
-                    Email = u.Email ?? "",
                     IsActive = u.IsActive,
                     DateOfBirth = u.DateOfBirth
                 })
@@ -95,149 +100,107 @@ namespace NewUserManagement.Server.Controllers
             return Ok(inactiveUsers);
         }
 
-        
-        // PUT: api/User/{userId}
+        // PUT: api/user/{userId}
         [HttpPut("{userId}")]
-        public async Task<IActionResult> UpdateUser(string userId, [FromBody] UserDTO userDTO)
+        public async Task<IActionResult> UpdateUser(string userId, [FromBody] AppUserDTO userDTO)
         {
-            if (userId != userDTO.Id.ToString()) // Convert Id to string for comparison
-            {
-                return BadRequest();
-            }
-
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
             {
                 return NotFound();
             }
 
-            // Update user properties with the new values
             user.Forename = userDTO.Forename;
             user.Surname = userDTO.Surname;
             user.Email = userDTO.Email;
             user.IsActive = userDTO.IsActive;
             user.DateOfBirth = userDTO.DateOfBirth;
 
-            // Save changes to the database
-            await _userManager.UpdateAsync(user); // Use UserManager to update the user
+            var result = await _userManager.UpdateAsync(user);
+
+            if (!result.Succeeded)
+            {
+                return BadRequest(result.Errors);
+            }
 
             return NoContent();
         }
 
         [HttpPost]
-        public async Task<ActionResult<UserDTO>> AddUser([FromBody] UserDTO userDTO)
+        public async Task<IActionResult> AddUser([FromBody] AddUserDTO userDTO)
         {
-            // Map UserDTO to User entity
-            var user = new AppUser // Change User to AppUser
+            if (string.IsNullOrWhiteSpace(userDTO.Email) || string.IsNullOrWhiteSpace(userDTO.Password))
+            {
+                return BadRequest("Email address and password are required.");
+            }
+
+            var user = new AppUser
             {
                 Forename = userDTO.Forename,
                 Surname = userDTO.Surname,
-                UserName = userDTO.Email, // Set email as username
                 Email = userDTO.Email,
-                IsActive = true, // Set IsActive to a default value
+                IsActive = true,
                 DateOfBirth = userDTO.DateOfBirth
             };
 
-            // Create the user using UserManager
+            // Hash the password using UserManager's password hasher
+            var hashedPassword = _userManager.PasswordHasher.HashPassword(user, userDTO.Password);
+            user.PasswordHash = hashedPassword;
+
+            // Create the user with the hashed password
             var result = await _userManager.CreateAsync(user);
 
             if (!result.Succeeded)
             {
-                // If user creation fails, return error messages
                 return BadRequest(result.Errors);
             }
 
-            // Instead of returning the userDTO, return the created user object directly
-            return Ok(user); // Return the created user
+            return StatusCode(201);
         }
 
-
+        // DELETE: api/User/{userId}
         [HttpDelete("{userId}")]
-        public async Task<IActionResult> DeleteUser(string userId) // Change int to string
+        public async Task<IActionResult> DeleteUser(string userId)
         {
-            try
+            var userToDelete = await _userManager.FindByIdAsync(userId);
+
+            if (userToDelete == null)
             {
-                // Get the user to delete using UserManager
-                var userToDelete = await _userManager.FindByIdAsync(userId);
+                return NotFound();
+            }
 
-                // Check if the user exists
-                if (userToDelete == null)
-                {
-                    // User not found, return a not found response
-                    return NotFound();
-                }
+            var result = await _userManager.DeleteAsync(userToDelete);
 
-                // Remove the user using UserManager
-                var result = await _userManager.DeleteAsync(userToDelete);
+            if (!result.Succeeded)
+            {
+                return BadRequest(result.Errors);
+            }
 
-                // Check if the deletion was successful
+            return Ok();
+        }
+
+        // DELETE: api/User/delete-multiple
+        [HttpPost("delete-multiple")]
+        public async Task<ActionResult> DeleteMultipleUsers(List<string> selectedUserIds)
+        {
+            if (selectedUserIds == null || selectedUserIds.Count == 0)
+            {
+                return BadRequest("No user IDs provided for deletion.");
+            }
+
+            var usersToDelete = await _userManager.Users.Where(u => selectedUserIds.Contains(u.Id)).ToListAsync();
+
+            foreach (var user in usersToDelete)
+            {
+                var result = await _userManager.DeleteAsync(user);
+
                 if (!result.Succeeded)
                 {
-                    // If deletion fails, return error messages
                     return BadRequest(result.Errors);
                 }
+            }
 
-                // Optionally, you can handle a successful deletion (e.g., return a success response)
-                return Ok();
-            }
-            catch (Exception ex)
-            {
-                // Handle any exceptions that occur during the deletion process
-                return StatusCode(500, $"An error occurred while deleting user with ID {userId}: {ex.Message}");
-            }
+            return Ok();
         }
-
-
-        [HttpPost("delete-multiple")]
-        public async Task<ActionResult> DeleteMultipleUsers(List<string> selectedUserIds) // Change int to string
-        {
-            try
-            {
-                if (selectedUserIds == null || selectedUserIds.Count == 0)
-                {
-                    return BadRequest("No user IDs provided for deletion.");
-                }
-
-                foreach (var userId in selectedUserIds)
-                {
-                    // Get the user to delete using UserManager
-                    var userToDelete = await _userManager.FindByIdAsync(userId);
-
-                    // Check if the user exists
-                    if (userToDelete == null)
-                    {
-                        // User not found, return a not found response or continue with next user
-                        continue;
-                    }
-
-                    // Remove the user using UserManager
-                    var result = await _userManager.DeleteAsync(userToDelete);
-
-                    // If deletion fails, return error messages
-                    if (!result.Succeeded)
-                    {
-                        return BadRequest(result.Errors);
-                    }
-                }
-
-                // Optionally, you can handle a successful deletion (e.g., return a success response)
-                return Ok();
-            }
-            catch (Exception ex)
-            {
-                // Handle any exceptions that occur during the deletion process
-                return StatusCode(500, $"An error occurred: {ex.Message}");
-            }
-        }
-
-        // Helper method to generate a unique ID (you can implement your own logic here)
-        private string GenerateUniqueId()
-        {
-            // Generate a new unique identifier (GUID)
-            return Guid.NewGuid().ToString();
-        }
-
     }
-
 }
-

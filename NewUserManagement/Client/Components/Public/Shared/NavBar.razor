@@ -1,9 +1,18 @@
-﻿@using System.Net.Http.Headers;
+﻿@using System.Net.Http.Headers
+@using System.IdentityModel.Tokens.Jwt
+@using Blazored.LocalStorage
+@using Microsoft.AspNetCore.Authentication
+@using System.Security;
+@using System.IdentityModel.Tokens;
+@using Microsoft.AspNetCore.Components.Authorization
+@using NewUserManagement.Shared.Models
+@using System.Security.Claims
 
 
 
 
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark d-flex">
     <a href="/" class="navbar-brand md-f-size-1-5 text-light ps-2 m-0 mx-lg-5 fn-bold">
 		User Management
     </a>
@@ -29,23 +38,87 @@
 				<a href="@LogsUri" role="button" class="btn nav-link @(IsPageActive(LogsUri) ? "active" : string.Empty)">
 								Logs
 						</a>
-						</li>
-						<li class="nav-item">
-				<a href="@SignInUri" role="button" class="btn nav-link @(IsPageActive(SignInUri) ? "active" : string.Empty)">
-                    Sign In
-                </a>
-            </li>
+			</li>
+		</ul>
+		<div class="d-flex justify-content-end w-auto">
+		<ul class="nav">
+			<AuthorizeView Roles="Admin">
+				<Authorized Context="Auth">
+					<li class="p-2">
+							<span class="p-2">Welcome @(IsAuthenticated ? $"{_user?.Forename} {_user?.Surname}" : "User")</span>
+				</li>
+				<li class="nav-item">
+					<button class="btn btn-link nav-link" @onclick="SignOut">Log out</button>
+				</li>
+				</Authorized>
+				<NotAuthorized>
+				<li class="nav-item">
+					<a href="@SignInUri" role="button" class="nav-link @(IsPageActive(SignInUri) ? "active" : string.Empty)">
+						Sign In
+					</a>
+				</li>
+				</NotAuthorized>
+			</AuthorizeView>
+		</ul>
+		</div>
+	</div>
 
-            
-        </ul>
-
-    </div>
 </nav>
 
 @code
 {
+	@inject InMemoryDatabaseCache DatabaseCache
+	@inject HttpClient HttpClient 
+	@inject AppAuthStateProvider AuthenticationStateProvider
+	@inject ILocalStorageService LocalStorageService
+	private bool IsAuthenticated { get; set; }
+	private AppUserDTO _user { get; set; }
+	private string Username { get; set; }
+	private string token { get; set; }
 
-	// Public and CamelCase because C# properties are methods.
+	protected override async Task OnInitializedAsync()
+	{
+		var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+		var user = authState.User;
+
+		if (user.Identity.IsAuthenticated)
+		{
+			IsAuthenticated = true;
+
+			var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
+			_user = await GetUserDetailsFromCacheOrDatabase(userId);
+			Console.WriteLine(_user.Forename);
+
+		}
+		else
+		{
+			IsAuthenticated = false;
+		}
+	}
+	private async Task<AppUserDTO> GetUserDetailsFromCacheOrDatabase(string userId)
+	{
+		// Implement logic to retrieve user details from cache or database based on user ID
+		// For example, if you're using an in-memory database cache:
+		var userDetails = await DatabaseCache.GetUserDetailsAsync(userId);
+
+		return userDetails;
+	}
+	private async Task SignInWithBrowserLocalStorageBearerToken()
+	{
+		if (await LocalStorageService.ContainKeyAsync("bearerToken"))
+		{
+			string savedToken = await LocalStorageService.GetItemAsync<string>("bearerToken");
+
+			await ((AppAuthStateProvider)AuthenticationStateProvider).SignIn();
+
+			HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", savedToken);
+
+			StateHasChanged();
+
+		}
+	}
+
+
 	[Inject] public NavigationManager NavigationManager { get; set; } = default!;
 
 	private const string HomePageUri = "/";
@@ -56,7 +129,7 @@
 
 	private bool IsPageActive(string pageToCheckUri)
 	{
-		// Skip(3) to remove https://domainname/
+		//Skip(3) to bypass the Https://domainname/
 		string[] currentUriSplitBetweenSlashes = NavigationManager.Uri.Split('/').Skip(3).ToArray();
 
 		if (pageToCheckUri == HomePageUri)
@@ -80,9 +153,58 @@
 					}
 				}
 			}
-		}
 
-		// If the code gets here pageToCheckUri is not the active page. So return false.
+		}
+		// If the code reaches here pageToCheckUri is not the active page, so return False
 		return false;
 	}
+	private async Task SignOut()
+	{
+		if (await LocalStorageService.ContainKeyAsync("bearerToken"))
+		{
+			await LocalStorageService.RemoveItemAsync("bearerToken");
+
+			((AppAuthStateProvider)AuthenticationStateProvider).SignOut();
+
+			StateHasChanged();
+		}
+	}
+
+	public bool IsTokenValid(string token)
+	{
+		JwtSecurityToken jwtToken = null!; // Initialize jwtToken variable
+
+		try
+		{
+			var jwtHandler = new JwtSecurityTokenHandler();
+
+			// Check if the token can be read and parse it
+			if (jwtHandler.CanReadToken(token) && jwtHandler.ReadToken(token) is JwtSecurityToken parsedToken)
+			{
+				jwtToken = parsedToken; // Assign value to jwtToken
+			}
+
+			// Check if jwtToken is null or the token is expired
+			if (jwtToken == null || jwtToken.ValidTo < DateTime.UtcNow)
+			{
+				// Token format is invalid or token has expired
+				Console.WriteLine("Token is invalid or expired.");
+				return false;
+			}
+
+			// Token is valid
+			Console.WriteLine("Token is valid.");
+			return true;
+		}
+		catch (Exception ex)
+		{
+			// Other exceptions occurred while validating token
+			Console.WriteLine($"An error occurred while validating token: {ex.Message}");
+			return false;
+		}
+	}
+
+
+
+
 }

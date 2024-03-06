@@ -2,15 +2,14 @@ using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Blazored.LocalStorage;
 using NewUserManagement.Client;
 using NewUserManagement.Client.Services;
+using Microsoft.AspNetCore.Components.Authorization;
+using NewUserManagement.Client.Providers;
+using Microsoft.AspNetCore.Identity;
+using NewUserManagement.Shared.Models;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 builder.RootComponents.Add<App>("#app");
-builder.Services.AddBlazoredLocalStorage();
-builder.Services.AddScoped<LoggingService>();
-builder.Services.AddScoped<LoggingCache>();
 
-// Register the LoggingClientService and its implementation
-builder.Services.AddScoped<LoggingClientService.ILogService, LoggingClientService.LogService>();
 // Register HttpClient with a base address
 builder.Services.AddScoped(sp =>
 {
@@ -18,8 +17,23 @@ builder.Services.AddScoped(sp =>
     return new HttpClient { BaseAddress = baseAddress };
 });
 
-// Register InMemoryDatabaseCache as a scoped service
+
+
+
+// Register Blazored.LocalStorage
+builder.Services.AddBlazoredLocalStorage();
+// Register InMemoryDatabaseCache
 builder.Services.AddScoped<InMemoryDatabaseCache>();
 
+// Register services for logging
+builder.Services.AddScoped<LoggingService>();
+builder.Services.AddScoped<LoggingCache>();
+builder.Services.AddScoped<LoggingClientService.ILogService, LoggingClientService.LogService>();
+// Register AuthenticationStateProvider and AppAuthStateProvider
+builder.Services.AddScoped<AppAuthStateProvider>();
+builder.Services.AddScoped<IPasswordHasher<AppUser>, PasswordHasher<AppUser>>();
 
+builder.Services.AddScoped<AuthenticationStateProvider>(provider =>
+    provider.GetRequiredService<AppAuthStateProvider>());
+builder.Services.AddAuthorizationCore();
 await builder.Build().RunAsync();

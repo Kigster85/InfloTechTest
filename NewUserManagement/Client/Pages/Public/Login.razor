@@ -1,20 +1,110 @@
 ﻿@page "/login"
+@using Microsoft.AspNetCore.Components
+@using System.Net.Http
+@using System.Net.Http.Json
+@using NewUserManagement.Client.Static
+@using NewUserManagement.Shared.Models
+@using Blazored.LocalStorage;
+@using System.Net.Http.Headers;
+
+
 
 <NavBar />
 
-<main class="container min-vh-90 py-nd-5 ">
-	<div class="container p-5">
+<main class="container min-vh-90 py-nd-5 d-flex justify-content-center">
+	<div class="p-5 justify-content-center">
 		<h3>Login</h3>
 
-		<p>
-			This is where the login screen will be.
-		</p>
-	</div>
+		@if (_signInSuccessful == true)
+		{
+			<p>You are already logged in. <button @onclick="SignOut">Logout</button></p>
+		}
+		else
+		{
+			<EditForm Model="_user" OnValidSubmit="SignInUser">
+						<DataAnnotationsValidator />
+								<div class="form-group my-3">
+									<label for="username">Username</label>
+					<InputText @bind-Value="_user.EmailAddress" id="email" type="email" class="form-control" />
+					<ValidationMessage For="@(() => _user.EmailAddress)" />
+								</div>
+								<div class="form-group my-3">
+									<label for="password">Password</label>
+					<InputText @bind-Value="_user.Password" id="password" type="password" class="form-control" />
+					<ValidationMessage For="@(() => _user.Password)" />
+								</div>
+				<ValidationSummary />
 
+				<button type="submit" class="btn btn-primary shadow w-100 md-f-size-1-5">
+					Sign In
+				</button>
+				@if (_signInAttemptFailed)
+				{
+					<div class="alert alert-danger" role="alert">
+						Login attempt failed. Please check your credentials and try again.
+					</div>
+				}
+
+				</EditForm>
+		}
+	</div>
 </main>
 
 <FooterBar />
 
 @code {
+	[Inject] private HttpClient HttpClient { get; set; }
+	[Inject] private NavigationManager NavigationManager { get; set; }
+	[Inject] ILocalStorageService LocalStorageService { get; set; }
+	[Inject] AppAuthStateProvider AuthenticationStateProvider { get; set; }
+	private bool _signInAttemptFailed = false;
+	private bool _signInSuccessful = false;
+	private AppUser _user = new(); 
 
+	private async Task SignInUser()
+	{
+		var response = await HttpClient.PostAsJsonAsync<AppUser>(API_EndPoints.s_signIn, _user);
+
+		if (response.IsSuccessStatusCode)
+		{
+			// Obtain the token from the response content
+			var tokenResponse = await response.Content.ReadAsStringAsync();
+
+			// Log the token to the console
+			Console.WriteLine($"Received token: {tokenResponse}");
+
+			// Verify that the token is in the correct format (JWS or JWE Compact Serialization)
+			// You may need to decode the token and inspect its structure to ensure it's valid
+			await LocalStorageService.SetItemAsync("bearerToken", tokenResponse);
+
+			// Call the SignIn method of the authentication state provider with the token
+			await ((AppAuthStateProvider)AuthenticationStateProvider).SignIn();
+
+			// Update the HttpClient default headers to include the bearer token
+			HttpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearerToken", tokenResponse);
+			_signInSuccessful = true;
+
+			// Navigate to the desired page after successful login
+			NavigationManager!.NavigateTo("/");
+		}
+		else
+		{
+			_signInAttemptFailed = true;
+			Console.WriteLine("You have failed to login ");
+			// Log failed login attempt
+			// Example: You can log this attempt using a client-side logging service or simply output to console
+		}
+	}
+	private async Task SignOut()
+	{
+		if (await LocalStorageService.ContainKeyAsync("bearerToken"))
+		{
+			await LocalStorageService.RemoveItemAsync("bearerToken");
+
+			((AppAuthStateProvider)AuthenticationStateProvider).SignOut();
+
+			StateHasChanged();
+		}
+	}
+	
 }

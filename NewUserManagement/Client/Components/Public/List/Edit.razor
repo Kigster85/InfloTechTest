@@ -17,7 +17,7 @@
 				<button @onclick="CloseEditModal" type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 			</div>
 			<div class="modal-body">
-				<UserForm UserDetails="@UserDetails" OnSubmit="@SubmitForm" OnSuccess="@ShowSuccessMsg" OnFailure="@ShowFailureMsg" />
+				<UserForm UserDetails="@UserDetails" OnSubmit="@SubmitEditForm" OnSuccess="@ShowSuccessMsg" OnFailure="@ShowFailureMsg" />
 
 					@if (showErrorMessage)
 					{
@@ -46,26 +46,27 @@
 	@inject HttpClient HttpClient
 	@inject ILogger<Edit> Logger // Inject ILogger service
 	@inject LoggingClientService.ILogService _logService
+
 	public bool showSuccessMessage = false;
 	public bool showErrorMessage = false;
-	[Parameter] public int UserId { get; set; }
-	private List<User> users = new List<User>();
-	private string? _modalDisplay = null;
-	private string? _modalClass = null;
+	[Parameter] public string userId { get; set; }
+	private List<AppUserDTO> users = new List<AppUserDTO>();
+	private string _modalDisplay = null;
+	private string _modalClass = null;
 	private bool _showBackdrop = false;
-	private int _selectedUserId { get; set; }
-	private User UserDetails { get; set; } = new User(); // Initialize with a default user object
+	private string _selectedUserId { get; set; }
+	private AppUserDTO UserDetails { get; set; } = new AppUserDTO(); // Initialize with a default user object
 	[Parameter] public EventCallback OnModalClosed { get; set; }
 	[Parameter] public EventCallback OnEditModalClosed { get; set; }
 	[Parameter] public EventCallback EditModalClickBtnClose { get; set; }
 
 	protected override async Task OnInitializedAsync()
 	{
-		// Fetch user details based on the UserId parameter
-		UserDetails = await DatabaseCache.GetUserDetails(UserId) ?? new User();
+
+		UserDetails = await DatabaseCache.GetUserDetails(userId) ?? new AppUserDTO();
 	}
 
-	public async Task LogUserEdit(int userId, string action, string details)
+	public async Task LogUserEdit(string userId, string action, string details)
 	{
 		try
 		{
@@ -93,57 +94,30 @@
 			throw; // Re-throw the exception to propagate it to the caller
 		}
 	}
-	// private async void NextUser()
-	// {
-	// 	int index = DatabaseCache.Users.FindIndex(u => u.Id == UserDetails.Id);
-	// 	if (index != -1)
-	// 	{
-	// 		index++; // Move to the next user
-
-	// 		if (index >= DatabaseCache.Users.Count)
-	// 		{
-	// 			index = 0; // Wrap around to the first user if reached the end
-	// 		}
-	// 		UserDetails = DatabaseCache.Users[index];
-	// 		await updateUrlWithoutNavigation("edit", UserDetails.Id);
-	// 	}
-	// }
-
-	// private async void PreviousUser()
-	// {
-	// 	int index = DatabaseCache.Users.FindIndex(u => u.Id == UserDetails.Id);
-	// 	if (index != -1)
-	// 	{
-	// 		index--; // Move to the previous user
-
-	// 		if (index < 0)
-	// 		{
-	// 			index = DatabaseCache.Users.Count - 1; // Wrap around to the last user if reached the beginning
-	// 		}
-	// 		UserDetails = DatabaseCache.Users[index];
-	// 		await updateUrlWithoutNavigation("edit", UserDetails.Id);
-	// 	}
-	// }
+	
 	protected override void OnInitialized() => ShowEditModal();
+	private bool IsAddUser { get; set; }
 
 	private async void ShowEditModal()
 	{
 		_modalDisplay = "block;";
 		_modalClass = "show";
 		_showBackdrop = true;
-		await updateUrlWithoutNavigation("edit", UserId);
+		IsAddUser = true;
+
+		await updateUrlWithoutNavigation("edit", userId);
 	}
-	[Parameter] public bool _showingViewModalWindow { get; set; }
 	private async Task CloseEditModal()
 	{
 		_modalDisplay = "none;";
 		_modalClass = string.Empty;
 		_showBackdrop = false;
+		IsAddUser = false;
 		NavigationManager.NavigateTo("/list");
 		await EditModalClickBtnClose.InvokeAsync();
 		await Task.Delay(0);
 	}
-	private async Task updateUrlWithoutNavigation(string route, int? UserId)
+	private async Task updateUrlWithoutNavigation(string route, string UserId)
 	{
 		string url = $"/list/{route}/{UserId}";
 		await JSRuntime.InvokeVoidAsync("updateUrlWithoutNavigation", route, UserId);
@@ -151,23 +125,23 @@
 	}
 
 
-	private async Task SubmitForm()
+	private async Task SubmitEditForm()
 	{
 		try
 		{
 			Console.WriteLine("Submitting form...");
 
 			// Call the UserController to update the user details
-			Console.WriteLine($"Sending PUT request to /api/User/{UserId}");
-			HttpResponseMessage response = await HttpClient.PutAsJsonAsync($"/api/User/{UserId}", UserDetails);
+			Console.WriteLine($"Sending PUT request to /api/user/{userId}");
+			HttpResponseMessage response = await HttpClient.PutAsJsonAsync($"/api/user/{userId}", UserDetails);
 
-			if (response.IsSuccessStatusCode)
+			if (response.IsSuccessStatusCode == true)
 			{
 				Console.WriteLine("Request succeeded.");
 
 				// Log the user edit
-				await LogUserEdit(UserId, "Edited", "User information updated successfully.");
-				await DatabaseCache.IncrementUserEditCount(UserId);
+				await LogUserEdit(userId, "Edited", "User information updated successfully.");
+				await DatabaseCache.IncrementUserEditCount(userId);
 				// Show success message
 				// Update the cache with the latest data from the server
 				Console.WriteLine("Refreshing cache...");
@@ -194,10 +168,11 @@
 	}
 
 
+
 	private async Task CloseEditModalSubmit()
 	{
 		// Reset message states
-		showSuccessMessage = false;
+		showSuccessMessage = true;
 		showErrorMessage = false;
 		await Task.Delay(0);
 		// Close the modal

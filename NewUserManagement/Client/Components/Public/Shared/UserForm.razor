@@ -3,7 +3,7 @@
 @using NewUserManagement.Shared.Models
 @using System.Threading.Tasks
 
-<!-- UserForm.razor -->
+
 
 	@if (ShowInputFields == false)
 	{
@@ -18,58 +18,99 @@
 					<span class="p-2">@UserDetails.Surname</span>
 				</div>
 				<div class="mb-2 p-2">
-					<strong class="form-label">Email:</strong>
-					<span class="p-2">@UserDetails.Email</span>
+					<strong class="form-label">UserName/Email:</strong>
+			<span class="p-2">@UserDetails.Email</span>
 				</div>
 				<div class="mb-2 p-2">
 					<strong class="form-label">Date of Birth:</strong>
 					<span class="p-2">@UserDetails.DateOfBirth</span>
 				</div>
-		</div>
-	}
-	else
-	{
-			<div class="container bg-dark">
+	</div>
+}
+else if (IsAddUser == false)
+{
+	<div class="container bg-dark text-bg-dark">
 
-				<EditForm Model="@UserDetails" OnValidSubmit="@HandleSubmit">
-					<DataAnnotationsValidator />
-
-					<ValidationSummary />
-					<div class="mb-2 p-2">
-						<label class="form-label">Forename:</label>
-						<InputText id="forename" class="form-control" @bind-Value="UserDetails.Forename" />
-						<ValidationMessage For="@(() => UserDetails.Forename)" />
-					</div>
-					<div class="mb-2 p-2">
-						<label class="form-label">Surname:</label>
-						<InputText id="surname" class="form-control" @bind-Value="UserDetails.Surname" />
-						<ValidationMessage For="@(() => UserDetails.Surname)" />
-					</div>
-					<div class="mb-2 p-2">
-						<label class="form-label">Email:</label>
-						<InputText id="email" class="form-control" @bind-Value="UserDetails.Email" />
-						<ValidationMessage For="@(() => UserDetails.Email)" />
-					</div>
-					<div class="mb-2 p-2">
-						<label class="form-label">Date of Birth:</label>
-						<InputDate id="dateofbirth" class="form-control" @bind-Value="UserDetails.DateOfBirth" />
-						<ValidationMessage For="@(() => UserDetails.DateOfBirth)" />
-					</div>
-
-					<div class="d-flex justify-content-end">
-						<button type="submit" class="btn btn-success shadow">Submit</button>
-					</div>
-				</EditForm>
+		<EditForm Model="@UserDetails" OnValidSubmit="@HandleSubmit">
+			<DataAnnotationsValidator />
+			<ValidationSummary />
+			<div class="mb-2 p-2">
+				<label class="form-label">Forename:</label>
+				<InputText id="forename" class="form-control" @bind-Value="UserDetails.Forename" />
+				<ValidationMessage For="@(() => UserDetails.Forename)" />
 			</div>
-	}
+			<div class="mb-2 p-2">
+				<label class="form-label">Surname:</label>
+				<InputText id="surname" class="form-control" @bind-Value="UserDetails.Surname" />
+				<ValidationMessage For="@(() => UserDetails.Surname)" />
+			</div>
+			<div class="mb-2 p-2">
+				<label class="form-label">UserName/Email:</label>
+				<InputText id="email" class="form-control" @bind-Value="UserDetails.Email" />
+				<ValidationMessage For="@(() => UserDetails.Email)" />
+			</div>
+			<div class="mb-2 p-2">
+				<label class="form-label">Date of Birth:</label>
+				<InputDate id="dateofbirth" class="form-control" @bind-Value="UserDetails.DateOfBirth" />
+				<ValidationMessage For="@(() => UserDetails.DateOfBirth)" />
+			</div>
+
+			<div class="d-flex justify-content-end">
+				<button type="submit" class="btn btn-success shadow">Submit</button>
+			</div>
+		</EditForm>
+	</div>
+}
+else
+{
+	<div class="container bg-dark text-bg-dark">
+
+		<EditForm Model="@UserDetails" OnValidSubmit="@HandleSubmit">
+			<DataAnnotationsValidator />
+			<ValidationSummary />
+			<div class="mb-2 p-2">
+				<label class="form-label">Forename:</label>
+				<InputText id="forename" class="form-control" @bind-Value="UserDetails.Forename" />
+				<ValidationMessage For="@(() => UserDetails.Forename)" />
+			</div>
+			<div class="mb-2 p-2">
+				<label class="form-label">Surname:</label>
+				<InputText id="surname" class="form-control" @bind-Value="UserDetails.Surname" />
+				<ValidationMessage For="@(() => UserDetails.Surname)" />
+			</div>
+			<div class="mb-2 p-2">
+				<label class="form-label">UserName/Email:</label>
+				<InputText id="email" class="form-control" @bind-Value="UserDetails.Email" />
+				<ValidationMessage For="@(() => UserDetails.Email)" />
+			</div>
+			<div class="mb-2 p-2">
+				<label class="form-label">Password:</label>
+				<InputText id="password" class="form-control" @bind-Value="UserDetails.Password" />
+				<ValidationMessage For="@(() => UserDetails.Password)" />
+			</div>
+			<div class="mb-2 p-2">
+				<label class="form-label">Date of Birth:</label>
+				<InputDate id="dateofbirth" class="form-control" @bind-Value="UserDetails.DateOfBirth" />
+				<ValidationMessage For="@(() => UserDetails.DateOfBirth)" />
+			</div>
+
+			<div class="d-flex justify-content-end">
+				<button type="submit" class="btn btn-success shadow">Submit</button>
+			</div>
+		</EditForm>
+	</div>
+
+
+
+}
 
 @code {
 	[Parameter]	public bool ShowInputFields { get; set; } = true; // Default to true to show input fields
-	[Parameter] public User UserDetails { get; set; } = new User();
-	[Parameter] public EventCallback<User> OnSubmit { get; set; }
+	[Parameter] public AppUserDTO UserDetails { get; set; } = new AppUserDTO();
+	[Parameter] public EventCallback<AppUserDTO> OnSubmit { get; set; }
 	[Parameter] public EventCallback OnSuccess { get; set; }
 	[Parameter] public EventCallback OnFailure { get; set; }
-
+	[Parameter] public bool IsAddUser { get; set; } = false;
 	private async Task HandleSubmit()
 	{
 		try
@@ -86,6 +127,12 @@
 			// If an error occurs, invoke the OnFailure event callback
 			await OnFailure.InvokeAsync(ex.Message);
 		}
+	}
+	protected override void OnInitialized()
+	{
+		base.OnInitialized();
+		Console.WriteLine($"ShowInputFields: {ShowInputFields}");
+		Console.WriteLine($"IsAddUser: {IsAddUser}");
 	}
 }
 

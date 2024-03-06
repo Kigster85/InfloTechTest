@@ -1,20 +1,20 @@
 ﻿namespace NewUserManagement.Client.Static;
 
-internal static class API_EndPoints
+public static class API_EndPoints
 {
-#if DEBUG
-    //Use this path//
-    internal const string ServerBaseUrl = "https://localhost:5167";
 
+
+#if DEBUG
+    // Use this path in debug mode
+    internal const string ServerBaseUrl = "https://localhost:5167";
 #else
-    //Use this Prod Path//
+    // Use this production path in release mode
     internal const string ServerBaseUrl = "https://www.yourdomain.com";
 #endif
 
-    internal readonly static string s_user = $"{ServerBaseUrl}/api/user";
-    internal readonly static string s_userById = $"{ServerBaseUrl}/api/user"; // Assuming the endpoint is /api/user/{id}
+    internal readonly static string s_user = $"{ServerBaseUrl}/api/user"; // Endpoint for retrieving users
+    internal readonly static string s_userById = $"{ServerBaseUrl}/api/user/{{userId}}"; // Endpoint for retrieving user by ID
+    internal readonly static string s_signIn = $"{ServerBaseUrl}/api/authorization/login";
 
-    //internal readonly static string s_signIn = $"{ServerBaseUrl}/api/signin";
-
-
+    // You may add more endpoint URLs as needed for other API operations
 }

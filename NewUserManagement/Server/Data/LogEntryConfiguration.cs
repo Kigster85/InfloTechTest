@@ -8,7 +8,7 @@ public class LogEntryConfiguration : IEntityTypeConfiguration<LogDBEntry>
     public void Configure(EntityTypeBuilder<LogDBEntry> builder)
     {
         builder.ToTable("LogEntries"); // Set table name
-        builder.HasKey(e => e.Id);      // Set primary key
+        builder.HasKey(e => e.LogId);      // Set primary key
         // Add additional configuration as needed
     }
 }

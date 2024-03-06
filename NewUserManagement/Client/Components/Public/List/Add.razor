@@ -1,4 +1,5 @@
 ﻿@page "/list/add"
+@using Microsoft.AspNetCore.Identity
 @using NewUserManagement.Client.Services
 @using NewUserManagement.Client.Pages.Public
 @using NewUserManagement.Client.Components
@@ -18,7 +19,7 @@
 						<button @onclick="CloseAddModal" type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 					</div>
 					<div class="modal-body">
-						<UserForm UserDetails="@UserDetails" OnSubmit="@AddUserSubmit" OnSuccess="@ShowSuccessMsg" OnFailure="@ShowFailureMsg" />
+				<UserForm UserDetails="@UserDetails" OnSubmit="@AddUserSubmit" OnSuccess="@ShowSuccessMsg" OnFailure="@ShowFailureMsg" IsAddUser="true" />
 
 						@if (showErrorMessage)
 						{
@@ -40,36 +41,37 @@
 	<div class="modal-backdrop fade show"></div>
 }
 @code {
-@inject InMemoryDatabaseCache DatabaseCache
-	@inject NavigationManager NavigationManager
-	@inject IJSRuntime JSRuntime
-	@inject HttpClient HttpClient
-	@inject ILogger<Add> Logger // Inject ILogger service
-	@inject LoggingClientService.ILogService _logService
+
+  @inject InMemoryDatabaseCache DatabaseCache
+  @inject NavigationManager NavigationManager
+  @inject IJSRuntime JSRuntime
+  @inject HttpClient HttpClient
+  @inject ILogger<Add> Logger
+  @inject LoggingClientService.ILogService _logService
+	@inject IPasswordHasher<AppUser> _passwordHasher
 
 	public bool showSuccessMessage = false;
 	public bool showErrorMessage = false;
-	[Parameter] public int UserId { get; set; }
+	[Parameter] public string? userId { get; set; }
 	[Parameter] public EventCallback OnModalClosed { get; set; }
 	[Parameter] public EventCallback AddModalClickBtnClose { get; set; }
 	[Parameter] public EventCallback OnAddModalClosed { get; set; }
 	[Parameter] public bool _showingAddModalWindow { get; set; }
-
 	private string? _modalDisplay { get; set;}
 	private string? _modalClass { get; set; }
 	private bool _showBackdrop { get; set; }
 	private bool? isLoading = true; // Flag to indicate loading state
 
-	private User? UserDetails { get; set; }
+	private AppUserDTO UserDetails { get; set; } // Initialize with a default user object
 	protected override async Task OnInitializedAsync()
 	{
 		// You can add an asynchronous operation that doesn't await anything to satisfy the requirement.
 		await Task.CompletedTask;
 		isLoading = false;
 		// Initialize UserDetails with default values or leave it as an empty object
-		UserDetails = new User();
+		UserDetails = new AppUserDTO();
 	}
-	public async Task LogUserCreation(int userId, string action, string details)
+	public async Task LogUserCreation(string userId, string action, string details)
 	{
 		try
 		{
@@ -95,6 +97,7 @@
 			throw; // Re-throw the exception to propagate it to the caller
 		}
 	}
+	private bool IsAddUser { get; set; }
 
 	protected override void OnInitialized() => ShowAddModal();
 
@@ -103,6 +106,8 @@
 		_modalDisplay = "block;";
 		_modalClass = "show";
 		_showBackdrop = true;
+		IsAddUser = false;
+
 		await updateUrlWithoutNavigation("add");
 	}
 	private async Task CloseAddModal()
@@ -110,10 +115,11 @@
 		_modalDisplay = "none;";
 		_modalClass = string.Empty;
 		_showBackdrop = false;
+		IsAddUser = true;
+
 		await Task.Delay(0);
 		await AddModalClickBtnClose.InvokeAsync();
-		_showingAddModalWindow = false;
-		await updateUrlWithoutNavigation("");
+		NavigationManager.NavigateTo("/list");
 
 	}
 	private async Task updateUrlWithoutNavigation(string route)
@@ -127,7 +133,7 @@
 		isLoading = true; // Set loading flag to true
 		try
 		{
-			await DatabaseCache.GetUsersFromDatabaseAndCache(null);
+			await DatabaseCache.GetUsersFromDatabaseAndCache();
 		}
 		catch (Exception)
 		{
@@ -138,22 +144,22 @@
 			isLoading = false; // Set loading flag to false when loading completes or fails
 		}
 	}
-
-
 	private async Task AddUserSubmit()
 	{
 		if (IsValidUser())
 		{
-			var user = new User
+			var user = new AddUserDTO
 				{
-					Forename = UserDetails?.Forename ?? "", // Check if UserDetails is null, if not, access Forename property; otherwise, use an empty string
-					Surname = UserDetails?.Surname ?? "",   // Check if UserDetails is null, if not, access Surname property; otherwise, use an empty string
-					Email = UserDetails?.Email ?? "",       // Check if UserDetails is null, if not, access Email property; otherwise, use an empty string
-					DateOfBirth = UserDetails?.DateOfBirth ?? DateTime.MinValue // Check if UserDetails is null, if not, access DateOfBirth property; otherwise, use a default DateTime value
+					Forename = UserDetails?.Forename ?? "",
+					Surname = UserDetails?.Surname ?? "",
+					Email = UserDetails?.Email ?? "",
+					DateOfBirth = UserDetails?.DateOfBirth ?? DateTime.MinValue,
+					Password = UserDetails.Password
 				};
 
 
-			var response = await HttpClient.PostAsJsonAsync("/api/User", user);
+
+			var response = await HttpClient.PostAsJsonAsync("/api/user", user);
 			if (response.IsSuccessStatusCode)
 			{
 				Console.WriteLine("User added successfully!");
@@ -167,7 +173,7 @@
 				if (lastUser != null)
 				{
 					// Obtain the UserId of the last user
-					int userId = lastUser.Id;
+					string userId = lastUser.Id;
 
 					// Now you can use the userId for logging or other operations
 					await LogUserCreation(userId, "UserAdded", $"User {lastUser.Forename} {lastUser.Surname} successfully added to the database.");
@@ -175,16 +181,19 @@
 				else
 				{
 					Console.WriteLine("Failed to retrieve added user from cache.");
-					ShowFailureMsg();
+					await ShowFailureMsg();
 				}
 			}
 			else
 			{
 				Console.WriteLine("Failed to add user. Please try again.");
-				ShowFailureMsg();
+				await ShowFailureMsg();
 			}
 		}
 	}
+
+
+
 
 	private bool IsValidUser()
 	{
@@ -216,7 +225,7 @@
 
 		return true;
 	}
-	private async void ShowSuccessMsg()
+	private async Task ShowSuccessMsg()
 	{
 		await CloseAddModal();
 		await OnModalClosed.InvokeAsync();
@@ -224,10 +233,10 @@
 
 	}
 
-	private void ShowFailureMsg()
+	private async Task ShowFailureMsg()
 	{
 		showErrorMessage = false;
-
+		await Task.Delay(0);
 	}
 
 
