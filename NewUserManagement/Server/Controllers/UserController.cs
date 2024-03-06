@@ -23,7 +23,6 @@ namespace NewUserManagement.Server.Controllers
             var users = await _userManager.Users
                 .Select(u => new AppUser
                 {
-                    UserName = u.Email,
                     Email = u.Email,
                     Forename = u.Forename,
                     Surname = u.Surname,
@@ -102,17 +101,18 @@ namespace NewUserManagement.Server.Controllers
 
         // PUT: api/user/{userId}
         [HttpPut("{userId}")]
-        public async Task<IActionResult> UpdateUser(string userId, [FromBody] AppUserDTO userDTO)
+        public async Task<IActionResult> UpdateUser(string userId, [FromBody] AppUser userDTO)
         {
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
             {
                 return NotFound();
             }
-
+            user.UserName = userDTO.Email;
             user.Forename = userDTO.Forename;
             user.Surname = userDTO.Surname;
-            user.Email = userDTO.Email;
+            user.Email = userDTO.EmailAddress;
+            user.EmailAddress = userDTO.Email;
             user.IsActive = userDTO.IsActive;
             user.DateOfBirth = userDTO.DateOfBirth;
 
@@ -136,6 +136,7 @@ namespace NewUserManagement.Server.Controllers
 
             var user = new AppUser
             {
+                UserName = userDTO.Email,
                 Forename = userDTO.Forename,
                 Surname = userDTO.Surname,
                 Email = userDTO.Email,

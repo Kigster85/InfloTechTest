@@ -150,9 +150,11 @@
 		{
 			var user = new AddUserDTO
 				{
-					Forename = UserDetails?.Forename ?? "",
-					Surname = UserDetails?.Surname ?? "",
-					Email = UserDetails?.Email ?? "",
+					Username = UserDetails.Email, // Set username to email address
+					Forename = UserDetails.Forename,
+					Surname = UserDetails.Surname,
+					Email = UserDetails.Email,
+					EmailAddress = UserDetails.Email,
 					DateOfBirth = UserDetails?.DateOfBirth ?? DateTime.MinValue,
 					Password = UserDetails.Password
 				};
@@ -162,6 +164,8 @@
 			var response = await HttpClient.PostAsJsonAsync("/api/user", user);
 			if (response.IsSuccessStatusCode)
 			{
+				await ShowSuccessMsg();
+				await DatabaseCache.RefreshCache(HttpClient);
 				Console.WriteLine("User added successfully!");
 				await AddModalClickBtnClose.InvokeAsync();
 				await OnAddModalClosed.InvokeAsync();

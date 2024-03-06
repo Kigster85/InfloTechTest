@@ -141,11 +141,11 @@
 
 				// Log the user edit
 				await LogUserEdit(userId, "Edited", "User information updated successfully.");
-				await DatabaseCache.IncrementUserEditCount(userId);
 				// Show success message
 				// Update the cache with the latest data from the server
 				Console.WriteLine("Refreshing cache...");
 				await DatabaseCache.UpdateUserOnServerAndRefreshCache(HttpClient, UserDetails);
+				await DatabaseCache.IncrementUserEditCount(userId);
 
 				// Close the modal after a delay
 				await CloseEditModalSubmit();

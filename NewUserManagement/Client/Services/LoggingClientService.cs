@@ -8,7 +8,7 @@ namespace NewUserManagement.Client.Services
     {
         public class LogEntry
         {
-            public int LogId { get; set; }
+            public string LogId { get; set; }
             public DateTime Timestamp { get; set; }
             public string? UserId { get; set; }
             public string? Action { get; set; }
@@ -20,7 +20,7 @@ namespace NewUserManagement.Client.Services
             public DateTime? DeletionTime { get; set; } // Nullable DateTime
 
             // Constructor for regular log entries
-            public LogEntry(int logId, string userId, string action, DateTime timestamp)
+            public LogEntry(string logId, string userId, string action, DateTime timestamp)
             {
                 LogId = logId;
                 UserId = userId;
@@ -29,7 +29,7 @@ namespace NewUserManagement.Client.Services
             }
 
             // Constructor for deleted user entries
-            public LogEntry(int logId, string deletedUserId, DateTime deletionTime)
+            public LogEntry(string logId, string deletedUserId, DateTime deletionTime)
             {
                 LogId = logId;
                 DeletedUserId = deletedUserId;

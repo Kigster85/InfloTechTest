@@ -1,7 +1,7 @@
 ﻿namespace NewUserManagement.Shared.Models;
 public class LogDBEntry
 {
-    public int LogId { get; set; }
+    public string LogId { get; set; }
     public DateTime Timestamp { get; set; }
     public string? UserId { get; set; }
     public string? Action { get; set; }
