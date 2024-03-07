@@ -111,8 +111,8 @@ namespace NewUserManagement.Server.Controllers
             user.UserName = userDTO.Email;
             user.Forename = userDTO.Forename;
             user.Surname = userDTO.Surname;
-            user.Email = userDTO.EmailAddress;
-            user.EmailAddress = userDTO.Email;
+            user.Email = userDTO.emailAddress;
+            user.emailAddress = userDTO.Email;
             user.IsActive = userDTO.IsActive;
             user.DateOfBirth = userDTO.DateOfBirth;
 
@@ -140,8 +140,10 @@ namespace NewUserManagement.Server.Controllers
                 Forename = userDTO.Forename,
                 Surname = userDTO.Surname,
                 Email = userDTO.Email,
+                emailAddress = userDTO.Email,
                 IsActive = true,
-                DateOfBirth = userDTO.DateOfBirth
+                DateOfBirth = userDTO.DateOfBirth,
+                Password = userDTO.Password
             };
 
             // Hash the password using UserManager's password hasher

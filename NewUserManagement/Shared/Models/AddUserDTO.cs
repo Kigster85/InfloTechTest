@@ -18,9 +18,10 @@ public class AddUserDTO
     [Required(ErrorMessage = "Email address is required")]
     [EmailAddress(ErrorMessage = "Invalid email address")]
     public string Email { get; set; }
+
     [Required(ErrorMessage = "Email address is required")]
     [EmailAddress(ErrorMessage = "Invalid email address")]
-    public string EmailAddress { get; set; }
+    public string emailAddress { get; set; }
     public bool IsActive { get; set; }= true;
 
     [DataType(DataType.Date)]

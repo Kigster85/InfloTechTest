@@ -7,7 +7,7 @@ namespace NewUserManagement.Shared.Models
     {
         [Required(ErrorMessage = "Email address is required")]
         [EmailAddress(ErrorMessage = "Invalid email address")]
-        public string EmailAddress { get; set; }
+        public string emailAddress { get; set; }
 
         [Required(ErrorMessage = "Password is required")]
         [CustomPasswordValidation(8, 20, requireDigit: true, requireLowercase: true, requireUppercase: true)]
