@@ -25,8 +25,8 @@
 						<DataAnnotationsValidator />
 								<div class="form-group my-3">
 									<label for="username">Username</label>
-					<InputText @bind-Value="_user.EmailAddress" id="email" type="email" class="form-control" />
-					<ValidationMessage For="@(() => _user.EmailAddress)" />
+					<InputText @bind-Value="_user.emailAddress" id="email" type="email" class="form-control" />
+					<ValidationMessage For="@(() => _user.emailAddress)" />
 								</div>
 								<div class="form-group my-3">
 									<label for="password">Password</label>
@@ -59,11 +59,11 @@
 	[Inject] AppAuthStateProvider AuthenticationStateProvider { get; set; }
 	private bool _signInAttemptFailed = false;
 	private bool _signInSuccessful = false;
-	private AppUser _user = new(); 
+	private AppUserLogIn _user = new(); 
 
 	private async Task SignInUser()
 	{
-		var response = await HttpClient.PostAsJsonAsync<AppUser>(API_EndPoints.s_signIn, _user);
+		var response = await HttpClient.PostAsJsonAsync<AppUserLogIn>(API_EndPoints.s_signIn, _user);
 
 		if (response.IsSuccessStatusCode)
 		{

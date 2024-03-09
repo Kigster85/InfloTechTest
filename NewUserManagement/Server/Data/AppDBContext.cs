@@ -66,7 +66,7 @@ namespace NewUserManagement.Server.Data
                 Id = Guid.NewGuid().ToString(),
                 UserName = administratorUserEmail,
                 NormalizedUserName = administratorUserEmail.ToUpperInvariant(),
-                EmailAddress = administratorUserEmail,
+                emailAddress = administratorUserEmail,
                 Email = administratorUserEmail,
                 NormalizedEmail = administratorUserEmail.ToUpperInvariant(),
                 Password = string.Empty,
@@ -101,7 +101,7 @@ namespace NewUserManagement.Server.Data
             new AppUser
             {
                 UserName = "ploew@example.com",
-                EmailAddress = "ploew@example.com",
+                emailAddress = "ploew@example.com",
                 Email = "ploew@example.com",
                 Forename = "Peter",
                 Surname = "Loew",
@@ -112,7 +112,7 @@ namespace NewUserManagement.Server.Data
             new AppUser
             {
                 UserName = "bfgates@example.com",
-                EmailAddress = "bfgates@example.com",
+                emailAddress = "bfgates@example.com",
                 Email = "bfgates@example.com",
                 Forename = "Benjamin Franklin",
                 Surname = "Gates",
@@ -123,7 +123,7 @@ namespace NewUserManagement.Server.Data
             new AppUser
             {
                 UserName = "ctroy@example.com",
-                EmailAddress = "ctroy@example.com",
+                emailAddress = "ctroy@example.com",
                 Email = "ctroy@example.com",
                 Forename = "Castor",
                 Surname = "Troy",
@@ -134,7 +134,7 @@ namespace NewUserManagement.Server.Data
             new AppUser
             {
                 UserName = "mraines@example.com",
-                EmailAddress = "mraines@example.com",
+                emailAddress = "mraines@example.com",
                 Email = "mraines@example.com",
                 Forename = "Memphis",
                 Surname = "Raines",
@@ -145,7 +145,7 @@ namespace NewUserManagement.Server.Data
             new AppUser
             {
                 UserName = "sgodspeed@example.com",
-                EmailAddress = "sgodspeed@example.com",
+                emailAddress = "sgodspeed@example.com",
                 Email = "sgodspeed@example.com",
                 Forename = "Stanley",
                 Surname = "Goodspeed",
@@ -156,7 +156,7 @@ namespace NewUserManagement.Server.Data
             new AppUser
             {
                 UserName = "himcdunnough@example.com",
-                EmailAddress = "himcdunnough@example.com",
+                emailAddress = "himcdunnough@example.com",
                 Email = "himcdunnough@example.com",
                 Forename = "H.I.",
                 Surname = "McDunnough",
@@ -167,7 +167,7 @@ namespace NewUserManagement.Server.Data
             new AppUser
             {
                 UserName = "cpoe@example.com",
-                EmailAddress = "cpoe@example.com",
+                emailAddress = "cpoe@example.com",
                 Email = "cpoe@example.com",
                 Forename = "Cameron",
                 Surname = "Poe",
@@ -178,7 +178,7 @@ namespace NewUserManagement.Server.Data
             new AppUser
             {
                 UserName = "emalus@example.com",
-                EmailAddress = "emalus@example.com",
+                emailAddress = "emalus@example.com",
                 Email = "emalus@example.com",
                 Forename = "Edward",
                 Surname = "Malus",
@@ -189,7 +189,7 @@ namespace NewUserManagement.Server.Data
             new AppUser
             {
                 UserName = "dmacready@example.com",
-                EmailAddress = "dmacready@example.com",
+                emailAddress = "dmacready@example.com",
                 Email = "dmacready@example.com",
                 Forename = "Damon",
                 Surname = "Macready",
@@ -200,7 +200,7 @@ namespace NewUserManagement.Server.Data
             new AppUser
             {
                 UserName = "jblaze@example.com",
-                EmailAddress = "jblaze@example.com",
+                emailAddress = "jblaze@example.com",
                 Email = "jblaze@example.com",
                 Forename = "Johnny",
                 Surname = "Blaze",
@@ -211,7 +211,7 @@ namespace NewUserManagement.Server.Data
             new AppUser
             {
                 UserName = "rfeld@example.com",
-                EmailAddress = "rfeld@example.com",
+                emailAddress = "rfeld@example.com",
                 Email = "rfeld@example.com",
                 Forename = "Robin",
                 Surname = "Feld",

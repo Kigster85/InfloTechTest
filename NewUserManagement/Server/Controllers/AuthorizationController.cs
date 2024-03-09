@@ -41,7 +41,7 @@ public class AuthorizationController : ControllerBase
     [HttpPost("login")]
     public async Task<IActionResult> SignIn([FromBody] AppUserLogIn user)
     {
-        string username = user.EmailAddress;
+        string username = user.emailAddress;
         string password = user.Password;
 
         _logger.LogInformation("Attempting to sign in user: {username}", username); // Added logger
