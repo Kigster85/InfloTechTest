@@ -142,28 +142,46 @@ namespace NewUserManagement.Client.Services
             }
         }
 
-        public void ToggleUserSelection(string userId)
-        {
-            if (SelectedUserIds.Contains(userId))
-            {
-                SelectedUserIds.Remove(userId); // Deselect user if already selected
-            }
-            else
-            {
-                SelectedUserIds.Add(userId); // Select user if not already selected
-            }
-        }
 
-        public void ClearSelectedUsers()
-        {
-            SelectedUserIds.Clear();
-        }
-
-        public async Task DeleteSelectedUsers()
+        public async Task<bool> DeleteUserByIdAsync(string userId)
         {
             try
             {
-                foreach (var userId in SelectedUserIds)
+                if (string.IsNullOrEmpty(userId))
+                {
+                    Console.WriteLine("User ID is null or empty.");
+                    return false;
+                }
+
+                var response = await _httpClient.DeleteAsync($"api/user/{userId}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    // Remove the deleted user from the local list
+                    Users.RemoveAll(u => u.Id == userId);
+                    Console.WriteLine($"User with ID {userId} deleted successfully.");
+                    return true;
+                }
+                else
+                {
+                    // Handle the case where deletion fails
+                    Console.WriteLine($"Failed to delete user with ID {userId}. Reason: {response.ReasonPhrase}");
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle the error, such as displaying an error message
+                Console.WriteLine($"An error occurred while deleting user with ID {userId}: {ex.Message}");
+                return false;
+            }
+        }
+
+        public async Task<bool> DeleteSelectedUsersAsync(List<string> selectedUserIds)
+        {
+            try
+            {
+                foreach (var userId in selectedUserIds)
                 {
                     var response = await _httpClient.DeleteAsync($"api/user/{userId}");
 
@@ -181,12 +199,21 @@ namespace NewUserManagement.Client.Services
 
                 // Clear the list of selected user IDs
                 ClearSelectedUsers();
+
+                return true; // Indicate successful deletion
             }
             catch (Exception ex)
             {
                 // Handle the error, such as displaying an error message
                 Console.WriteLine($"An error occurred while deleting selected users: {ex.Message}");
+                return false; // Indicate failure
             }
+        }
+
+
+        public void ClearSelectedUsers()
+        {
+            SelectedUserIds.Clear();
         }
 
 

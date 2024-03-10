@@ -161,10 +161,13 @@ else if (_showingAddModalWindow)
 	@inject LoggingService _loggingService
 	private List<AppUserDTO> UserDetails = new List<AppUserDTO>();
 	private bool isLoading = true; // Flag to indicate loading state
-    protected override async Task OnInitializedAsync()
-    {
-		await DatabaseCache.GetUsersFromDatabaseAndCache();
-		isLoading = false;
+	private List<string> SelectedUserIds { get; set; } = new List<string>();
+	private bool IsSelectAllChecked { get; set; }
+
+	protected override async Task OnInitializedAsync()
+	{
+	await DatabaseCache.GetUsersFromDatabaseAndCache();
+	isLoading = false;
 	}
     
 	private bool IsDeleteButtonVisible { get; set; } = false;
@@ -228,28 +231,23 @@ else if (_showingAddModalWindow)
 
 
 
-	private async Task DeleteUser(string? userId)
+	private async Task DeleteUser(string userId)
 	{
 		try
 		{
 			if (!string.IsNullOrEmpty(userId))
 			{
-				// Find the user in the cache
-				var userToDelete = DatabaseCache.Users.FirstOrDefault(u => u.Id == userId);
+				// Use the DeleteUserByIdAsync method from DatabaseCache to delete the user
+				var success = await DatabaseCache.DeleteUserByIdAsync(userId);
 
-				if (userToDelete != null)
+				if (success)
 				{
-					// Remove the user from the cache
-					DatabaseCache.Users.Remove(userToDelete);
-
-					// Optionally, you can perform other actions here like sending a request to the server to delete the user permanently
-
 					Console.WriteLine($"User with ID {userId} deleted successfully.");
 					await SuccessDeleteMsgOnClose();
 				}
 				else
 				{
-					Console.WriteLine($"User with ID {userId} not found in the cache.");
+					Console.WriteLine($"Failed to delete user with ID {userId}. User not found or deletion failed.");
 				}
 			}
 			else
@@ -263,48 +261,38 @@ else if (_showingAddModalWindow)
 		}
 	}
 
-
-
 	private async Task DeleteSelected()
 	{
 		try
 		{
 			// Get the IDs of selected users
 			var selectedUserIds = GetSelectedUserIds();
+
 			if (selectedUserIds.Count == 0)
 			{
 				// No users selected, display a message or handle it as needed
 				return;
 			}
 
-			// Iterate through selected user IDs and delete each user
-			foreach (var userId in selectedUserIds)
+			// Use the DeleteSelectedUsersAsync method from DatabaseCache to delete selected users
+			var success = await DatabaseCache.DeleteSelectedUsersAsync(selectedUserIds);
+
+			if (success)
 			{
-				// Find the user in the cache
-				var userToDelete = DatabaseCache.Users.FirstOrDefault(u => u.Id == userId);
+				// Clear the selected user IDs list and hide the delete button
+				SelectedUserIds.Clear();
+				IsSelectAllChecked = false;
 
-				if (userToDelete != null)
-				{
-					// Remove the user from the cache
-					DatabaseCache.Users.Remove(userToDelete);
+				// Notify Blazor to re-render the component and update the UI
+				StateHasChanged();
 
-					Console.WriteLine($"User with ID {userId} deleted successfully.");
-				}
-				else
-				{
-					Console.WriteLine($"Failed to delete user with ID {userId}. User not found in the cache.");
-				}
+				// Display success message or perform any other necessary actions
+				await SuccessDeleteMsgOnClose();
 			}
-
-			// Clear the selected user IDs list and hide the delete button
-			SelectedUserIds.Clear();
-			IsSelectAllChecked = false;
-
-			// Notify Blazor to re-render the component and update the UI
-			StateHasChanged();
-
-			// Display success message or perform any other necessary actions
-			await SuccessDeleteMsgOnClose();
+			else
+			{
+				Console.WriteLine("Failed to delete selected users. Some deletions may have failed.");
+			}
 		}
 		catch (Exception ex)
 		{
@@ -316,22 +304,15 @@ else if (_showingAddModalWindow)
 		}
 	}
 
-
-
-
-	
-	// Method to retrieve selected user IDs
-	private List<string> GetSelectedUserIds()
-	{
-		return SelectedUserIds.ToList(); // Return a copy of the SelectedUserIds list
-	}
-
-	private List<string> SelectedUserIds { get; set; } = new List<string>();
+	// Method to toggle the selection state of a single user
 	private void ToggleSelection(string userId, ChangeEventArgs e)
 	{
 		if (e.Value is bool isChecked && isChecked)
 		{
-			SelectedUserIds.Add(userId); // Add to selected list
+			if (!SelectedUserIds.Contains(userId))
+			{
+				SelectedUserIds.Add(userId); // Add to selected list if not already present
+			}
 		}
 		else
 		{
@@ -341,7 +322,12 @@ else if (_showingAddModalWindow)
 		// Update IsDeleteButtonVisible based on the number of selected users
 		IsDeleteButtonVisible = SelectedUserIds.Count > 0;
 	}
-	private bool IsSelectAllChecked { get; set; }
+	// Method to retrieve selected user IDs
+	private List<string> GetSelectedUserIds()
+	{
+		return SelectedUserIds.ToList(); // Return a copy of the SelectedUserIds list
+	}
+
 
 	// Method to toggle the selection state of all users
 	private void ToggleSelectAll()
