@@ -102,7 +102,7 @@ namespace NewUserManagement.Server.Controllers
 
         // PUT: api/user/{userId}
         [HttpPut("{userId}")]
-        public async Task<IActionResult> UpdateUser(string userId, [FromBody] AppUser userDTO)
+        public async Task<IActionResult> UpdateUser(string userId, [FromBody] EditUserDTO userDTO)
         {
             var user = await _userManager.FindByIdAsync(userId);
             if (user == null)
@@ -112,9 +112,8 @@ namespace NewUserManagement.Server.Controllers
             user.UserName = userDTO.Email;
             user.Forename = userDTO.Forename;
             user.Surname = userDTO.Surname;
-            user.Email = userDTO.emailAddress;
+            user.Email = userDTO.Email;
             user.emailAddress = userDTO.Email;
-            user.IsActive = userDTO.IsActive;
             user.DateOfBirth = userDTO.DateOfBirth;
 
             var result = await _userManager.UpdateAsync(user);

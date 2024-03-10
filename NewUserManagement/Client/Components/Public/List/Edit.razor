@@ -62,8 +62,7 @@
 
 	protected override async Task OnInitializedAsync()
 	{
-		var users = await DatabaseCache.GetAllUsers();
-
+		UserDetails = await DatabaseCache.GetUserDetails(userId) ?? new AppUserDTO();
 	}
 
 	
