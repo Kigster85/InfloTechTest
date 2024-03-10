@@ -27,7 +27,7 @@ else if (_showingAddModalWindow)
 	<Add AddModalClickBtnClose="CloseModal" userId="@_selectedUserId" OnModalClosed="SuccessAddMsgOnClose" OnAddModalClosed="HandleModalClosed" />
 }
 
-<main class="container min-vh-90 py-nd-5 bg-dark">
+<main class="container min-vh-90 py-nd-5 bg-dark mt-5">
     <h2 class="p-5">User List</h2>
 	@if (showSuccessMessage == true)
 	{
@@ -56,8 +56,20 @@ else if (_showingAddModalWindow)
 		Console.WriteLine(message);
 	}
     <div class="container min-vh-90 py-nd-5 table-responsive">
+		<div class="container py-nd-5">
+			<div class="btn-group pb-3" role="group">
+				<button @onclick="FetchAllUsers" class="btn btn-primary">Show All</button>
+				<button @onclick="FetchActiveUsers" class="btn btn-primary">Active Only</button>
+				<button @onclick="FetchInactiveUsers" class="btn btn-primary">Non Active</button>
 
-		<table class="table table-bordered table-hover table-dark">
+			</div>
+			@if (IsDeleteButtonVisible)
+			{
+				<button @onclick="DeleteSelected" class="btn btn-primary float-end ">Delete User</button>
+			}
+			<button @onclick="AddUser" class="btn btn-primary float-end">Add User</button>
+
+		<table class="table table-bordered table-hover table-dark mb-lg-2">
             <thead>
                 <tr>
 					<th><input type="checkbox" @bind="IsSelectAllChecked" /></th>
@@ -80,7 +92,7 @@ else if (_showingAddModalWindow)
 														<td @onclick="@(e => ViewUser(user.Id))">@user.Id</td>
 														<td @onclick="@(e => ViewUser(user.Id))">@user.Forename</td>
 														<td @onclick="@(e => ViewUser(user.Id))">@user.Surname</td>
-								<td @onclick="@(e => ViewUser(user.Id))">@user.Email</td>
+														<td @onclick="@(e => ViewUser(user.Id))">@user.Email</td>
 														<td @onclick="@(e => ViewUser(user.Id))">@((user.IsActive == true) ? "Yes" : "No")</td>
 														<td @onclick="@(e => ViewUser(user.Id))">@user.DateOfBirth.ToShortDateString()</td>
 
@@ -126,19 +138,12 @@ else if (_showingAddModalWindow)
 									</div>
 								</NotAuthorized>
 								</AuthorizeView>
-		<div class="container py-nd-5">
-			<div class="btn-group" role="group">
-				<button @onclick="FetchAllUsers" class="btn btn-primary">Show All</button>
-				<button @onclick="FetchActiveUsers" class="btn btn-primary">Active Only</button>
-				<button @onclick="FetchInactiveUsers" class="btn btn-primary">Non Active</button>
-
-			</div>
-			<button @onclick="AddUser" class="btn btn-primary float-end">Add User</button>
-
 			@if (IsDeleteButtonVisible)
 			{
-				<button @onclick="DeleteSelected" class="btn btn-primary float-end">Delete User</button>
+				<button @onclick="DeleteSelected" class="btn btn-primary float-end ">Delete User</button>
 			}
+			<div class="mb-5 p-3"></div>
+
 		</div>
 
     </div>
@@ -149,21 +154,19 @@ else if (_showingAddModalWindow)
 <FooterBar />
 
 @code {
-		@inject InMemoryDatabaseCache DatabaseCache
-		@inject HttpClient HttpClient
-		@inject ILogger<List> Logger // Inject ILogger service
-		@inject LoggingClientService.ILogService _logService
-		@inject LoggingService _loggingService
-	// 	@inject AuthenticationStateProvider AuthenticationStateProvider
-	// private AuthenticationState AuthenticationState { get; set; }
-		private List<AppUser> users = new List<AppUser>();
-    private bool isLoading = true; // Flag to indicate loading state
+	@inject InMemoryDatabaseCache DatabaseCache
+	@inject HttpClient HttpClient
+	@inject ILogger<List> Logger // Inject ILogger service
+	@inject LoggingClientService.ILogService _logService
+	@inject LoggingService _loggingService
+	private List<AppUserDTO> UserDetails = new List<AppUserDTO>();
+	private bool isLoading = true; // Flag to indicate loading state
     protected override async Task OnInitializedAsync()
     {
-		// AuthenticationState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
-				await DatabaseCache.GetUsersFromDatabaseAndCache();
-				isLoading = false;
-    }
+		await DatabaseCache.GetUsersFromDatabaseAndCache();
+		isLoading = false;
+	}
+    
 	private bool IsDeleteButtonVisible { get; set; } = false;
 			    
 	private async Task FetchAllUsers()
@@ -174,8 +177,6 @@ else if (_showingAddModalWindow)
 			// Get users from the in-memory database cache
 			DatabaseCache.Users = await DatabaseCache.GetAllUsers();
 
-			// Alternatively, if the GetAllUsers method returns a list of users directly, you can assign it like this:
-			// users = await DatabaseCache.GetAllUsers();
 		}
 		catch (Exception ex)
 		{
@@ -185,6 +186,8 @@ else if (_showingAddModalWindow)
 		{
 			isLoading = false; // Set loading flag to false when loading completes or fails
 		}
+		await Task.CompletedTask; // Ensure the method is asynchronous
+
 	}
 
 

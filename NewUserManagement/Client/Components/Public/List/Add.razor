@@ -133,7 +133,7 @@
 		isLoading = true; // Set loading flag to true
 		try
 		{
-			await DatabaseCache.GetUsersFromDatabaseAndCache();
+			await DatabaseCache.GetAllUsers();
 		}
 		catch (Exception)
 		{

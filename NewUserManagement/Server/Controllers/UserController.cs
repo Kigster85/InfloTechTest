@@ -18,11 +18,12 @@ namespace NewUserManagement.Server.Controllers
 
         // GET: api/user
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<AppUser>>> GetUsers()
+        public async Task<ActionResult<IEnumerable<AppUserDTO>>> GetUsers()
         {
             var users = await _userManager.Users
-                .Select(u => new AppUser
+                .Select(u => new AppUserDTO
                 {
+                    Id = u.Id,
                     Email = u.Email,
                     Forename = u.Forename,
                     Surname = u.Surname,

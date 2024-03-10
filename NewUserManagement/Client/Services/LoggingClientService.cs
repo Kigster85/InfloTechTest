@@ -47,6 +47,9 @@ namespace NewUserManagement.Client.Services
             Task<List<LogEntry>> GetLogEntriesAsync();
             Task AddLogEntryAsync(LogEntry logEntry);
             Task LogAsync(LogEntry logEntry);
+            Task LogViewCount(string userId, int viewCount);
+            Task LogEditCount(string userId, int editCount);
+            Task LogUserDeletion(string userId, string action, string details);
         }
 
         public class LogService : ILogService
@@ -59,7 +62,40 @@ namespace NewUserManagement.Client.Services
                 _logger = logger;
                 _httpClient = httpClient;
             }
+            public async Task LogViewCount(string userId, int viewCount)
+            {
+                var logEntry = new LogEntry
+                {
+                    Timestamp = DateTime.UtcNow,
+                    UserId = userId,
+                    Action = "ViewCount",
+                    Details = "Viewed user profile.",
+                    ViewCount = viewCount
+                };
 
+                await LogAction(logEntry);
+            }
+
+            public async Task LogEditCount(string userId, int editCount)
+            {
+                var logEntry = new LogEntry
+                {
+                    Timestamp = DateTime.UtcNow,
+                    UserId = userId,
+                    Action = "EditCount",
+                    Details = "Edited user profile.",
+                    EditCount = editCount
+                };
+
+                await LogAction(logEntry);
+            }
+            private async Task LogAction(LogEntry logEntry)
+            {
+                var json = JsonSerializer.Serialize(logEntry);
+                var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+                var response = await _httpClient.PostAsync("api/LogEntries", content);
+                response.EnsureSuccessStatusCode();
+            }
             public async Task<List<LogEntry>> GetLogEntriesAsync()
             {
                 try
@@ -143,6 +179,32 @@ namespace NewUserManagement.Client.Services
                 {
                     // Log any exceptions that occur during logging
                     _logger.LogError(ex, "Error occurred while adding log entry: {ErrorMessage}", ex.Message);
+                    throw; // Re-throw the exception to propagate it to the caller
+                }
+            }
+            public async Task LogUserDeletion(string userId, string action, string details)
+            {
+                try
+                {
+                    // Create a log entry for the user deletion action
+                    var logEntry = new LogEntry
+                    {
+                        Timestamp = DateTime.UtcNow,
+                        UserId = userId,
+                        Action = action,
+                        Details = details
+                    };
+
+                    // Call the method to add the log entry
+                    await AddLogEntryAsync(logEntry);
+
+                    // Optionally, you can log a message indicating that the user deletion was successfully logged
+                    _logger.LogInformation("User deletion logged successfully.");
+                }
+                catch (Exception ex)
+                {
+                    // Log or handle any exceptions that occur during user deletion logging
+                    _logger.LogError(ex, "Error occurred while logging user deletion: {ErrorMessage}", ex.Message);
                     throw; // Re-throw the exception to propagate it to the caller
                 }
             }

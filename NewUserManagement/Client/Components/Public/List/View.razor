@@ -7,6 +7,7 @@
 @using NewUserManagement.Client.Components.Public.List
 @using Microsoft.JSInterop
 @using Microsoft.AspNetCore.Identity;
+@using NewUserManagement.Shared.Utilities
 
 
 
@@ -44,12 +45,12 @@
 	@inject ILogger<View> Logger // Inject ILogger service
 	@inject LoggingClientService.ILogService _logService
 
-	[Parameter] public string? userId { get; set; }
+	[Parameter] public string userId { get; set; }
 
-	private List<AppUser> users = new List<AppUser>();
-	private string? _selectedUserId { get; set; }
+	private List<AppUserDTO> Users = new List<AppUserDTO>();
+	private string _selectedUserId { get; set; }
 
-	private AppUserDTO UserDetails { get; set; } = new AppUserDTO(); // Initialize with a default user object
+	private AppUserDTO UserDetails { get; set; } // Initialize with a default user object
 	protected async override Task OnInitializedAsync()
 	{
 		try
@@ -89,15 +90,17 @@
 
 
 
+
+
 	private async Task LogUserView(string? userId)
 	{
-		if (userId != null)
+		if (!string.IsNullOrEmpty(userId))
 		{
-			// Log the view event
-			Logger.LogInformation($"User viewed: UserID = {userId}", userId);
-
 			try
 			{
+				// Log the user view event with user ID
+				Logger.LogInformation($"User viewed: UserID = {userId}");
+
 				// Increment the view count for the user
 				await DatabaseCache.IncrementUserViewCount(userId);
 
@@ -125,75 +128,90 @@
 			{
 				// Handle or log any exceptions that occur during view count increment or logging
 				Logger.LogError(ex, "Error occurred while logging user view event: {ErrorMessage}", ex.Message);
+				// Optionally, rethrow the exception if you need to propagate it to the caller
+				throw;
 			}
 		}
 		else
 		{
-			// Handle the case where userId is null
-			Logger.LogWarning("Attempted to log user view with null userId.");
+			// Handle the case where userId is null or empty
+			Logger.LogWarning("Attempted to log user view with null or empty userId.");
 		}
 	}
+
 
 
 
 	private async Task NextUser()
-	{
-		int index = DatabaseCache.Users.FindIndex(u => u.Id == UserDetails.Id);
-		if (index != -1)
-		{
-			index++; // Move to the next user
+{
+    int index = DatabaseCache.Users.FindIndex(u => u.Id == UserDetails.Id);
+    if (index != -1)
+    {
+        index++; // Move to the next user
 
-			if (index >= DatabaseCache.Users.Count)
-			{
-				index = 0; // Wrap around to the first user if reached the end
-			}
-			UserDetails = DatabaseCache.Users[index];
-			// Check if UserDetails and its Id property are not null before proceeding
-			if (UserDetails != null && UserDetails.Id != null)
-			{
-				// Log the view action for the current user
-				await LogUserView(UserDetails.Id.ToString());
+        if (index >= DatabaseCache.Users.Count)
+        {
+            index = 0; // Wrap around to the first user if reached the end
+        }
 
-				// Update the URL without navigation
-				await UpdateUrlWithoutNavigation("view", UserDetails.Id.ToString());
-			}
-			else
-			{
-				// Handle the case where UserDetails or UserDetails.Id is null
-				Console.WriteLine("UserDetails or UserDetails.Id is null.");
-			}
-		}
-	}
+        // Get the next user from the cached data
+        AppUserDTO userDetailsDTO = DatabaseCache.Users[index];
 
-	private async Task PreviousUser()
-	{
-		int index = DatabaseCache.Users.FindIndex(u => u.Id == UserDetails.Id);
-		if (index != -1)
-		{
-			index--; // Move to the previous user
+        // Check if userDetailsDTO is not null before proceeding
+        if (userDetailsDTO != null)
+        {
+            UserDetails = userDetailsDTO;
 
-			if (index < 0)
-			{
-				index = DatabaseCache.Users.Count - 1; // Wrap around to the last user if reached the beginning
-			}
-			UserDetails = DatabaseCache.Users[index];
+            // Log the view action for the current user
+            await LogUserView(UserDetails.Id.ToString());
 
-			// Check if UserDetails and its Id property are not null before proceeding
-			if (UserDetails != null && UserDetails.Id != null)
-			{
-				// Log the view action for the current user
-				await LogUserView(UserDetails.Id.ToString());
+            // Update the URL without navigation
+            await UpdateUrlWithoutNavigation("view", UserDetails.Id.ToString());
+        }
+        else
+        {
+            // Handle the case where userDetailsDTO is null
+            Console.WriteLine("UserDetailsDTO is null.");
+        }
+    }
+}
 
-				// Update the URL without navigation
-				await UpdateUrlWithoutNavigation("view", UserDetails.Id.ToString());
-			}
-			else
-			{
-				// Handle the case where UserDetails or UserDetails.Id is null
-				Console.WriteLine("UserDetails or UserDetails.Id is null.");
-			}
-		}
-	}
+private async Task PreviousUser()
+{
+    int index = DatabaseCache.Users.FindIndex(u => u.Id == UserDetails.Id);
+    if (index != -1)
+    {
+        index--; // Move to the previous user
+
+        if (index < 0)
+        {
+            index = DatabaseCache.Users.Count - 1; // Wrap around to the last user if reached the beginning
+        }
+
+        // Get the previous user from the cached data
+        AppUserDTO userDetailsDTO = DatabaseCache.Users[index];
+
+        // Check if userDetailsDTO is not null before proceeding
+        if (userDetailsDTO != null)
+        {
+            UserDetails = userDetailsDTO;
+
+            // Log the view action for the current user
+            await LogUserView(UserDetails.Id.ToString());
+
+            // Update the URL without navigation
+            await UpdateUrlWithoutNavigation("view", UserDetails.Id.ToString());
+        }
+        else
+        {
+            // Handle the case where userDetailsDTO is null
+            Console.WriteLine("UserDetailsDTO is null.");
+        }
+    }
+}
+
+
+
 
 	[Parameter] public EventCallback ViewModalClickBtnClose { get; set; }
 	[Parameter] public EventCallback OpenEditUser { get; set; }

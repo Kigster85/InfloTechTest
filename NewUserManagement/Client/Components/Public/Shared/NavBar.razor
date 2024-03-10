@@ -9,13 +9,8 @@
 @using System.Security.Claims
 
 
+<nav class="container navbar navbar-expand-lg navbar-dark justify-content-between fixed-top" style="z-index: 2;">
 
-
-
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark d-flex">
-    <a href="/" class="navbar-brand md-f-size-1-5 text-light ps-2 m-0 mx-lg-5 fn-bold">
-		User Management
-    </a>
 
 
 	<button class="navbar-toggler navbar-dark mx-1" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle Navigation">
@@ -25,30 +20,30 @@
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
 		<ul class="nav">
 						<li class="nav-item">
-				<a href="@HomePageUri" role="button" class="btn nav-link @(IsPageActive(HomePageUri) ? "active" : string.Empty)">
+				<a href="@HomePageUri" role="button" class="nav-link @(IsPageActive(HomePageUri) ? "active" : string.Empty)">
                     Home
                 </a>
             </li>
 						<li class="nav-item">
-				<a href="@ListUri" role="button" class="btn nav-link @(IsPageActive(ListUri) ? "active" : string.Empty)">
+				<a href="@ListUri" role="button" class="nav-link @(IsPageActive(ListUri) ? "active" : string.Empty)">
                     List
                 </a>
             </li>
 						<li class="nav-item">
-				<a href="@LogsUri" role="button" class="btn nav-link @(IsPageActive(LogsUri) ? "active" : string.Empty)">
+				<a href="@LogsUri" role="button" class="nav-link @(IsPageActive(LogsUri) ? "active" : string.Empty)">
 								Logs
 						</a>
 			</li>
 		</ul>
-		<div class="d-flex justify-content-end w-auto">
-		<ul class="nav">
+		<div class="nav ms-auto m-3">
+			<ul class="nav ">
 			<AuthorizeView Roles="Admin">
-				<Authorized Context="Auth">
+				<Authorized >
 					<li class="p-2">
-							<span class="p-2">Welcome @(IsAuthenticated ? $"{_user?.Forename} {_user?.Surname}" : "User")</span>
-				</li>
+							<span class="p-2">Welcome, @context.User.FindFirstValue("Forename")!</span>
+						</li>
 				<li class="nav-item">
-					<button class="btn btn-link nav-link" @onclick="SignOut">Log out</button>
+							<a class="nav-link" role="button" @onclick="SignOut">Log out</a>
 				</li>
 				</Authorized>
 				<NotAuthorized>
@@ -64,46 +59,38 @@
 	</div>
 
 </nav>
-
+<div class="d-flex p-2 justify-content-center fixed-top bg-dark pb-4" style="z-index: 1;  border-bottom: aliceblue 1px solid;">
+	<h3>User Management</h3>
+</div>
 @code
 {
+	[Inject] NavigationManager Navigation { get; set; }
+	[Inject] AppAuthStateProvider AuthStateProvider { get; set; }
+	[Inject] HttpClient HttpClient { get; set; }
+	[Inject] AppAuthStateProvider AuthenticationStateProvider { get; set; }
+	[Inject] ILocalStorageService LocalStorageService { get; set; }
+	[Parameter] public AppUser userDetails { get; set;}
+
 	@inject InMemoryDatabaseCache DatabaseCache
-	@inject HttpClient HttpClient 
-	@inject AppAuthStateProvider AuthenticationStateProvider
-	@inject ILocalStorageService LocalStorageService
-	private bool IsAuthenticated { get; set; }
-	private AppUserDTO _user { get; set; }
+
+	private AppUser _user { get; set; }
 	private string Username { get; set; }
 	private string token { get; set; }
-
-	protected override async Task OnInitializedAsync()
+	
+	private async Task SignOut()
 	{
-		var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+		var authState = await AuthStateProvider.GetAuthenticationStateAsync();
 		var user = authState.User;
 
 		if (user.Identity.IsAuthenticated)
 		{
-			IsAuthenticated = true;
-
-			var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
-			_user = await GetUserDetailsFromCacheOrDatabase(userId);
-			Console.WriteLine(_user.Forename);
-
-		}
-		else
-		{
-			IsAuthenticated = false;
+			// Perform sign out actions here, such as clearing local storage
+			Navigation.NavigateTo("/");
 		}
 	}
-	private async Task<AppUserDTO> GetUserDetailsFromCacheOrDatabase(string userId)
-	{
-		// Implement logic to retrieve user details from cache or database based on user ID
-		// For example, if you're using an in-memory database cache:
-		var userDetails = await DatabaseCache.GetUserDetailsAsync(userId);
 
-		return userDetails;
-	}
-	private async Task SignInWithBrowserLocalStorageBearerToken()
+
+	private async Task<bool> SignInWithBrowserLocalStorageBearerToken()
 	{
 		if (await LocalStorageService.ContainKeyAsync("bearerToken"))
 		{
@@ -115,14 +102,17 @@
 
 			StateHasChanged();
 
+			return true; // Sign-in successful
+		}
+		else
+		{
+			return false; // Sign-in unsuccessful
 		}
 	}
 
-
-	[Inject] public NavigationManager NavigationManager { get; set; } = default!;
-
+	
 	private const string HomePageUri = "/";
-  private const string ListUri = "/list";
+	private const string ListUri = "/list";
 	private const string LogsUri = "/logs";
 	private const string SignInUri = "/login";
 
@@ -130,7 +120,7 @@
 	private bool IsPageActive(string pageToCheckUri)
 	{
 		//Skip(3) to bypass the Https://domainname/
-		string[] currentUriSplitBetweenSlashes = NavigationManager.Uri.Split('/').Skip(3).ToArray();
+		string[] currentUriSplitBetweenSlashes = Navigation.Uri.Split('/').Skip(3).ToArray();
 
 		if (pageToCheckUri == HomePageUri)
 		{
@@ -158,53 +148,5 @@
 		// If the code reaches here pageToCheckUri is not the active page, so return False
 		return false;
 	}
-	private async Task SignOut()
-	{
-		if (await LocalStorageService.ContainKeyAsync("bearerToken"))
-		{
-			await LocalStorageService.RemoveItemAsync("bearerToken");
-
-			((AppAuthStateProvider)AuthenticationStateProvider).SignOut();
-
-			StateHasChanged();
-		}
-	}
-
-	public bool IsTokenValid(string token)
-	{
-		JwtSecurityToken jwtToken = null!; // Initialize jwtToken variable
-
-		try
-		{
-			var jwtHandler = new JwtSecurityTokenHandler();
-
-			// Check if the token can be read and parse it
-			if (jwtHandler.CanReadToken(token) && jwtHandler.ReadToken(token) is JwtSecurityToken parsedToken)
-			{
-				jwtToken = parsedToken; // Assign value to jwtToken
-			}
-
-			// Check if jwtToken is null or the token is expired
-			if (jwtToken == null || jwtToken.ValidTo < DateTime.UtcNow)
-			{
-				// Token format is invalid or token has expired
-				Console.WriteLine("Token is invalid or expired.");
-				return false;
-			}
-
-			// Token is valid
-			Console.WriteLine("Token is valid.");
-			return true;
-		}
-		catch (Exception ex)
-		{
-			// Other exceptions occurred while validating token
-			Console.WriteLine($"An error occurred while validating token: {ex.Message}");
-			return false;
-		}
-	}
-
-
-
 
 }

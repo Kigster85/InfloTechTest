@@ -73,7 +73,7 @@ builder.Services.AddScoped(sp =>
     httpClient.BaseAddress = new Uri("https://localhost:5167"); // Replace with your API base URL
     return httpClient;
 });
-
+builder.Services.AddMemoryCache();
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 builder.Services.AddRouting(options => options.LowercaseUrls = true);
