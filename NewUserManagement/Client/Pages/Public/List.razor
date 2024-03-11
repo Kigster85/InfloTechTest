@@ -133,9 +133,11 @@ else if (_showingAddModalWindow)
 				<NotAuthorized>
 
 
-					<div class="alert alert-warning d-flex justify-content-center" role="alert">
-										You are not logged in. Please log in to access this feature.
+					<div class="alert alert-warning d-flex justify-content-center mt-5" role="alert">
+						<span>You are not logged in. Please <a href="/login"> Sign in </a> to access this feature.</span>
+
 									</div>
+
 								</NotAuthorized>
 								</AuthorizeView>
 			@if (IsDeleteButtonVisible)
