@@ -72,7 +72,7 @@ else if (_showingAddModalWindow)
 		<table class="table table-bordered table-hover table-dark mb-lg-2">
             <thead>
                 <tr>
-					<th><input type="checkbox" @bind="IsSelectAllChecked" /></th>
+						<th><input type="checkbox" checked="@IsSelectAllChecked" @onchange="ToggleSelectAll" /></th>
                     <th>Id</th>
                     <th>Forename</th>
                     <th>Surname</th>
@@ -88,7 +88,7 @@ else if (_showingAddModalWindow)
 										@foreach (var user in DatabaseCache.Users)
 										{
 												<tr class="pointer" >
-														<td><input type="checkbox" checked="@IsSelectAllChecked" @onchange="(e) => { if (user?.Id != null) ToggleSelection(user.Id, e); }" /></td>
+									<td><input type="checkbox" checked="@IsSelectAllChecked" @onchange="(e) => { if (user?.Id != null) ToggleSelection(user.Id, e); }" /></td>
 														<td @onclick="@(e => ViewUser(user.Id))">@user.Id</td>
 														<td @onclick="@(e => ViewUser(user.Id))">@user.Forename</td>
 														<td @onclick="@(e => ViewUser(user.Id))">@user.Surname</td>
@@ -128,7 +128,7 @@ else if (_showingAddModalWindow)
 		{
 			<Loading />
 		}
-		<AuthorizeView Roles="Admin, Member, Guest">
+		<AuthorizeView Roles="Admin">
 
 				<NotAuthorized>
 
@@ -163,15 +163,15 @@ else if (_showingAddModalWindow)
 	private bool isLoading = true; // Flag to indicate loading state
 	private List<string> SelectedUserIds { get; set; } = new List<string>();
 	private bool IsSelectAllChecked { get; set; }
+	private bool IsDeleteButtonVisible { get; set; } = false;
+
 
 	protected override async Task OnInitializedAsync()
 	{
 	await DatabaseCache.GetUsersFromDatabaseAndCache();
 	isLoading = false;
 	}
-    
-	private bool IsDeleteButtonVisible { get; set; } = false;
-			    
+
 	private async Task FetchAllUsers()
 	{
 		isLoading = true; // Set loading flag to true
@@ -281,11 +281,12 @@ else if (_showingAddModalWindow)
 			{
 				// Clear the selected user IDs list and hide the delete button
 				SelectedUserIds.Clear();
-				IsSelectAllChecked = false;
+				IsSelectAllChecked = false; // Reset the IsSelectAllChecked property
+
 
 				// Notify Blazor to re-render the component and update the UI
 				StateHasChanged();
-
+				await FetchAllUsers();
 				// Display success message or perform any other necessary actions
 				await SuccessDeleteMsgOnClose();
 			}
@@ -309,10 +310,7 @@ else if (_showingAddModalWindow)
 	{
 		if (e.Value is bool isChecked && isChecked)
 		{
-			if (!SelectedUserIds.Contains(userId))
-			{
-				SelectedUserIds.Add(userId); // Add to selected list if not already present
-			}
+			SelectedUserIds.Add(userId); // Add to selected list
 		}
 		else
 		{
@@ -322,30 +320,51 @@ else if (_showingAddModalWindow)
 		// Update IsDeleteButtonVisible based on the number of selected users
 		IsDeleteButtonVisible = SelectedUserIds.Count > 0;
 	}
+
 	// Method to retrieve selected user IDs
 	private List<string> GetSelectedUserIds()
 	{
 		return SelectedUserIds.ToList(); // Return a copy of the SelectedUserIds list
 	}
 
-
 	// Method to toggle the selection state of all users
-	private void ToggleSelectAll()
+	private void ToggleSelectAll(ChangeEventArgs e)
 	{
-		// Clear the existing selected user IDs list if the select all checkbox is unchecked
-		if (!IsSelectAllChecked)
-		{
-			SelectedUserIds.Clear();
-			return;
-		}
+		// Get the checked state of the checkbox
+		bool isChecked = (bool)e.Value;
+
+		// Update the IsSelectAllChecked property
+		IsSelectAllChecked = isChecked;
+
+		// Clear the existing selected user IDs list
+		SelectedUserIds.Clear();
 
 		// If select all checkbox is checked, add all user IDs to the selected user IDs list
-		SelectedUserIds.Clear();
-		foreach (var user in DatabaseCache.Users)
+		if (isChecked)
 		{
-			SelectedUserIds.Add(user.Id!);
+			foreach (var user in DatabaseCache.Users)
+			{
+				SelectedUserIds.Add(user.Id!);
+			}
 		}
+		foreach (var userId in SelectedUserIds)
+		{
+			Console.WriteLine($"Selected User ID: {userId}");
+		}
+		// Update IsDeleteButtonVisible based on the number of selected users
+		IsDeleteButtonVisible = SelectedUserIds.Count > 0;
 	}
+
+
+
+
+
+
+
+
+
+
+	
 
 	private string _selectedUserId { get; set; }
 	public bool _showingViewModalWindow = false;
@@ -455,7 +474,6 @@ else if (_showingAddModalWindow)
 		// Reset the success message flag
 		IsDeleteButtonVisible = false;
 		SelectedUserIds.Clear();
-
 	}
 	private async Task HandleModalClosed()
 	{

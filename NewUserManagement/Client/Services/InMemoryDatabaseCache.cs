@@ -209,11 +209,14 @@ namespace NewUserManagement.Client.Services
                 return false; // Indicate failure
             }
         }
+        private bool IsSelectAllChecked { get; set; } = false;
 
 
         public void ClearSelectedUsers()
         {
             SelectedUserIds.Clear();
+            IsSelectAllChecked = false;
+
         }
 
 

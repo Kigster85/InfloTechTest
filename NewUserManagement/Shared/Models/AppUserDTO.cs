@@ -22,5 +22,7 @@ namespace NewUserManagement.Shared.Models
 
         [DataType(DataType.Date)]
         public DateTime DateOfBirth { get; set; }
+
+        public bool IsChecked { get; set; } = false;
     }
 }
