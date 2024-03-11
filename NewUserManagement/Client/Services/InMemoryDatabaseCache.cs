@@ -38,7 +38,6 @@ namespace NewUserManagement.Client.Services
 
         private bool _gettingUsersFromDatabaseAndCaching = false;
         private static readonly object lockObject = new object();
-
         private void NotifyUsersDataChanged() => OnUsersDataChanged?.Invoke();
 
         // Dictionary to store view counts for users
@@ -215,7 +214,10 @@ namespace NewUserManagement.Client.Services
         public void ClearSelectedUsers()
         {
             SelectedUserIds.Clear();
-            IsSelectAllChecked = false;
+            foreach (var user in Users)
+            {
+                IsSelectAllChecked = false;
+            }
 
         }
 
@@ -273,7 +275,41 @@ namespace NewUserManagement.Client.Services
                 return false;
             }
         }
+        internal async Task<List<AppUserDTO>> GetActiveUsers(int page, int pageSize)
+        {
+            try
+            {
+                // Assuming the InMemoryDatabaseCache instance is accessible here
+                var activeUsers = await Task.Run(() => Users.Where(u => u.IsActive)
+                                                                                  .Skip((page - 1) * pageSize)
+                                                                                  .Take(pageSize)
+                                                                                  .ToList());
+                return activeUsers;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to fetch active users from the cache: {ex.Message}");
+                return new List<AppUserDTO>();
+            }
+        }
 
+        internal async Task<List<AppUserDTO>> GetInactiveUsers(int page, int pageSize)
+        {
+            try
+            {
+                // Assuming the InMemoryDatabaseCache instance is accessible here
+                var inactiveUsers = await Task.Run(() => Users.Where(u => !u.IsActive)
+                                                                                    .Skip((page - 1) * pageSize)
+                                                                                    .Take(pageSize)
+                                                                                    .ToList());
+                return inactiveUsers;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to fetch inactive users from the cache: {ex.Message}");
+                return new List<AppUserDTO>();
+            }
+        }
 
         // Method to change sorting criteria
         internal async Task ChangeSorting(string sortBy, bool ascendingOrder)
