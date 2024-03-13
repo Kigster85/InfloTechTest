@@ -47,19 +47,59 @@ namespace NewUserManagement.Client.Services
             Task<List<LogEntry>> GetLogEntriesAsync();
             Task AddLogEntryAsync(LogEntry logEntry);
             Task LogAsync(LogEntry logEntry);
+            Task LogViewCount(string userId, int viewCount);
+            Task LogEditCount(string userId, int editCount);
+            Task LogUserDeletion(string userId, string action, string details);
+            LogEntry GetPreviousLogEntry();
+            LogEntry GetNextLogEntry();
+
         }
 
         public class LogService : ILogService
         {
             private readonly ILogger<LogService> _logger;
             private readonly HttpClient _httpClient;
-
+            private readonly List<LogEntry> _logEntries = new List<LogEntry>();
+            private int _currentIndex = -1;
             public LogService(ILogger<LogService> logger, HttpClient httpClient)
             {
                 _logger = logger;
                 _httpClient = httpClient;
             }
+            public async Task LogViewCount(string userId, int viewCount)
+            {
+                var logEntry = new LogEntry
+                {
+                    Timestamp = DateTime.UtcNow,
+                    UserId = userId,
+                    Action = "ViewCount",
+                    Details = "Viewed user profile.",
+                    ViewCount = viewCount
+                };
 
+                await LogAction(logEntry);
+            }
+
+            public async Task LogEditCount(string userId, int editCount)
+            {
+                var logEntry = new LogEntry
+                {
+                    Timestamp = DateTime.UtcNow,
+                    UserId = userId,
+                    Action = "EditCount",
+                    Details = "Edited user profile.",
+                    EditCount = editCount
+                };
+
+                await LogAction(logEntry);
+            }
+            private async Task LogAction(LogEntry logEntry)
+            {
+                var json = JsonSerializer.Serialize(logEntry);
+                var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+                var response = await _httpClient.PostAsync("api/LogEntries", content);
+                response.EnsureSuccessStatusCode();
+            }
             public async Task<List<LogEntry>> GetLogEntriesAsync()
             {
                 try
@@ -146,8 +186,72 @@ namespace NewUserManagement.Client.Services
                     throw; // Re-throw the exception to propagate it to the caller
                 }
             }
+            public async Task LogUserDeletion(string userId, string action, string details)
+            {
+                try
+                {
+                    // Create a log entry for the user deletion action
+                    var logEntry = new LogEntry
+                    {
+                        Timestamp = DateTime.UtcNow,
+                        UserId = userId,
+                        Action = action,
+                        Details = details
+                    };
+
+                    // Call the method to add the log entry
+                    await AddLogEntryAsync(logEntry);
+
+                    // Optionally, you can log a message indicating that the user deletion was successfully logged
+                    _logger.LogInformation("User deletion logged successfully.");
+                }
+                catch (Exception ex)
+                {
+                    // Log or handle any exceptions that occur during user deletion logging
+                    _logger.LogError(ex, "Error occurred while logging user deletion: {ErrorMessage}", ex.Message);
+                    throw; // Re-throw the exception to propagate it to the caller
+                }
+            }
 
 
+
+            public LogEntry GetCurrentLogEntry()
+            {
+                if (_currentIndex >= 0 && _currentIndex < _logEntries.Count)
+                {
+                    return _logEntries[_currentIndex];
+                }
+                else
+                {
+                    return null; // No current log entry
+                }
+            }
+
+            public LogEntry GetPreviousLogEntry()
+            {
+                if (_currentIndex > 0 && _currentIndex <= _logEntries.Count)
+                {
+                    _currentIndex--;
+                    return _logEntries[_currentIndex];
+                }
+                else
+                {
+                    return null; // No previous log entry
+                }
+            }
+
+            public LogEntry GetNextLogEntry()
+            {
+                if (_currentIndex >= 0 && _currentIndex < _logEntries.Count - 1)
+                {
+                    _currentIndex++;
+                    return _logEntries[_currentIndex];
+                }
+                else
+                {
+                    return null; // No next log entry
+                }
+            }
 
         }
     }

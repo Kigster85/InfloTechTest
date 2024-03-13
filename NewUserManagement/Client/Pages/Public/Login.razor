@@ -12,9 +12,13 @@
 <NavBar />
 
 <main class="container min-vh-90 py-nd-5 d-flex justify-content-center">
-	<div class="p-5 justify-content-center">
+	<div class="p-5 mt-5 justify-content-center">
 		<h3>Login</h3>
-
+		<span class="text-light">Please use the following details to log in to this example User Management System.
+			<br/>
+			<strong>Username:</strong> admin@example.com
+			<strong>Password:</strong> AdminPassword123!
+		</span>
 		@if (_signInSuccessful == true)
 		{
 			<p>You are already logged in. <button @onclick="SignOut">Logout</button></p>
@@ -48,6 +52,7 @@
 				</EditForm>
 		}
 	</div>
+
 </main>
 
 <FooterBar />
@@ -85,7 +90,7 @@
 			_signInSuccessful = true;
 
 			// Navigate to the desired page after successful login
-			NavigationManager!.NavigateTo("/");
+			NavigationManager!.NavigateTo("/list");
 		}
 		else
 		{

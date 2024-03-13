@@ -246,3 +246,7 @@ ModelManifest.xml
 
 # Inflo Custom Ignores
 **/*.js.map
+/NewUserManagement/mysql-8.3.0-winx64.msi
+/NewUserManagement/mysql-8.3.0-winx64.msi
+/NewUserManagement/mysql-8.3.0-winx64.msi
+/NewUserManagement/mysql-8.3.0-winx64.msi

@@ -62,38 +62,39 @@
 
 	protected override async Task OnInitializedAsync()
 	{
-
 		UserDetails = await DatabaseCache.GetUserDetails(userId) ?? new AppUserDTO();
 	}
 
-	public async Task LogUserEdit(string userId, string action, string details)
-	{
-		try
-		{
-			// Increment the edit count for the user
-			int editCount = DatabaseCache.GetUserEditCount(userId);
-			var logEntry = new LogEntry
-				{
-					Timestamp = DateTime.UtcNow,
-					UserId = userId,
-					Action = "Edited",
-					Details = $"User {userId} was Edited",
-					ViewCount = 0,
-					EditCount = editCount // Assuming edit count is not applicable for view events
-				};
-			// Call the method to add the log entry
-			await _logService.AddLogEntryAsync(logEntry);
+	
 
-			// Optionally, you can log a message indicating that the user edit was successfully logged
-			Logger.LogInformation("User edit logged successfully.");
-		}
-		catch (Exception ex)
-		{
-			// Log or handle any exceptions that occur during user edit logging
-			Logger.LogError(ex, "Error occurred while logging user edit: {ErrorMessage}", ex.Message);
-			throw; // Re-throw the exception to propagate it to the caller
-		}
-	}
+	 public async Task LogUserEdit(string userId, string action, string details)
+	 {
+	 	try
+	 	{
+	 		// Increment the edit count for the user
+	 		int editCount = DatabaseCache.GetUserEditCount(userId);
+	 		var logEntry = new LogEntry
+	 			{
+	 				Timestamp = DateTime.UtcNow,
+	 				UserId = userId,
+	 				Action = "Edited",
+	 				Details = $"User {userId} was Edited",
+	 				ViewCount = 0,
+	 				EditCount = editCount // Assuming edit count is not applicable for view events
+	 			};
+	 		// Call the method to add the log entry
+	 		await _logService.AddLogEntryAsync(logEntry);
+
+	 		// Optionally, you can log a message indicating that the user edit was successfully logged
+	 		Logger.LogInformation("User edit logged successfully.");
+	 	}
+	 	catch (Exception ex)
+	 	{
+	 		// Log or handle any exceptions that occur during user edit logging
+	 		Logger.LogError(ex, "Error occurred while logging user edit: {ErrorMessage}", ex.Message);
+	 		throw; // Re-throw the exception to propagate it to the caller
+	 	}
+	 }
 	
 	protected override void OnInitialized() => ShowEditModal();
 	private bool IsAddUser { get; set; }
@@ -144,7 +145,7 @@
 				// Show success message
 				// Update the cache with the latest data from the server
 				Console.WriteLine("Refreshing cache...");
-				await DatabaseCache.UpdateUserOnServerAndRefreshCache(HttpClient, UserDetails);
+				await DatabaseCache.RefreshCache(HttpClient);
 				await DatabaseCache.IncrementUserEditCount(userId);
 
 				// Close the modal after a delay

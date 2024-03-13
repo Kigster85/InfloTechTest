@@ -38,7 +38,6 @@ namespace NewUserManagement.Client.Services
 
         private bool _gettingUsersFromDatabaseAndCaching = false;
         private static readonly object lockObject = new object();
-
         private void NotifyUsersDataChanged() => OnUsersDataChanged?.Invoke();
 
         // Dictionary to store view counts for users
@@ -142,28 +141,46 @@ namespace NewUserManagement.Client.Services
             }
         }
 
-        public void ToggleUserSelection(string userId)
-        {
-            if (SelectedUserIds.Contains(userId))
-            {
-                SelectedUserIds.Remove(userId); // Deselect user if already selected
-            }
-            else
-            {
-                SelectedUserIds.Add(userId); // Select user if not already selected
-            }
-        }
 
-        public void ClearSelectedUsers()
-        {
-            SelectedUserIds.Clear();
-        }
-
-        public async Task DeleteSelectedUsers()
+        public async Task<bool> DeleteUserByIdAsync(string userId)
         {
             try
             {
-                foreach (var userId in SelectedUserIds)
+                if (string.IsNullOrEmpty(userId))
+                {
+                    Console.WriteLine("User ID is null or empty.");
+                    return false;
+                }
+
+                var response = await _httpClient.DeleteAsync($"api/user/{userId}");
+
+                if (response.IsSuccessStatusCode)
+                {
+                    // Remove the deleted user from the local list
+                    Users.RemoveAll(u => u.Id == userId);
+                    Console.WriteLine($"User with ID {userId} deleted successfully.");
+                    return true;
+                }
+                else
+                {
+                    // Handle the case where deletion fails
+                    Console.WriteLine($"Failed to delete user with ID {userId}. Reason: {response.ReasonPhrase}");
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle the error, such as displaying an error message
+                Console.WriteLine($"An error occurred while deleting user with ID {userId}: {ex.Message}");
+                return false;
+            }
+        }
+
+        public async Task<bool> DeleteSelectedUsersAsync(List<string> selectedUserIds)
+        {
+            try
+            {
+                foreach (var userId in selectedUserIds)
                 {
                     var response = await _httpClient.DeleteAsync($"api/user/{userId}");
 
@@ -181,12 +198,27 @@ namespace NewUserManagement.Client.Services
 
                 // Clear the list of selected user IDs
                 ClearSelectedUsers();
+
+                return true; // Indicate successful deletion
             }
             catch (Exception ex)
             {
                 // Handle the error, such as displaying an error message
                 Console.WriteLine($"An error occurred while deleting selected users: {ex.Message}");
+                return false; // Indicate failure
             }
+        }
+        private bool IsSelectAllChecked { get; set; } = false;
+
+
+        public void ClearSelectedUsers()
+        {
+            SelectedUserIds.Clear();
+            foreach (var user in Users)
+            {
+                IsSelectAllChecked = false;
+            }
+
         }
 
 
@@ -243,7 +275,41 @@ namespace NewUserManagement.Client.Services
                 return false;
             }
         }
+        internal async Task<List<AppUserDTO>> GetActiveUsers(int page, int pageSize)
+        {
+            try
+            {
+                // Assuming the InMemoryDatabaseCache instance is accessible here
+                var activeUsers = await Task.Run(() => Users.Where(u => u.IsActive)
+                                                                                  .Skip((page - 1) * pageSize)
+                                                                                  .Take(pageSize)
+                                                                                  .ToList());
+                return activeUsers;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to fetch active users from the cache: {ex.Message}");
+                return new List<AppUserDTO>();
+            }
+        }
 
+        internal async Task<List<AppUserDTO>> GetInactiveUsers(int page, int pageSize)
+        {
+            try
+            {
+                // Assuming the InMemoryDatabaseCache instance is accessible here
+                var inactiveUsers = await Task.Run(() => Users.Where(u => !u.IsActive)
+                                                                                    .Skip((page - 1) * pageSize)
+                                                                                    .Take(pageSize)
+                                                                                    .ToList());
+                return inactiveUsers;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Failed to fetch inactive users from the cache: {ex.Message}");
+                return new List<AppUserDTO>();
+            }
+        }
 
         // Method to change sorting criteria
         internal async Task ChangeSorting(string sortBy, bool ascendingOrder)
@@ -375,7 +441,3 @@ namespace NewUserManagement.Client.Services
     }
 
 }
-
-
-
-

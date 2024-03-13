@@ -24,6 +24,7 @@ builder.Services.AddScoped(sp =>
 builder.Services.AddBlazoredLocalStorage();
 // Register InMemoryDatabaseCache
 builder.Services.AddScoped<InMemoryDatabaseCache>();
+builder.Services.AddMemoryCache();
 
 // Register services for logging
 builder.Services.AddScoped<LoggingService>();

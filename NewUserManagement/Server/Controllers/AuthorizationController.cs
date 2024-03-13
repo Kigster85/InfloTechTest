@@ -75,7 +75,8 @@ public class AuthorizationController : ControllerBase
         {
             new Claim(JwtRegisteredClaimNames.Sub, identityUser.Email),
             new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            new Claim(ClaimTypes.NameIdentifier, identityUser.Id)
+            new Claim(ClaimTypes.NameIdentifier, identityUser.Id),
+            new Claim("Forename", identityUser.Forename)  
         };
 
         IList<string> roleNames = await _userManager.GetRolesAsync(identityUser);

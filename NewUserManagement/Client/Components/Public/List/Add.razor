@@ -133,7 +133,7 @@
 		isLoading = true; // Set loading flag to true
 		try
 		{
-			await DatabaseCache.GetUsersFromDatabaseAndCache();
+			await DatabaseCache.GetAllUsers();
 		}
 		catch (Exception)
 		{
@@ -164,10 +164,8 @@
 			var response = await HttpClient.PostAsJsonAsync("/api/user", user);
 			if (response.IsSuccessStatusCode)
 			{
-				await ShowSuccessMsg();
 				await DatabaseCache.RefreshCache(HttpClient);
 				Console.WriteLine("User added successfully!");
-				await AddModalClickBtnClose.InvokeAsync();
 				await OnAddModalClosed.InvokeAsync();
 				// Retrieve the UserId from the refreshed cache
 				// Fetch the last user from the database
@@ -233,6 +231,7 @@
 	{
 		await CloseAddModal();
 		await OnModalClosed.InvokeAsync();
+		// await ShowSuccessMsg();
 
 
 	}

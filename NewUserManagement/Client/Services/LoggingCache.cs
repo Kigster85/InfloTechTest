@@ -1,41 +1,57 @@
-﻿using System.Net.Http.Json;
-using static NewUserManagement.Client.Services.LoggingClientService;
+﻿using static NewUserManagement.Client.Services.LoggingClientService;
+using System.Net.Http.Json;
 
 namespace NewUserManagement.Client.Services
 {
     public class LoggingCache
     {
         private List<LogEntry> _logEntries = new List<LogEntry>();
+
         // Property to expose log entries
         public List<LogEntry> LogEntries => _logEntries;
+
+        // Method to add log entries to the cache
+        public void AddLogEntries(List<LogEntry> logEntries)
+        {
+            _logEntries.AddRange(logEntries);
+        }
 
         // Method to clear log entries
         public void ClearLogEntries()
         {
             _logEntries.Clear();
         }
-        public void AddLogEntry(LogEntry logEntry)
-        {
-            _logEntries.Add(logEntry);
-        }
 
-        public List<LogEntry> GetLogEntries()
+        // Asynchronous method to fetch log entries from the cache
+        public Task<List<LogEntry>> GetCachedLogEntriesAsync()
         {
-            return _logEntries;
+            return Task.FromResult(_logEntries);
         }
-
-        // Additional methods for log retrieval, filtering, etc.
+        public Task<LogEntry> GetLogEntryDetailsAsync(int logId)
+        {
+            return Task.FromResult(_logEntries.Find(entry => entry.LogId == logId));
+        }
     }
 
     public class LoggingService
     {
         private readonly HttpClient _httpClient;
         private readonly LoggingCache _loggingCache;
-
+        private readonly TimeSpan _cacheRefreshInterval = TimeSpan.FromMinutes(30); // Cache refresh interval (e.g., every 30 minutes)
+        private DateTime _lastCacheRefreshTime;
+        private readonly System.Timers.Timer _refreshTimer;
         public LoggingService(HttpClient httpClient, LoggingCache loggingCache)
         {
             _httpClient = httpClient;
             _loggingCache = loggingCache;
+
+            // Initialize the timer for cache refresh
+            _refreshTimer = new System.Timers.Timer(_cacheRefreshInterval.TotalMilliseconds);
+            _refreshTimer.Elapsed += async (sender, e) => await RefreshCache();
+            _refreshTimer.AutoReset = true;
+            _refreshTimer.Start();
+
+            _lastCacheRefreshTime = DateTime.UtcNow;
         }
 
         public async Task FetchAndCacheLogEntries()
@@ -49,7 +65,8 @@ namespace NewUserManagement.Client.Services
                 if (logEntries != null)
                 {
                     _loggingCache.ClearLogEntries(); // Clear existing cache
-                    _loggingCache.LogEntries.AddRange(logEntries); // Add fetched log entries to cache
+                    _loggingCache.AddLogEntries(logEntries); // Add fetched log entries to cache
+                    _lastCacheRefreshTime = DateTime.UtcNow; // Update last cache refresh time
                 }
             }
             catch (Exception ex)
@@ -59,10 +76,19 @@ namespace NewUserManagement.Client.Services
             }
         }
 
-        // Method to retrieve cached log entries
-        public List<LogEntry> GetCachedLogEntries()
+        // Method to refresh the cache
+        private async Task RefreshCache()
         {
-            return _loggingCache.LogEntries;
+            // Refresh only if the interval has passed since the last refresh
+            if (DateTime.UtcNow - _lastCacheRefreshTime >= _cacheRefreshInterval)
+            {
+                await FetchAndCacheLogEntries();
+            }
+        }
+
+        public Task<LogEntry> GetLogEntryDetailsAsync(int logId)
+        {
+            return _loggingCache.GetLogEntryDetailsAsync(logId);
         }
     }
 }

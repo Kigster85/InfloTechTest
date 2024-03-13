@@ -6,9 +6,6 @@ namespace NewUserManagement.Shared.Models
     public class AppUserDTO
     {
         public string Id { get; set; }
-
-        [Required(ErrorMessage = "Password is required")]
-        [CustomPasswordValidation(8, 20, requireDigit: true, requireLowercase: true, requireUppercase: true)]
         public string Password { get; set; }
 
         [Required(ErrorMessage = "Forename is required")]
@@ -25,5 +22,7 @@ namespace NewUserManagement.Shared.Models
 
         [DataType(DataType.Date)]
         public DateTime DateOfBirth { get; set; }
+
+        public bool IsChecked { get; set; } = false;
     }
 }
