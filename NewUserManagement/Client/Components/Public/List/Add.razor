@@ -60,15 +60,13 @@
 	private string? _modalDisplay { get; set;}
 	private string? _modalClass { get; set; }
 	private bool _showBackdrop { get; set; }
-	private bool? isLoading = true; // Flag to indicate loading state
+	private bool? isLoading = true;
 
-	private AppUserDTO UserDetails { get; set; } // Initialize with a default user object
+	private AppUserDTO UserDetails { get; set; }
 	protected override async Task OnInitializedAsync()
 	{
-		// You can add an asynchronous operation that doesn't await anything to satisfy the requirement.
 		await Task.CompletedTask;
 		isLoading = false;
-		// Initialize UserDetails with default values or leave it as an empty object
 		UserDetails = new AppUserDTO();
 	}
 	public async Task LogUserCreation(string userId, string action, string details)
@@ -158,9 +156,6 @@
 					DateOfBirth = UserDetails?.DateOfBirth ?? DateTime.MinValue,
 					Password = UserDetails.Password
 				};
-
-
-
 			var response = await HttpClient.PostAsJsonAsync("/api/user", user);
 			if (response.IsSuccessStatusCode)
 			{
@@ -193,9 +188,6 @@
 			}
 		}
 	}
-
-
-
 
 	private bool IsValidUser()
 	{
@@ -231,8 +223,6 @@
 	{
 		await CloseAddModal();
 		await OnModalClosed.InvokeAsync();
-		// await ShowSuccessMsg();
-
 
 	}
 

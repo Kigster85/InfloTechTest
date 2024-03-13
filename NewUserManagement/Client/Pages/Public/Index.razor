@@ -10,7 +10,7 @@
 		<main role="main" class="pb-3">
 
 
-			<h1 id="user-management-technical-exercise">Rebuilt User Management Technical Exercise</h1>
+			<h3 id="user-management-technical-exercise">Rebuilt User Management Technical Exercise</h3>
 			<p>
 				Here is our rebuilt, brand new fully functional User Management System. Taking the data from the original Technical Exercise, we have rebuilt from the ground up a brand new system working in
 				Asp.Net's Blazor Web Assembly. Making use of Aps.Net Identity Framework for our log in and authorization needs. Also making use of Restful API's to deal with all of our interactions with the SQLite database currently being used. (Database technology used can be changed and implemented easily enough.)'
@@ -18,21 +18,21 @@
 				All together, we have provided an upto date system which is more future proof, has more scaleability, reusability, expandable, and more secure.
 			</p>
 			<p><strong>What have we built? What aspects does it include? What more can be added?</strong></p>
-			<h2 id="the-exercise">The Exercise</h2>
+			<h4 id="the-exercise">The Exercise</h4>
 			<p>You asked us to complete as many of the tasks as we could do in the <a href="/exercise">Exercise</a> ranging from the levels listed below.</p>
 			<ul>
 				<li><strong>Standard</strong> - Functionality that is common when working as a web developer</li>
 				<li><strong>Advanced</strong> - Slightly more technical tasks and problem solving</li>
 				<li><strong>Expert</strong> - Tasks with a higher level of problem solving and architecture needed</li>
 			</ul>
-			<h3 id="1-filters-section-standard">1. Filters Section (Standard) Completed</h3>
+			<h5 id="1-filters-section-standard">1. Filters Section (Standard) Completed</h5>
 			<ul>
 				<li><del>Active Only – This should show only users where their <code>IsActive</code> property is set to <code>true</code></del></li>
 				<li><del>Non Active – This should show only users where their <code>IsActive</code> property is set to <code>false</code></del></li>
 			</ul>
-			<h3 id="2-user-model-properties-standard">2. User Model Properties (Standard) Completed</h3>
+			<h5 id="2-user-model-properties-standard">2. User Model Properties (Standard) Completed</h5>
 			<p><del>Add a new property to the <code>AppUser</code> class in the system called <code>DateOfBirth</code> which is to be used and displayed in relevant sections of the app.</del></p>
-			<h3 id="3-actions-section-standard">3. Actions Section (Standard) Completed</h3>
+			<h5 id="3-actions-section-standard">3. Actions Section (Standard) Completed</h5>
 			<p>Create the code and UI flows for the following actions</p>
 			<ul>
 				<li><del><strong>Add</strong> – A screen that allows you to create a new user and return to the list</del></li>
@@ -43,7 +43,7 @@
 			<p>The delete function can be found directly integrated into the list page having the option to select multiple records to delete at once or indivually.
 				The view, add, and edit all use the same UserForms component to display a Modal View displaying and asking for the required information whilst providing validation for all user required inputs.
 			</p>
-			<h3 id="4-data-logging-advanced">4. Data Logging (Advanced) Completed</h3>
+			<h5 id="4-data-logging-advanced">4. Data Logging (Advanced) Completed</h5>
 			<p>the logs page makes use of the SeriLog package available on NuGet. It has its own separate table in the database, where all the log entries are stored.
 				The logs page itself is a table built like the user list table but with filter options at the top. You can select any record to pull up a <strong>View Modal</strong> giving
 				you all details for that specific userId.
@@ -54,12 +54,12 @@
 				<li><del>In the Logs page, the user should be able to click into each entry to see more detail about it.</del></li>
 				<li>Things for the future which have not been implemented as of yet could include the likes of Pagenation when a sepcific number of records is displayed, Different search capabilities like by username, forename, surname etc.</li>
 			</ul>
-			<h3 id="5-extend-the-application-expert">5. Extend the Application (Expert) Completed</h3>
+			<h5 id="5-extend-the-application-expert">5. Extend the Application (Expert) Completed</h5>
 			<p>
-We completely built from the ground up a new application to use for the user management system. Making use of Blazor Web Assembly and all the ASP.Net has to offer in .Net 7.
-We have incorperated a In Memory Database Cache which stored the database information for quicker retrieval of information, we can asyncronously update the database and cache at the same time
-so that the user experiences a fast running application with no hold up on server lag because all the information has been stored on their local machine. In do this it also limits the server useage
-keeping requests down, and server usage costs down. This can all be scaled up and down depending on the useage of the application and the numbers using it.
+				We completely built from the ground up a new application to use for the user management system. Making use of Blazor Web Assembly and all the ASP.Net has to offer in .Net 7.
+				We have incorperated a In Memory Database Cache which stored the database information for quicker retrieval of information, we can asyncronously update the database and cache at the same time
+				so that the user experiences a fast running application with no hold up on server lag because all the information has been stored on their local machine. In do this it also limits the server useage
+				keeping requests down, and server usage costs down. This can all be scaled up and down depending on the useage of the application and the numbers using it.
 			</p>
 			<ul>
 				<li><del>Re-implement the UI using a client side framework connecting to an API. Use of Blazor is preferred, but if you are more familiar with other frameworks, feel free to use them.</del></li>
@@ -68,14 +68,23 @@ keeping requests down, and server usage costs down. This can all be scaled up an
 				<li><del>Implement bundling of static assets.</del></li>
 				<li><del>Update the data access layer to use a real database, and implement database schema migrations.</del></li>
 			</ul>
-			<h2 id="additional-notes">Additional Notes</h2>
+			<h5 id="additional-notes">Additional Notes</h5>
 			<ul>
 				<li>Future additions to the project could include a change in the database technology being used, Improved information gathering, multilayer users with vairating levels of superiority, reporting tools, and more. </li>
-				<li>If any additional packages, tools or setup are required to run your completed version, please document these thoroughly.</li>
+				<li>Here are the packages used for this rebuild.</li>
 			</ul>
-
-
-			<p>
+			<div class="container d-flex justify-content-around">
+				<div class="mx5">
+					<p class="h3 p-1">Client Packages</p>
+					<img src="/img/clientpackages.png" />
+				</div>
+				<div class="mx-5">
+					<p class="h3 p-1">Server Packages</p>
+					<img src="/img/serverpackages.png" />
+				</div>
+			</div>
+			
+			<p class="p-3">
 				<a class="btn btn-primary d-flex justify-content-center" href="/list">To User List</a>
 			</p>
 

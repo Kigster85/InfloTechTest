@@ -108,7 +108,7 @@
 <FooterBar />
 
 @code {
-@inject ILogger<Logs> Logger // Inject ILogger service
+@inject ILogger<Logs> Logger 
 	@inject LoggingClientService.ILogService _logService
 	@inject HttpClient httpClient
 	@inject LoggingService _loggingService
@@ -116,12 +116,9 @@
 	@inject NavigationManager NavigationManager
 
 	public bool _showingLogsModalWindow = false;
-	// List to store unique user IDs
 	List<string?> UniqueUserIds { get; set; } = new List<string?>();
-	private bool isLoading = true; // Flag to indicate loading state
-
+	private bool isLoading = true; 
 	private List<LogEntry>? LogEntries;
-
 	private List<LogEntry> FilteredLogEntries = new List<LogEntry>();
 	public int SelectedLogId { get; set; }
 	[Parameter] public LogEntry LogEntryDetails { get; set; }
@@ -149,10 +146,6 @@
 		}
 	}
 
-
-
-
-
 	private void ViewLog(int logId)
 	{
 		Console.WriteLine($"Logs page - Viewing Log with ID: {logId}");
@@ -165,8 +158,6 @@
 
 		StateHasChanged();
 	}
-
-
 
 	// Method to handle filtering by user ID
 	private void FilterByUserId()
@@ -184,9 +175,6 @@
 		StateHasChanged();
 	}
 
-
-
-
 	// Method to handle filtering
 	private void FilterRecords()
 	{
@@ -202,8 +190,6 @@
 		}
 	}
 
-
-
 	// Method to handle onchange event of the dropdown
 	private void HandleSelectedUserId(ChangeEventArgs e)
 	{
@@ -212,7 +198,6 @@
 
 	private string? selectedFilter;
 	private string? userIdFilter;
-
 
 	// Method to handle filter selection change
 	private void OnFilterSelectionChange(ChangeEventArgs e)
@@ -233,7 +218,6 @@
 		selectedAction = e?.Value?.ToString();
 		StateHasChanged();
 	}
-
 
 	// ClearFilter method to reset filter criteria and reload all log entries
 	private void ClearFilter()

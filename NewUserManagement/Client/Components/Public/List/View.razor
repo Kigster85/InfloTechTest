@@ -26,8 +26,7 @@
 				<UserForm UserDetails="@UserDetails" ShowInputFields = "false" />
 			</div>
 			<div class="modal-footer">
-@* 				<button @onclick="() => EditUser(UserId)" class="btn dropdown-item">Edit</button>
- *@				<button @onclick="PreviousUser" type="button" class="btn btn-primary shadow">Previous</button>
+				<button @onclick="PreviousUser" type="button" class="btn btn-primary shadow">Previous</button>
 				<button @onclick="NextUser" type="button" class="btn btn-primary shadow">Next</button>
 				<button @onclick="CloseViewModal" type="button" class="btn btn-primary shadow" data-bs-dismiss="modal">Close</button>
 			</div>
@@ -132,9 +131,6 @@
 			Logger.LogWarning("Attempted to log user view with null or empty userId.");
 		}
 	}
-
-
-
 
 	private async Task NextUser()
 {

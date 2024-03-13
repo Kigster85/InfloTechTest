@@ -55,7 +55,7 @@ else if (_showingAddModalWindow)
 		</div>
 		Console.WriteLine(message);
 	}
-    <div class="container min-vh-90 py-nd-5 table-responsive">
+<div class="container min-vh-90 py-nd-5 table-responsive">
 		<div class="container py-nd-5">
 			<div class="btn-group pb-3" role="group">
 				<button @onclick="FetchAllUsers" class="btn btn-primary">Show All</button>
@@ -147,10 +147,7 @@ else if (_showingAddModalWindow)
 			<div class="mb-5 p-3"></div>
 
 		</div>
-
-    </div>
-
-
+</div>
 
 </main>
 <FooterBar />
@@ -194,7 +191,6 @@ else if (_showingAddModalWindow)
 		await Task.CompletedTask; // Ensure the method is asynchronous
 
 	}
-
 
 	private async Task FetchActiveUsers()
 	{
@@ -296,8 +292,6 @@ else if (_showingAddModalWindow)
 		}
 	}
 
-
-
 	// Method to toggle the selection state of a single user
 	private void ToggleSelection(string userId, ChangeEventArgs e)
 	{
@@ -379,7 +373,6 @@ else if (_showingAddModalWindow)
 		await UpdateUrlWithoutNavigation("view", userId);
 	}
 
-
 	private async void EditUser(string userId)
 	{
 			Console.WriteLine($"Editing user with ID: {userId}");
@@ -387,7 +380,6 @@ else if (_showingAddModalWindow)
 		_showingEditModalWindow = true; // Show the edit modal
 		await UpdateUrlWithoutNavigation("edit", userId);
 	}
-
 
 	private async void AddUser()
 	{
@@ -402,7 +394,6 @@ else if (_showingAddModalWindow)
 		_showingEditModalWindow = false;
 
 	}
-
 
 	public bool showEditSuccessMessage { get; set; }
 	public bool showAddSuccessMessage { get; set; }
@@ -423,8 +414,7 @@ else if (_showingAddModalWindow)
 		showSuccessMessage = true;
 		successMessageType = SuccessMessageType.Edit;
 		// Display the success message
-		// Delay before showing the success message
-		await Task.Delay(3000);
+		await Task.Delay(2900);
 		CloseSuccessMessage();
 
 
@@ -434,8 +424,7 @@ else if (_showingAddModalWindow)
 		showSuccessMessage = true;
 		successMessageType = SuccessMessageType.Add;
 		// Display the success message
-		// Delay before showing the success message
-		await Task.Delay(3000);
+		await Task.Delay(2900);
 		CloseSuccessMessage();
 
 	}
@@ -445,7 +434,7 @@ else if (_showingAddModalWindow)
 		successMessageType = SuccessMessageType.Delete;
 		IsDeleteButtonVisible = false;
 		StateHasChanged();
-		await Task.Delay(3000); // Delay for 3 seconds
+		await Task.Delay(2900); 
 		HideDeleteButton();
 		CloseSuccessMessage();
 
