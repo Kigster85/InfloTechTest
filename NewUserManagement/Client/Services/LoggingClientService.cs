@@ -50,13 +50,17 @@ namespace NewUserManagement.Client.Services
             Task LogViewCount(string userId, int viewCount);
             Task LogEditCount(string userId, int editCount);
             Task LogUserDeletion(string userId, string action, string details);
+            LogEntry GetPreviousLogEntry();
+            LogEntry GetNextLogEntry();
+
         }
 
         public class LogService : ILogService
         {
             private readonly ILogger<LogService> _logger;
             private readonly HttpClient _httpClient;
-
+            private readonly List<LogEntry> _logEntries = new List<LogEntry>();
+            private int _currentIndex = -1;
             public LogService(ILogger<LogService> logger, HttpClient httpClient)
             {
                 _logger = logger;
@@ -210,6 +214,44 @@ namespace NewUserManagement.Client.Services
             }
 
 
+
+            public LogEntry GetCurrentLogEntry()
+            {
+                if (_currentIndex >= 0 && _currentIndex < _logEntries.Count)
+                {
+                    return _logEntries[_currentIndex];
+                }
+                else
+                {
+                    return null; // No current log entry
+                }
+            }
+
+            public LogEntry GetPreviousLogEntry()
+            {
+                if (_currentIndex > 0 && _currentIndex <= _logEntries.Count)
+                {
+                    _currentIndex--;
+                    return _logEntries[_currentIndex];
+                }
+                else
+                {
+                    return null; // No previous log entry
+                }
+            }
+
+            public LogEntry GetNextLogEntry()
+            {
+                if (_currentIndex >= 0 && _currentIndex < _logEntries.Count - 1)
+                {
+                    _currentIndex++;
+                    return _logEntries[_currentIndex];
+                }
+                else
+                {
+                    return null; // No next log entry
+                }
+            }
 
         }
     }

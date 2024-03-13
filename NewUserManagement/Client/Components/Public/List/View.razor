@@ -86,12 +86,6 @@
 		await Task.CompletedTask; // Ensure the method is asynchronous
 	}
 
-
-
-
-
-
-
 	private async Task LogUserView(string? userId)
 	{
 		if (!string.IsNullOrEmpty(userId))
@@ -209,22 +203,8 @@ private async Task PreviousUser()
         }
     }
 }
-
-
-
-
 	[Parameter] public EventCallback ViewModalClickBtnClose { get; set; }
 	[Parameter] public EventCallback OpenEditUser { get; set; }
-
-
-	// private async Task EditUser(int userId)
-	// {
-	// 	await OpenEditUser.InvokeAsync();
-	// 	_selectedUserId = userId;
-	// 	await updateUrlWithoutNavigation("edit", userId);
-	// 	await ViewModalClickBtnClose.InvokeAsync();
-
-	// }
 	private bool ShowInputFields { get; set; }
 	private string? _modalDisplay = null;
 	private string? _modalClass = null;

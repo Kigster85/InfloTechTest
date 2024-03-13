@@ -1,6 +1,135 @@
-﻿@page "/list/logsviewer"
-<h3>LogsViewer</h3>
+﻿@page "/logs/logsviewer"
+@using static NewUserManagement.Client.Services.LoggingClientService
+@using NewUserManagement.Shared.Models
+
+<div class="modal @(_modalClass)" id="informationalModal" tabindex="-1" aria-labelledby="informationalModalLabel" role="dialog" style="display:@_modalDisplay">
+	<div class="container mt-5 d-flex justify-content-center w-40 " role="document">
+		<div class="modal-content bg-dark">
+			<div class="modal-header">
+				<h5 class="modal-title">LogsViewer</h5>
+				<button @onclick="CloseLogsModal" type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<div class="container bg-dark">
+				<div class="modal-body">
+					<div class="p-2">
+						<strong>Id:</strong><span> @(LogEntryDetails.LogId)</span>
+					</div>
+					<div class="mb-2 p-2">
+						<strong class="form-label">User Id:</strong>
+						<span class="p-2">@(LogEntryDetails.UserId)</span>
+					</div>
+					<div class="mb-2 p-2">
+						<strong class="form-label">Action Taken:</strong>
+						<span class="p-2">@(LogEntryDetails.Action)</span>
+					</div>
+					<div class="mb-2 p-2">
+						<strong class="form-label">Log Details:</strong>
+						<span class="p-2">@(LogEntryDetails.Details)</span>
+					</div>
+					<div class="mb-2 p-2">
+						<strong class="form-label">Time Stamp:</strong>
+						<span class="p-2">@(LogEntryDetails.Timestamp)</span>
+					</div>
+				</div>
+			</div>
+			<div class="modal-footer">
+@* 				<button @onclick="PreviousLog" type="button" class="btn btn-primary shadow">Previous</button>
+					<button @onclick="NextLog" type="button" class="btn btn-primary shadow">Next</button>*@
+					<button @onclick="CloseLogsModal" type="button" class="btn btn-primary shadow" data-bs-dismiss="modal">Close</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+@if (_showBackdrop)
+{
+	<div class="modal-backdrop fade show"></div>
+}
 
 @code {
+
+	@inject ILogger<LogsViewer> Logger
+
+	@inject LoggingCache LoggingCache
+
+	@inject LoggingClientService.ILogService _logService
+
+	@inject NavigationManager NavigationManager
+
+	@inject IJSRuntime JSRuntime
+	@inject LoggingService _loggingService
+	@inject LoggingCache _loggingCache
+
 	[Parameter] public EventCallback LogsModalClickBtnClose { get; set; }
+	[Parameter] public int SelectedLogId { get; set; } // Initialize LogEntryDetails
+	private string _selectedUserId { get; set; }
+	private LogEntry LogEntryDetails { get; set; }
+	private string _modalDisplay = "none";
+	private string _modalClass = "";
+	private bool _showBackdrop = false;
+	protected async override Task OnInitializedAsync()
+	{
+		// Fetch log details based on SelectedLogId
+		LogEntryDetails = await GetLogEntryDetailsAsync(SelectedLogId);
+	}
+
+	private async Task<LogEntry> GetLogEntryDetailsAsync(int logId)
+	{
+		// Retrieve log entry details based on logId
+		return await _loggingCache.GetLogEntryDetailsAsync(logId);
+	}
+
+	protected override void OnInitialized() => ShowLogsModal();
+
+	private async void ShowLogsModal()
+	{
+		_modalDisplay = "block";
+		_modalClass = "show";
+		_showBackdrop = true;
+
+		await Task.Delay(0);
+
+	}
+
+	private async void CloseLogsModal()
+	{
+		_modalDisplay = "none";
+		_modalClass = "";
+		_showBackdrop = false;
+		await LogsModalClickBtnClose.InvokeAsync();
+		NavigationManager.NavigateTo("/logs");
+	}
+	private async Task UpdateUrlWithoutNavigation(string route, int logId, string userId)
+	{
+		// Construct the URL based on the route, logId, and userId
+		string url = $"/logs/{route}/{logId}";
+
+
+		// Invoke the JavaScript function to update the URL
+		await JSRuntime.InvokeVoidAsync("updateUrlWithoutNavigation", route, logId, userId);
+	}
+	// private void PreviousLog()
+	// {
+	// 	// Get the previous log entry for the current user ID
+	// 	LogEntry previousLog = _logService.GetPreviousLogEntry();
+
+	// 	// If a previous log entry is found, update the LogEntry property
+	// 	if (previousLog != null)
+	// 	{
+	// 		LogEntryDetails = previousLog;
+	// 	}
+	// }
+
+	// private void NextLog()
+	// {
+	// 	// Get the next log entry for the current user ID
+	// 	LogEntry nextLog = _logService.GetNextLogEntry();
+
+	// 	// If a next log entry is found, update the LogEntry property
+	// 	if (nextLog != null)
+	// 	{
+	// 		LogEntryDetails = nextLog;
+	// 	}
+	// }
+
 }

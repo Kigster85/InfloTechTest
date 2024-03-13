@@ -1,4 +1,4 @@
-﻿window.updateUrlWithoutNavigation = function (route, userId) {
+﻿window.updateUrlWithoutNavigation = function (route, logId, userId) {
     // Get the current pathname
     var pathname = window.location.pathname;
 
@@ -16,6 +16,11 @@
 
     // Construct the URL based on the base path and route
     var url = `${basePath}${route}`;
+
+    // If logId is provided, append it to the URL
+    if (logId !== undefined) {
+        url += `/${logId}`;
+    }
 
     // If userId is provided, append it to the URL
     if (userId !== undefined) {
