@@ -53,7 +53,7 @@
 						<th>Log Id</th>
 						<th>UserId</th>
 						<th>Action</th>
-						<th>User Logs</th>
+						<th></th>
 					</tr>
 				</thead>
 			<AuthorizeView Roles="Admin">
@@ -74,7 +74,7 @@
 									<td @onclick="@(e => ViewLog(logEntry.LogId))">@logEntry.LogId</td>
 									<td @onclick="@(e => ViewLog(logEntry.LogId))">@logEntry.UserId</td>
 									<td @onclick="@(e => ViewLog(logEntry.LogId))">@logEntry.Action</td>
-									<td @onclick="@(e => ViewLog(logEntry.LogId))"><button class="btn btn-light">User Logs</button></td>
+									<td class="d-flex justify-content-center" @onclick="@(e => ViewLog(logEntry.LogId))"><button class="btn btn-light">More Information</button></td>
 							</tr>
 							
 						}

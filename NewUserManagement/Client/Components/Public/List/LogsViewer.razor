@@ -30,11 +30,19 @@
 						<strong class="form-label">Time Stamp:</strong>
 						<span class="p-2">@(LogEntryDetails.Timestamp)</span>
 					</div>
+					<div class="mb-2 p-2">
+						<strong class="form-label">View Count:</strong>
+						<span class="p-2">@(LogEntryDetails.ViewCount)</span>
+					</div>
+					<div class="mb-2 p-2">
+						<strong class="form-label">Edit Count:</strong>
+						<span class="p-2">@(LogEntryDetails.EditCount)</span>
+					</div>
 				</div>
 			</div>
 			<div class="modal-footer">
-@* 				<button @onclick="PreviousLog" type="button" class="btn btn-primary shadow">Previous</button>
-					<button @onclick="NextLog" type="button" class="btn btn-primary shadow">Next</button>*@
+   				<button @onclick="PreviousLog" type="button" class="btn btn-primary shadow">Previous</button>
+					<button @onclick="NextLog" type="button" class="btn btn-primary shadow">Next</button>
 					<button @onclick="CloseLogsModal" type="button" class="btn btn-primary shadow" data-bs-dismiss="modal">Close</button>
 			</div>
 		</div>
@@ -108,28 +116,46 @@
 		// Invoke the JavaScript function to update the URL
 		await JSRuntime.InvokeVoidAsync("updateUrlWithoutNavigation", route, logId, userId);
 	}
-	// private void PreviousLog()
-	// {
-	// 	// Get the previous log entry for the current user ID
-	// 	LogEntry previousLog = _logService.GetPreviousLogEntry();
+	private async Task PreviousLog()
+	{
+		// Get the index of the current log entry
+		int currentIndex = LoggingCache.LogEntries.FindIndex(entry => entry.LogId == LogEntryDetails.LogId);
 
-	// 	// If a previous log entry is found, update the LogEntry property
-	// 	if (previousLog != null)
-	// 	{
-	// 		LogEntryDetails = previousLog;
-	// 	}
-	// }
+		// If the current log entry is found in the cache
+		if (currentIndex != -1)
+		{
+			// Get the index of the previous log entry
+			int previousIndex = currentIndex - 1;
 
-	// private void NextLog()
-	// {
-	// 	// Get the next log entry for the current user ID
-	// 	LogEntry nextLog = _logService.GetNextLogEntry();
+			// If the previous log entry index is valid
+			if (previousIndex >= 0 && previousIndex < LoggingCache.LogEntries.Count)
+			{
+				// Update LogEntryDetails with the previous log entry
+				LogEntryDetails = await GetLogEntryDetailsAsync(LoggingCache.LogEntries[previousIndex].LogId);
+			}
+		}
+	}
 
-	// 	// If a next log entry is found, update the LogEntry property
-	// 	if (nextLog != null)
-	// 	{
-	// 		LogEntryDetails = nextLog;
-	// 	}
-	// }
+	private async Task NextLog()
+	{
+		// Get the index of the current log entry
+		int currentIndex = LoggingCache.LogEntries.FindIndex(entry => entry.LogId == LogEntryDetails.LogId);
+
+		// If the current log entry is found in the cache
+		if (currentIndex != -1)
+		{
+			// Get the index of the next log entry
+			int nextIndex = currentIndex + 1;
+
+			// If the next log entry index is valid
+			if (nextIndex >= 0 && nextIndex < LoggingCache.LogEntries.Count)
+			{
+				// Update LogEntryDetails with the next log entry
+				LogEntryDetails = await GetLogEntryDetailsAsync(LoggingCache.LogEntries[nextIndex].LogId);
+			}
+		}
+	}
+
+
 
 }
