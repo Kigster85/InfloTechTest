@@ -7,7 +7,7 @@
 
 	@if (ShowInputFields == false)
 	{
-	<div class="container bg-dark">
+	<div class="bg-dark">
 
 				<div class ="mb-2 p-2">
 					<strong class="form-label">Forename:</strong>
@@ -54,7 +54,14 @@ else if (IsAddUser == false)
 				<InputDate id="dateofbirth" class="form-control" @bind-Value="UserDetails.DateOfBirth" />
 				<ValidationMessage For="@(() => UserDetails.DateOfBirth)" />
 			</div>
-
+			<div class="d-flex p-2">
+				<label class="form-label">Is Active:</label>
+				<div class="form-check" style="margin-left: 0.5rem;">
+					<InputCheckbox id="isActive" class="form-check-input" @bind-Value="UserDetails.IsActive" />
+					<label class="form-check-label" for="isActive">Ticked = yes | Un-Ticked = no</label>
+				</div>
+				<ValidationMessage For="@(() => UserDetails.IsActive)" />
+			</div>
 			<div class="d-flex justify-content-end">
 				<button type="submit" class="btn btn-success shadow">Submit</button>
 			</div>
@@ -98,7 +105,14 @@ else
 				<InputDate id="dateofbirth" class="form-control" @bind-Value="UserDetails.DateOfBirth" />
 				<ValidationMessage For="@(() => UserDetails.DateOfBirth)" />
 			</div>
-
+			<div class="d-flex p-2">
+				<label class="form-label">Is Active:</label>
+				<div class="form-check" style="margin-left: 0.5rem;">
+					<InputCheckbox id="isActive" class="form-check-input" @bind-Value="UserDetails.IsActive" />
+					<label class="form-check-label" for="isActive">Ticked = yes | Un-Ticked = no</label>
+				</div>
+				<ValidationMessage For="@(() => UserDetails.IsActive)" />
+			</div>
 			<div class="d-flex justify-content-end">
 				<button type="submit" class="btn btn-success shadow">Submit</button>
 			</div>

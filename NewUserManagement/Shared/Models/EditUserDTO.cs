@@ -13,4 +13,5 @@ public class EditUserDTO
 
     [DataType(DataType.Date)]
     public DateTime DateOfBirth { get; set; }
+    public bool IsActive { get; set; }
 }

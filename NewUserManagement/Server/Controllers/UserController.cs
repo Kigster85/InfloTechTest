@@ -115,6 +115,8 @@ namespace NewUserManagement.Server.Controllers
             user.Email = userDTO.Email;
             user.emailAddress = userDTO.Email;
             user.DateOfBirth = userDTO.DateOfBirth;
+            user.IsActive = userDTO.IsActive;
+
 
             var result = await _userManager.UpdateAsync(user);
 
@@ -141,7 +143,7 @@ namespace NewUserManagement.Server.Controllers
                 Surname = userDTO.Surname,
                 Email = userDTO.Email,
                 emailAddress = userDTO.Email,
-                IsActive = true,
+                IsActive = userDTO.IsActive,
                 DateOfBirth = userDTO.DateOfBirth,
                 Password = userDTO.Password
             };

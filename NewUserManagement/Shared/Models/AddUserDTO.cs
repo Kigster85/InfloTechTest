@@ -26,4 +26,5 @@ public class AddUserDTO
 
     [DataType(DataType.Date)]
     public DateTime DateOfBirth { get; set; }
+
 }
